@@ -196,6 +196,10 @@
 .stg-btn-danger:hover { background: rgba(255,57,151,0.15); }
 
 /* ── Storage bar ─────────────────────────────── */
+.stg-server-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.stg-server-dot.green { background: #39ff7f; box-shadow: 0 0 8px rgba(57,255,127,0.4); }
+.stg-server-dot.yellow { background: var(--yellow); box-shadow: 0 0 8px rgba(255,215,0,0.4); }
+.stg-server-dot.red { background: var(--red); box-shadow: 0 0 8px rgba(255,57,151,0.4); }
 .stg-storage-bar { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
 .stg-storage-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; background: linear-gradient(90deg, var(--primary), #39ff7f); }
 .stg-storage-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--text-dim); }

@@ -305,25 +305,37 @@
       <div class="stg-section-desc">Monitor usage and manage your instance data.</div>
 
       <div class="stg-group">
-        <div class="stg-group-label">STORAGE USAGE</div>
-        <div>
-          <div class="stg-storage-bar"><div class="stg-storage-fill" id="storageFill" style="width:38%"></div></div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:12px;"><span id="storageUsed">3.8 GB used</span><span>10 GB total</span></div>
-          <div class="stg-storage-legend">
-            <div class="stg-storage-legend-item"><div class="stg-storage-dot" style="background:var(--primary)"></div> Mail &amp; attachments</div>
-            <div class="stg-storage-legend-item"><div class="stg-storage-dot" style="background:#39ff7f"></div> Media &amp; assets</div>
-            <div class="stg-storage-legend-item"><div class="stg-storage-dot" style="background:var(--red)"></div> Things data</div>
-            <div class="stg-storage-legend-item"><div class="stg-storage-dot" style="background:var(--yellow)"></div> Backups</div>
+        <div class="stg-group-label">SERVER</div>
+        <div class="stg-row">
+          <div><div class="stg-label">IP address</div></div>
+          <div class="stg-mono-cyan" id="serverIp">--</div>
+        </div>
+        <div class="stg-row">
+          <div><div class="stg-label">Status</div></div>
+          <div id="serverStatus" style="display:flex;align-items:center;gap:8px;">
+            <span class="stg-server-dot" id="serverDot"></span>
+            <span id="serverStatusText" style="font-family:var(--font-mono);font-size:14px;">--</span>
           </div>
+        </div>
+        <div class="stg-row">
+          <div><div class="stg-label">CPU load</div></div>
+          <div class="stg-mono-cyan" id="serverCpu">--</div>
+        </div>
+        <div class="stg-row">
+          <div><div class="stg-label">Memory</div></div>
+          <div class="stg-mono-cyan" id="serverMem">--</div>
+        </div>
+        <div class="stg-row">
+          <div><div class="stg-label">Uptime</div></div>
+          <div class="stg-mono-cyan" id="serverUptime">--</div>
         </div>
       </div>
 
       <div class="stg-group">
-        <div class="stg-group-label">BACKUPS</div>
-        <div class="stg-row"><div><div class="stg-label">Auto-backup</div><div class="stg-sublabel">Daily snapshot of your instance data</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="autoBackup"></div><span class="stg-toggle-label">ON</span></div></div>
+        <div class="stg-group-label">STORAGE</div>
         <div class="stg-row">
-          <div><div class="stg-label">Backup retention</div></div>
-          <div class="stg-select-wrap"><select class="stg-select" data-key="backupRetention"><option>7 days</option><option>14 days</option><option>30 days</option><option>90 days</option></select></div>
+          <div><div class="stg-label">Instance data</div></div>
+          <div class="stg-mono-cyan" id="storageSize">--</div>
         </div>
         <div class="stg-row">
           <div><div class="stg-label">Export all data</div><div class="stg-sublabel">Download a zip of all your instance data</div></div>
@@ -332,9 +344,9 @@
       </div>
 
       <div class="stg-group">
-        <div class="stg-group-label">CACHE</div>
+        <div class="stg-group-label">BROWSER</div>
         <div class="stg-row">
-          <div><div class="stg-label">Clear local cache</div><div class="stg-sublabel">Frees up browser storage -- you won't lose data</div></div>
+          <div><div class="stg-label">Clear browser cache</div><div class="stg-sublabel">Clears localStorage only -- no server data affected</div></div>
           <button class="stg-ai-btn stg-ai-connect" id="clearCacheBtn" style="width:auto;padding:8px 20px;">Clear</button>
         </div>
       </div>

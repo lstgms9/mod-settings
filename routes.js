@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const os = require('os');
 const { TOTP, Secret } = require('otpauth');
 const QRCode = require('qrcode');
 const archiver = require('archiver');
@@ -222,6 +223,51 @@ module.exports = function(router, ctx) {
     delete user.tfaPending;
     writeUser(req.user.studio, user);
     res.json({ ok: true });
+  });
+
+  // ── Server info ──────────────────────────────────────────────
+  router.get('/server-info', async (req, res) => {
+    if (!req.user) return res.error(401, 'Not logged in');
+    const load1 = os.loadavg()[0];
+    const cpus = os.cpus().length;
+    const loadPct = Math.round((load1 / cpus) * 100);
+    let status = 'not busy';
+    if (loadPct > 60) status = 'busy';
+    else if (loadPct > 25) status = 'bit busy';
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const usedMem = totalMem - freeMem;
+    const ifaces = os.networkInterfaces();
+    let ip = null;
+    for (const name in ifaces) {
+      for (const iface of ifaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) { ip = iface.address; break; }
+      }
+      if (ip) break;
+    }
+    // storage size
+    let storageBytes = 0;
+    function dirSize(dir) {
+      try {
+        for (const f of fs.readdirSync(dir)) {
+          const fp = path.join(dir, f);
+          const st = fs.statSync(fp);
+          if (st.isDirectory()) dirSize(fp);
+          else storageBytes += st.size;
+        }
+      } catch {}
+    }
+    dirSize(storageDir);
+    res.json({
+      ip: ip || 'unknown',
+      status,
+      loadPct,
+      cpus,
+      uptime: Math.floor(os.uptime()),
+      memTotal: totalMem,
+      memUsed: usedMem,
+      storageBytes,
+    });
   });
 
   // ── Export: zip download of all user data ────────────────────

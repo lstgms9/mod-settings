@@ -356,6 +356,45 @@
     });
   }
 
+  // ── Server info ────────────────────────────────────────────
+  function fmtBytes(b) {
+    if (b > 1e9) return (b / 1e9).toFixed(1) + ' GB';
+    if (b > 1e6) return (b / 1e6).toFixed(1) + ' MB';
+    if (b > 1e3) return (b / 1e3).toFixed(1) + ' KB';
+    return b + ' B';
+  }
+  function fmtUptime(s) {
+    var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+    var parts = [];
+    if (d) parts.push(d + 'd');
+    if (h) parts.push(h + 'h');
+    parts.push(m + 'm');
+    return parts.join(' ');
+  }
+  async function loadServerInfo() {
+    var info = await API.get('/server-info');
+    if (info.error) return;
+    var ipEl = document.getElementById('serverIp');
+    var dotEl = document.getElementById('serverDot');
+    var statusEl = document.getElementById('serverStatusText');
+    var cpuEl = document.getElementById('serverCpu');
+    var memEl = document.getElementById('serverMem');
+    var uptimeEl = document.getElementById('serverUptime');
+    var sizeEl = document.getElementById('storageSize');
+    if (ipEl) ipEl.textContent = info.ip;
+    if (dotEl) {
+      dotEl.className = 'stg-server-dot ' + (info.status === 'busy' ? 'red' : info.status === 'bit busy' ? 'yellow' : 'green');
+    }
+    if (statusEl) {
+      statusEl.textContent = info.status;
+      statusEl.style.color = info.status === 'busy' ? 'var(--red)' : info.status === 'bit busy' ? 'var(--yellow)' : '#39ff7f';
+    }
+    if (cpuEl) cpuEl.textContent = info.loadPct + '% (' + info.cpus + ' cores)';
+    if (memEl) memEl.textContent = fmtBytes(info.memUsed) + ' / ' + fmtBytes(info.memTotal);
+    if (uptimeEl) uptimeEl.textContent = fmtUptime(info.uptime);
+    if (sizeEl) sizeEl.textContent = fmtBytes(info.storageBytes);
+  }
+
   // ── Export ──────────────────────────────────────────────────
   function initExport() {
     var btn = document.getElementById('exportBtn');
@@ -455,6 +494,7 @@
     init2FA();
     initExport();
     initCacheClear();
+    loadServerInfo();
     applyPrefs();
     applyVisual();
   };
