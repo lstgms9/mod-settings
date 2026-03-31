@@ -333,9 +333,12 @@
 
       <div class="stg-group">
         <div class="stg-group-label">STORAGE</div>
-        <div class="stg-row">
-          <div><div class="stg-label">Instance data</div></div>
-          <div class="stg-mono-cyan" id="storageSize">--</div>
+        <div id="storageBarWrap" style="margin-bottom:4px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+            <span style="color:var(--text-dim)">Instance data</span>
+            <span class="stg-mono-cyan" id="storageSize">--</span>
+          </div>
+          <div class="stg-storage-bar"><div class="stg-storage-fill" id="storageFill" style="width:0%"></div></div>
         </div>
         <div class="stg-row">
           <div><div class="stg-label">Export all data</div><div class="stg-sublabel">Download a zip of all your instance data</div></div>

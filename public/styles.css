@@ -200,7 +200,7 @@
 .stg-server-dot.green { background: #39ff7f; box-shadow: 0 0 8px rgba(57,255,127,0.4); }
 .stg-server-dot.yellow { background: var(--yellow); box-shadow: 0 0 8px rgba(255,215,0,0.4); }
 .stg-server-dot.red { background: var(--red); box-shadow: 0 0 8px rgba(255,57,151,0.4); }
-.stg-storage-bar { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+.stg-storage-bar { height: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
 .stg-storage-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; background: linear-gradient(90deg, var(--primary), #39ff7f); }
 .stg-storage-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--text-dim); }
 .stg-storage-legend-item { display: flex; align-items: center; gap: 5px; }

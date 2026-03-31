@@ -364,12 +364,10 @@
     return b + ' B';
   }
   function fmtUptime(s) {
-    var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
-    var parts = [];
-    if (d) parts.push(d + 'd');
-    if (h) parts.push(h + 'h');
-    parts.push(m + 'm');
-    return parts.join(' ');
+    // show as percentage — 100% unless rebooted very recently
+    var totalDay = 86400;
+    if (s >= totalDay) return '100%';
+    return Math.floor((s / totalDay) * 100) + '%';
   }
   async function loadServerInfo() {
     var info = await API.get('/server-info');
@@ -392,7 +390,11 @@
     if (cpuEl) cpuEl.textContent = info.loadPct + '% (' + info.cpus + ' cores)';
     if (memEl) memEl.textContent = fmtBytes(info.memUsed) + ' / ' + fmtBytes(info.memTotal);
     if (uptimeEl) uptimeEl.textContent = fmtUptime(info.uptime);
-    if (sizeEl) sizeEl.textContent = fmtBytes(info.storageBytes);
+    var limitGB = 20;
+    var usedGB = info.storageBytes / 1e9;
+    if (sizeEl) sizeEl.textContent = usedGB.toFixed(1) + ' of ' + limitGB + ' GB';
+    var fillEl = document.getElementById('storageFill');
+    if (fillEl) fillEl.style.width = Math.min(100, (usedGB / limitGB) * 100).toFixed(1) + '%';
   }
 
   // ── Export ──────────────────────────────────────────────────
