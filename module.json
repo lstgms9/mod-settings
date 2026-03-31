@@ -1,0 +1,9 @@
+{
+  "name": "settings",
+  "version": "0.1.0",
+  "label": "Settings",
+  "icon": "settings",
+  "description": "Settings module",
+  "content_types": [],
+  "routes": "routes.js"
+}
