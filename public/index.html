@@ -22,7 +22,7 @@
         <div class="stg-group-label">THEME</div>
         <div class="stg-row">
           <div><div class="stg-label">Color theme</div><div class="stg-sublabel">Changes apply across all modules</div></div>
-          <div class="stg-seg" data-key="theme">
+          <div class="stg-seg stg-seg-equal" data-key="theme">
             <button class="stg-seg-btn active" data-val="dark">Dark</button>
             <button class="stg-seg-btn" data-val="grey">Grey</button>
             <button class="stg-seg-btn" data-val="light-grey">Light Grey</button>
@@ -32,7 +32,7 @@
         </div>
         <div class="stg-row">
           <div><div class="stg-label">Accent color</div><div class="stg-sublabel">Primary highlight color</div></div>
-          <div class="stg-seg" data-key="accent">
+          <div class="stg-seg stg-seg-equal" data-key="accent">
             <button class="stg-seg-btn active" data-val="cyan" style="color:var(--primary)">&#9679; Cyan</button>
             <button class="stg-seg-btn" data-val="pink" style="color:var(--red)">&#9679; Pink</button>
             <button class="stg-seg-btn" data-val="green" style="color:#39ff7f">&#9679; Green</button>
@@ -47,14 +47,6 @@
       </div>
 
       <div class="stg-group">
-        <div class="stg-group-label">DISPLAY FONT</div>
-        <div class="stg-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
-          <div><div class="stg-label">Heading font</div><div class="stg-sublabel">Default is Bungee. Pick your own.</div></div>
-          <div class="stg-font-grid" id="fontGrid"></div>
-        </div>
-      </div>
-
-      <div class="stg-group">
         <div class="stg-group-label">FONT SIZE</div>
         <div class="stg-row">
           <div><div class="stg-label">Interface text size</div></div>
@@ -64,33 +56,16 @@
             <button class="stg-seg-btn" data-val="large">Large</button>
           </div>
         </div>
-        <div class="stg-row">
-          <div><div class="stg-label">Editor font size</div><div class="stg-sublabel">For mail compose, notes, press kits</div></div>
-          <div class="stg-range-row">
-            <input type="range" min="12" max="22" value="15" data-key="editorFontSize">
-            <span class="stg-range-val">15px</span>
-          </div>
-        </div>
       </div>
 
       <div class="stg-group">
-        <div class="stg-group-label">DENSITY</div>
-        <div class="stg-row">
-          <div><div class="stg-label">Layout density</div><div class="stg-sublabel">Spacing between elements</div></div>
-          <div class="stg-seg" data-key="density">
-            <button class="stg-seg-btn" data-val="compact">Compact</button>
-            <button class="stg-seg-btn active" data-val="default">Default</button>
-            <button class="stg-seg-btn" data-val="spacious">Spacious</button>
-          </div>
-        </div>
-        <div class="stg-row">
-          <div><div class="stg-label">Sidebar position</div></div>
-          <div class="stg-seg" data-key="sidebarPos">
-            <button class="stg-seg-btn active" data-val="left">Left</button>
-            <button class="stg-seg-btn" data-val="right">Right</button>
-          </div>
+        <div class="stg-group-label">DISPLAY FONT</div>
+        <div class="stg-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+          <div><div class="stg-label">Heading font</div><div class="stg-sublabel">Default is Bungee (Latin only). Auto-switches to Nunito for non-Latin languages. Or pick your own.</div></div>
+          <div class="stg-font-grid" id="fontGrid"></div>
         </div>
       </div>
+
     </div>
 
     <!-- AI ACCOUNTS -->

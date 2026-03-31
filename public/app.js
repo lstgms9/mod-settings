@@ -3,6 +3,7 @@
   let prefs = {};
   let connectedAIs = {};
   let saveTimer = null;
+  let lastToast = null;
 
   const AI_PROVIDERS = [
     { id:'claude', name:'Claude', provider:'Anthropic', color:'#d4a574', icon:'\u25C8', placeholder:'sk-ant-... or OAuth token', models:['Opus 4','Sonnet 4','Haiku 3.5'] },
@@ -18,21 +19,66 @@
 
   const FONTS = [
     { id:'bungee', name:'Bungee', family:"'Bungee', cursive", sz:18 },
-    { id:'nunito', name:'Nunito Black', family:"'Nunito', sans-serif", weight:900, sz:20 },
+    { id:'nunito', name:'Nunito Black \u00b7 International', family:"'Nunito', sans-serif", weight:900, sz:20 },
+    { id:'noto-sans', name:'Noto Sans Display \u00b7 International', family:"'Noto Sans Display', sans-serif", weight:800, sz:18 },
     { id:'orbitron', name:'Orbitron', family:"'Orbitron', sans-serif", weight:900, sz:16 },
     { id:'audiowide', name:'Audiowide', family:"'Audiowide', cursive", sz:18 },
     { id:'righteous', name:'Righteous', family:"'Righteous', cursive", sz:20 },
-    { id:'caveat', name:'Caveat', family:"'Caveat', cursive", weight:700, sz:26 },
+    { id:'caveat', name:'Caveat \u00b7 International', family:"'Caveat', cursive", weight:700, sz:26 },
     { id:'press-start', name:'Press Start 2P', family:"'Press Start 2P', cursive", sz:11 },
-    { id:'playfair', name:'Playfair Display', family:"'Playfair Display', serif", weight:900, sz:18 },
+    { id:'playfair', name:'Playfair Display \u00b7 International', family:"'Playfair Display', serif", weight:900, sz:18 },
+    { id:'lora', name:'Lora \u00b7 International', family:"'Lora', serif", weight:700, sz:20 },
+    { id:'merriweather', name:'Merriweather \u00b7 International', family:"'Merriweather', serif", weight:900, sz:18 },
   ];
 
   function esc(s) { return platform.ui ? platform.ui.esc(s) : s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function toast(msg) { if (platform.ui) platform.ui.toast(msg || 'Settings saved', { duration: 2000 }); }
+  function toast(msg) {
+    if (!platform.ui) return;
+    if (lastToast && lastToast.parentNode) lastToast.parentNode.removeChild(lastToast);
+    lastToast = platform.ui.toast(msg || 'Settings saved', { duration: 2000 });
+  }
+
+  // ── Apply visual changes to page ─────────────────────────────
+  var THEMES = {
+    dark:       { '--bg':'#0b0b14','--bg2':'#12121f','--bg3':'#1a1a2e','--text':'#e4e4f0','--text-mid':'#a0aab0','--text-dim':'#5a6a70','--border':'#252540','--border2':'#353555' },
+    grey:       { '--bg':'#1a1a24','--bg2':'#22222f','--bg3':'#2a2a3e','--text':'#e4e4f0','--text-mid':'#a0aab0','--text-dim':'#6a7a80','--border':'#353550','--border2':'#454565' },
+    'light-grey':{ '--bg':'#2e2e3e','--bg2':'#363648','--bg3':'#404058','--text':'#eeeef4','--text-mid':'#b0bac0','--text-dim':'#808a90','--border':'#505068','--border2':'#606078' },
+    light:      { '--bg':'#e8e8f0','--bg2':'#dcdce8','--bg3':'#d0d0e0','--text':'#1a1a2e','--text-mid':'#4a4a60','--text-dim':'#7a7a90','--border':'#c0c0d4','--border2':'#b0b0c8' },
+    white:      { '--bg':'#ffffff','--bg2':'#f4f4f8','--bg3':'#eaeaf0','--text':'#111118','--text-mid':'#444450','--text-dim':'#888898','--border':'#d8d8e4','--border2':'#c8c8d8' },
+  };
+  var ACCENTS = {
+    cyan: '#00e6d2', pink: '#ff3997', green: '#39ff7f', yellow: '#ffd700', orange: '#ff6b35'
+  };
+  var FONT_MAP = {};
+  FONTS.forEach(function(f) { FONT_MAP[f.id] = f.family; });
+  var SIZES = { small: '14px', medium: '15px', large: '17px' };
+
+  function applyVisual() {
+    var r = document.documentElement.style;
+    // theme
+    var t = THEMES[prefs.theme];
+    if (t) { for (var k in t) r.setProperty(k, t[k]); }
+    // accent
+    var a = ACCENTS[prefs.accent];
+    if (a) { r.setProperty('--primary', a); r.setProperty('--accent', a); }
+    // heading font
+    var font = FONT_MAP[prefs.headingFont];
+    if (font) r.setProperty('--font-head', font);
+    // font size — apply to body and module content so it cascades
+    var sz = SIZES[prefs.fontSize];
+    if (sz) {
+      document.body.style.fontSize = sz;
+      var mc = document.getElementById('module-content');
+      if (mc) mc.style.fontSize = sz;
+    }
+    // persist to localStorage for shell to pick up on reload
+    try { localStorage.setItem('okdun-user-prefs', JSON.stringify({ theme: prefs.theme, accent: prefs.accent, headingFont: prefs.headingFont, fontSize: prefs.fontSize })); } catch(e) {}
+  }
 
   // ── Save prefs (debounced) ──────────────────────────────────
   function schedSave() {
     clearTimeout(saveTimer);
+    applyVisual();
     saveTimer = setTimeout(async () => {
       await API.put('/prefs', prefs);
       toast();
@@ -410,6 +456,7 @@
     initExport();
     initCacheClear();
     applyPrefs();
+    applyVisual();
   };
 
   // ── Destroy ─────────────────────────────────────────────────
@@ -418,4 +465,15 @@
     prefs = {};
     connectedAIs = {};
   };
+
+  // ── Early apply from localStorage (before module loads) ─────
+  try {
+    var saved = JSON.parse(localStorage.getItem('okdun-user-prefs'));
+    if (saved) {
+      var r = document.documentElement.style;
+      var t = saved.theme && { dark:{},grey:{},['light-grey']:{},light:{},white:{} }[saved.theme] ? null : null;
+      // full apply happens in init, this is just accent/font for instant feel
+      if (saved.accent && ACCENTS[saved.accent]) { r.setProperty('--primary', ACCENTS[saved.accent]); r.setProperty('--accent', ACCENTS[saved.accent]); }
+    }
+  } catch(e) {}
 })();

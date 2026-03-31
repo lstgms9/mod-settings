@@ -17,7 +17,7 @@
 }
 .stg-nav-item {
   display: flex; align-items: center; gap: 10px;
-  padding: 9px 20px; font-size: 13px; font-weight: 500;
+  padding: 9px 20px; font-size: 14px; font-weight: 500;
   color: var(--text-dim); cursor: pointer; transition: all 0.2s;
   border-left: 3px solid transparent; user-select: none;
 }
@@ -32,7 +32,7 @@
 @keyframes stgFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
 .stg-section-header { font-family: var(--font-head); font-size: 18px; color: var(--text); margin-bottom: 6px; }
-.stg-section-desc { font-size: 13px; color: var(--text-dim); margin-bottom: 28px; max-width: 500px; }
+.stg-section-desc { font-size: 14px; color: var(--text-dim); margin-bottom: 28px; max-width: 500px; }
 
 /* ── Groups ──────────────────────────────────── */
 .stg-group {
@@ -41,7 +41,7 @@
 }
 .stg-group:hover { border-color: var(--border2); }
 .stg-group-label {
-  font-family: var(--font-head); font-size: 10px; letter-spacing: 1.5px;
+  font-family: var(--font-head); font-size: 13px; letter-spacing: 1.5px;
   color: var(--primary); margin-bottom: 14px;
 }
 
@@ -52,23 +52,26 @@
 }
 .stg-row:last-child { border-bottom: none; padding-bottom: 0; }
 .stg-row:first-of-type { padding-top: 0; }
-.stg-label { font-size: 13px; font-weight: 500; color: var(--text); }
+.stg-label { font-size: 14px; font-weight: 500; color: var(--text); }
 .stg-sublabel { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 .stg-mono-cyan { font-family: var(--font-mono); color: var(--primary); }
 
 /* ── Segmented control ───────────────────────── */
 .stg-seg {
   display: flex; background: var(--bg); border: 1px solid var(--border);
-  border-radius: 6px; overflow: hidden; flex-shrink: 0;
+  border-radius: 0; flex-shrink: 0;
 }
 .stg-seg-btn {
-  padding: 6px 14px; font-size: 12px; font-weight: 600;
+  padding: 6px 14px; font-size: 14px; font-weight: 600;
   font-family: inherit; color: var(--text-dim); background: transparent;
-  border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  border: 1px solid transparent; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  margin: -1px;
 }
 .stg-seg-btn:not(:last-child) { border-right: 1px solid var(--border); }
-.stg-seg-btn.active { background: rgba(255,255,255,0.06); color: var(--primary); }
+.stg-seg-btn.active { background: rgba(0,230,210,0.1); color: var(--primary); border-color: var(--primary); }
 .stg-seg-btn:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.02); }
+.stg-seg-equal { width: 340px; }
+.stg-seg-equal .stg-seg-btn { flex: 1; text-align: center; padding-left: 6px; padding-right: 6px; }
 
 /* ── Toggle ──────────────────────────────────── */
 .stg-toggle-wrap { display: flex; align-items: center; gap: 10px; }
@@ -82,14 +85,14 @@
   border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.3s;
 }
 .stg-toggle.on::after { left: 22px; background: #39ff7f; box-shadow: 0 0 8px rgba(57,255,127,0.3); }
-.stg-toggle-label { font-size: 12px; font-family: var(--font-mono); color: var(--text-dim); }
+.stg-toggle-label { font-size: 14px; font-family: var(--font-mono); color: var(--text-dim); min-width: 28px; }
 .stg-toggle.on + .stg-toggle-label { color: #39ff7f; }
 
 /* ── Select ──────────────────────────────────── */
 .stg-select-wrap { position: relative; }
 .stg-select {
   appearance: none; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
-  padding: 7px 32px 7px 12px; font-size: 13px; font-family: inherit; color: var(--text);
+  padding: 7px 32px 7px 12px; font-size: 14px; font-family: inherit; color: var(--text);
   cursor: pointer; outline: none; transition: border-color 0.2s; min-width: 170px;
 }
 .stg-select:focus { border-color: var(--primary); }
@@ -115,13 +118,13 @@
 /* ── Time input ──────────────────────────────── */
 .stg-time-input {
   background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
-  padding: 6px 10px; font-size: 12px; font-family: var(--font-mono); color: var(--text);
+  padding: 6px 10px; font-size: 14px; font-family: var(--font-mono); color: var(--text);
   outline: none; width: 100px;
 }
 .stg-time-input:focus { border-color: var(--primary); }
 
 /* ── AI cards ────────────────────────────────── */
-.stg-ai-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 8px; }
+.stg-ai-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 8px; }
 .stg-ai-card {
   background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
   padding: 18px; transition: all 0.3s; position: relative;
@@ -134,7 +137,7 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 18px; font-weight: 700; flex-shrink: 0;
 }
-.stg-ai-name { font-family: var(--font-head); font-size: 12px; color: var(--text); }
+.stg-ai-name { font-family: var(--font-head); font-size: 14px; color: var(--text); }
 .stg-ai-provider { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
 .stg-ai-status {
   font-size: 11px; font-family: var(--font-mono); color: var(--text-dim);
@@ -205,7 +208,7 @@
   padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 .stg-shortcut-row:last-child { border-bottom: none; }
-.stg-shortcut-action { font-size: 13px; color: var(--text); }
+.stg-shortcut-action { font-size: 14px; color: var(--text); }
 .stg-shortcut-keys { display: flex; gap: 4px; }
 .stg-key {
   background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
@@ -220,7 +223,8 @@
   padding: 12px; cursor: pointer; transition: all 0.2s; text-align: center;
 }
 .stg-font-card:hover { border-color: var(--border2); }
-.stg-font-card.active { border-color: var(--primary); box-shadow: 0 0 12px rgba(0,230,210,0.15); }
+.stg-font-card.active { border-color: var(--primary); box-shadow: 0 0 12px rgba(0,230,210,0.15); background: rgba(0,230,210,0.06); }
+.stg-font-card.active .stg-font-name { color: var(--primary); }
 .stg-font-preview { font-size: 18px; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
 .stg-font-name { font-size: 10px; font-family: var(--font-mono); color: var(--text-dim); }
 
@@ -241,7 +245,7 @@
   font-size: 24px; width: 40px; height: 40px; display: flex; align-items: center;
   justify-content: center; background: var(--bg); border-radius: 8px; flex-shrink: 0;
 }
-.stg-tfa-method-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.stg-tfa-method-name { font-size: 14px; font-weight: 600; color: var(--text); }
 .stg-tfa-method-desc { font-size: 12px; color: var(--text-dim); margin-top: 3px; line-height: 1.5; }
 .stg-tfa-radio {
   width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 50%;
