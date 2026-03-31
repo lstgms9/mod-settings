@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "label": "Settings",
   "icon": "settings",
-  "description": "Settings module",
-  "content_types": [],
+  "description": "User preferences, AI accounts, 2FA, and data export",
+  "content_types": ["setting"],
   "routes": "routes.js"
 }
