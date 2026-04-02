@@ -4,6 +4,9 @@
   "label": "Settings",
   "icon": "settings",
   "description": "User preferences, AI accounts, 2FA, and data export",
-  "content_types": ["setting"],
-  "routes": "routes.js"
+  "content_types": [
+    "setting"
+  ],
+  "routes": "routes.js",
+  "facing": "platform"
 }
