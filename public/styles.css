@@ -287,6 +287,34 @@
 }
 .stg-tfa-verify-btn:hover { background: rgba(57,255,127,0.2); }
 
+/* ── Email addresses ─────────────────────────── */
+.stg-email-list { margin-bottom: 14px; }
+.stg-email-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.stg-email-row:last-child { border-bottom: none; }
+.stg-email-addr { font-size: 14px; font-family: var(--font-mono); color: var(--text); }
+.stg-email-default-tag {
+  font-size: 9px; font-family: var(--font-head); letter-spacing: 1px;
+  padding: 2px 6px; border-radius: 4px; margin-left: 8px;
+  background: rgba(0,230,210,0.1); color: var(--primary); border: 1px solid rgba(0,230,210,0.2);
+}
+.stg-email-actions { display: flex; gap: 12px; }
+.stg-email-action { font-size: 12px; color: var(--text-dim); cursor: pointer; transition: color 0.2s; }
+.stg-email-action:hover { color: var(--primary); }
+.stg-email-delete:hover { color: var(--red); }
+.stg-email-add-form { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.stg-email-local-input {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 7px 10px; font-size: 14px; font-family: var(--font-mono); color: var(--text);
+  outline: none; width: 120px; transition: border-color 0.2s;
+}
+.stg-email-local-input:focus { border-color: var(--primary); }
+.stg-email-at { color: var(--text-dim); font-family: var(--font-mono); font-size: 14px; }
+.stg-email-domain-select { min-width: 140px; }
+.stg-email-add-btn { width: auto; padding: 7px 16px; }
+
 /* ── Mobile ──────────────────────────────────── */
 @media (max-width: 768px) {
   #settings-app { flex-direction: column; }

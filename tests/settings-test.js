@@ -100,6 +100,11 @@ async function loginTestUser() {
   r.headers['content-type'] === 'application/zip' ? ok('Export returns zip') : fail('Export content-type', r.headers['content-type']);
   r.headers['content-disposition'] && r.headers['content-disposition'].includes('.zip') ? ok('Export filename') : fail('Export filename', r.headers['content-disposition']);
 
+  // Email addresses endpoint
+  r = await httpReq('GET', BASE + '/api/settings/email-addresses');
+  r.body.domains && r.body.emails ? ok('GET /email-addresses returns domains+emails') : fail('GET /email-addresses', JSON.stringify(r.body));
+  Array.isArray(r.body.domains) && Array.isArray(r.body.emails) ? ok('Email arrays are arrays') : fail('Email arrays', typeof r.body.domains);
+
   // ── 2FA tests (need real user) ────────────────────────────
   console.log('\n-- 2FA tests --');
   await createTestUser();
@@ -300,6 +305,18 @@ async function loginTestUser() {
       await page.waitForTimeout(500);
       var exportBtn = await page.$('#exportBtn');
       exportBtn ? ok('Export button present') : fail('Export button', 'not found');
+    }
+
+    // Navigate to Account and check email group
+    var dangerNav = await page.$('.stg-nav-item[data-section="danger"]');
+    if (dangerNav) {
+      await dangerNav.click();
+      await page.waitForTimeout(1000);
+      var emailGroup = await page.$('#emailGroup');
+      emailGroup ? ok('Email addresses group present') : fail('Email group', 'not found');
+      var emailContent = await page.$('#emailContent');
+      var emailHTML = emailContent ? await emailContent.innerHTML() : '';
+      emailHTML.length > 0 ? ok('Email content rendered') : fail('Email content', 'empty');
     }
 
     // CSS containment check — module root should NOT use position:fixed or inset:0

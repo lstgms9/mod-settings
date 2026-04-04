@@ -225,6 +225,19 @@ module.exports = function(router, ctx) {
     res.json({ ok: true });
   });
 
+  // ── Email addresses (reads from domain module's storage types) ──
+  router.get('/email-addresses', async (req, res) => {
+    if (!req.user) return res.error(401, 'Not logged in');
+    const studio = req.user.studio;
+    // get domains with email configured
+    const allDomains = await storage.list('domain_record');
+    const domains = allDomains.filter(d => d.userId === studio && d.emailConfigured);
+    // get email addresses
+    const allEmails = await storage.list('email_address');
+    const emails = allEmails.filter(a => a.owner === studio);
+    res.json({ domains, emails });
+  });
+
   // ── Server info ──────────────────────────────────────────────
   router.get('/server-info', async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');

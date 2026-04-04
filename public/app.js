@@ -417,6 +417,105 @@
     });
   }
 
+  // ── Email addresses ────────────────────────────────────────
+  var emailDomains = [];
+  var emailAddresses = [];
+
+  async function loadEmails() {
+    var container = document.getElementById('emailContent');
+    if (!container) return;
+    var data = await API.get('/email-addresses');
+    if (data.error) return;
+    emailDomains = data.domains || [];
+    emailAddresses = data.emails || [];
+    renderEmails();
+  }
+
+  function renderEmails() {
+    var container = document.getElementById('emailContent');
+    if (!container) return;
+    if (!emailDomains.length) {
+      container.innerHTML = '<div class="stg-info-box">Set up a custom domain with email first.</div>';
+      return;
+    }
+    var defaultEmail = prefs.defaultEmail || '';
+    var html = '';
+    // address list
+    if (emailAddresses.length) {
+      html += '<div class="stg-email-list">';
+      for (var i = 0; i < emailAddresses.length; i++) {
+        var em = emailAddresses[i];
+        var isDefault = em.fullAddress === defaultEmail;
+        html += '<div class="stg-email-row">' +
+          '<div class="stg-email-addr">' + esc(em.fullAddress) + (isDefault ? ' <span class="stg-email-default-tag">DEFAULT</span>' : '') + '</div>' +
+          '<div class="stg-email-actions">';
+        if (!isDefault) html += '<span class="stg-email-action" data-action="set-default" data-email="' + esc(em.fullAddress) + '">Set default</span>';
+        html += '<span class="stg-email-action stg-email-delete" data-action="delete" data-id="' + em.id + '" data-domain-id="' + em.domainRecordId + '">Delete</span>';
+        html += '</div></div>';
+      }
+      html += '</div>';
+    }
+    // add form
+    html += '<div class="stg-email-add-form">' +
+      '<input type="text" class="stg-email-local-input" id="emailLocalInput" placeholder="name">' +
+      '<span class="stg-email-at">@</span>' +
+      '<select class="stg-select stg-email-domain-select" id="emailDomainSelect">';
+    for (var j = 0; j < emailDomains.length; j++) {
+      html += '<option value="' + esc(emailDomains[j].id) + '">' + esc(emailDomains[j].domain) + '</option>';
+    }
+    html += '</select>' +
+      '<button class="stg-ai-btn stg-ai-connect stg-email-add-btn" id="addEmailBtn">Add</button>' +
+      '</div>';
+    container.innerHTML = html;
+  }
+
+  function initEmails() {
+    var container = document.getElementById('emailContent');
+    if (!container) return;
+    container.addEventListener('click', async function(e) {
+      var el = e.target.closest('[data-action]');
+      if (el) {
+        var action = el.dataset.action;
+        if (action === 'set-default') {
+          prefs.defaultEmail = el.dataset.email;
+          schedSave();
+          renderEmails();
+        } else if (action === 'delete') {
+          var ok = platform.ui ? await platform.ui.confirm('Delete this email address?') : confirm('Delete?');
+          if (!ok) return;
+          var basePath = platform.basePath || '';
+          var resp = await fetch(basePath + '/api/domain/domains/' + el.dataset.domainId + '/emails/' + el.dataset.id, {
+            method: 'DELETE', credentials: 'same-origin'
+          });
+          if (resp.ok) { toast('Email deleted'); loadEmails(); }
+          else { toast('Delete failed'); }
+        }
+        return;
+      }
+      if (!e.target.closest('#addEmailBtn')) return;
+      var localInput = document.getElementById('emailLocalInput');
+      var domainSelect = document.getElementById('emailDomainSelect');
+      if (!localInput || !domainSelect) return;
+      var local = localInput.value.trim().toLowerCase();
+      if (!local) { localInput.style.borderColor = 'var(--red)'; localInput.focus(); setTimeout(function() { localInput.style.borderColor = ''; }, 1500); return; }
+      var domainId = domainSelect.value;
+      var basePath = platform.basePath || '';
+      var resp = await fetch(basePath + '/api/domain/domains/' + domainId + '/emails', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: local })
+      });
+      var result = await resp.json();
+      if (result.id) {
+        toast('Email address added');
+        if (!prefs.defaultEmail) { prefs.defaultEmail = result.data.fullAddress; schedSave(); }
+        loadEmails();
+      } else {
+        toast(result.error || 'Failed to add');
+      }
+    });
+  }
+
   // ── Apply loaded prefs to UI ────────────────────────────────
   function applyPrefs() {
     // seg controls
@@ -497,6 +596,8 @@
     initExport();
     initCacheClear();
     loadServerInfo();
+    loadEmails();
+    initEmails();
     applyPrefs();
     applyVisual();
   };
