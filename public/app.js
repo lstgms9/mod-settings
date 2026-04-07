@@ -98,6 +98,7 @@
       document.querySelectorAll('#stgMain .stg-section').forEach(function(s) { s.classList.remove('active'); });
       var el = document.getElementById('sec-' + sec);
       if (el) el.classList.add('active');
+      if (sec === 'revenue') loadConnectStatus();
     });
   }
 
@@ -516,6 +517,126 @@
     });
   }
 
+  // ── Revenue / Stripe Connect ───────────────────────────────
+  var TIER_NAMES = { free: 'Free', lite: 'OK Lite', standard: 'OK Standard', pro: 'OK Pro' };
+  var TIER_PRICES = { free: '$0', lite: '$3/mo', standard: '$7/mo', pro: '$10/mo' };
+
+  async function loadConnectStatus() {
+    var el = document.getElementById('connectStatus');
+    if (!el) return;
+    var basePath = platform.basePath || '';
+    try {
+      var r = await fetch(basePath + '/api/connect/status');
+      var data = await r.json();
+      renderRevenue(data, el);
+    } catch(e) {
+      el.innerHTML = '<div class="stg-sublabel">Unable to load payment status.</div>';
+    }
+  }
+
+  function renderRevenue(data, el) {
+    var tier = data.tier || prefs.plan || 'free';
+    var tierName = TIER_NAMES[tier] || tier;
+    var rate = data.commissionRate || 0;
+    var ratePct = Math.round(rate * 100);
+
+    // Commission info
+    var commEl = document.getElementById('commissionInfo');
+    if (commEl) {
+      if (tier === 'free') commEl.textContent = 'Upgrade to accept payments';
+      else commEl.textContent = 'Your tier: ' + tierName + ' \u2014 ' + ratePct + '% platform fee';
+    }
+
+    if (tier === 'free') {
+      el.innerHTML = '<div class="stg-upgrade-prompt">' +
+        '<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;">Upgrade to accept payments</div>' +
+        '<div style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">Start with OK Lite (' + TIER_PRICES.lite + ') to accept payments from your customers with just a 5% platform fee.</div>' +
+        '<button class="stg-ai-btn stg-ai-connect" style="width:auto;padding:8px 20px;" onclick="platform.nav.goto(\'/bill-pay\')">Upgrade Plan</button>' +
+        '</div>';
+      return;
+    }
+
+    if (!data.status || data.status === 'none') {
+      el.innerHTML = '<div class="stg-row">' +
+        '<div><div class="stg-label">Payment processing</div><div class="stg-sublabel">Connect a Stripe account to accept payments from your customers.</div></div>' +
+        '<button class="stg-ai-btn stg-ai-connect" id="startConnectBtn" style="width:auto;padding:8px 20px;">Start accepting payments</button>' +
+        '</div>';
+      return;
+    }
+
+    var statusBadge = '';
+    if (data.status === 'active' && data.chargesEnabled) {
+      statusBadge = '<span class="stg-connect-badge active">Active</span>';
+    } else if (data.status === 'needs_info') {
+      statusBadge = '<span class="stg-connect-badge pending">Needs info</span>';
+    } else {
+      statusBadge = '<span class="stg-connect-badge pending">Pending</span>';
+    }
+
+    var html = '<div class="stg-row">' +
+      '<div><div class="stg-label">Payment processing</div><div class="stg-sublabel">Stripe Express account</div></div>' +
+      statusBadge +
+      '</div>';
+
+    if (data.chargesEnabled) {
+      html += '<div class="stg-row">' +
+        '<div><div class="stg-label">Commission rate</div><div class="stg-sublabel">' + tierName + ' tier</div></div>' +
+        '<div class="stg-connect-rate">' + ratePct + '%</div>' +
+        '</div>';
+      html += '<div class="stg-row">' +
+        '<div><div class="stg-label">Stripe Dashboard</div><div class="stg-sublabel">View your payouts, transactions, and settings</div></div>' +
+        '<button class="stg-ai-btn stg-ai-connect" id="openDashboardBtn" style="width:auto;padding:8px 20px;">Open Dashboard</button>' +
+        '</div>';
+    } else {
+      html += '<div class="stg-row">' +
+        '<div><div class="stg-label">Complete setup</div><div class="stg-sublabel">Finish Stripe onboarding to start accepting payments.</div></div>' +
+        '<button class="stg-ai-btn stg-ai-connect" id="refreshConnectBtn" style="width:auto;padding:8px 20px;">Continue Setup</button>' +
+        '</div>';
+    }
+
+    el.innerHTML = html;
+  }
+
+  async function startConnect() {
+    var basePath = platform.basePath || '';
+    try {
+      var r = await fetch(basePath + '/api/connect/create', { method: 'POST' });
+      var data = await r.json();
+      if (data.url) window.location.href = data.url;
+      else toast(data.error || 'Failed to start');
+    } catch(e) { toast('Connection error'); }
+  }
+
+  async function refreshConnect() {
+    var basePath = platform.basePath || '';
+    try {
+      var r = await fetch(basePath + '/api/connect/refresh', { method: 'POST' });
+      var data = await r.json();
+      if (data.url) window.location.href = data.url;
+      else toast(data.error || 'Failed');
+    } catch(e) { toast('Connection error'); }
+  }
+
+  async function openStripeDashboard() {
+    var basePath = platform.basePath || '';
+    try {
+      var r = await fetch(basePath + '/api/connect/dashboard');
+      var data = await r.json();
+      if (data.url) window.open(data.url, '_blank');
+      else toast(data.error || 'Failed');
+    } catch(e) { toast('Connection error'); }
+  }
+
+  function initRevenue() {
+    var container = document.getElementById('revenueContent');
+    if (!container) return;
+    container.addEventListener('click', function(e) {
+      if (e.target.closest('#startConnectBtn')) startConnect();
+      else if (e.target.closest('#refreshConnectBtn')) refreshConnect();
+      else if (e.target.closest('#openDashboardBtn')) openStripeDashboard();
+    });
+  }
+
   // ── Apply loaded prefs to UI ────────────────────────────────
   function applyPrefs() {
     // seg controls
@@ -593,6 +714,7 @@
     renderAICards();
     initAIGrid();
     init2FA();
+    initRevenue();
     initExport();
     initCacheClear();
     loadServerInfo();

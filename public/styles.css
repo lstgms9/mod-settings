@@ -315,6 +315,20 @@
 .stg-email-domain-select { min-width: 140px; }
 .stg-email-add-btn { width: auto; padding: 7px 16px; }
 
+/* ── Revenue / Connect ───────────────────────── */
+.stg-connect-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 10px;
+  font-size: 11px; font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.04em;
+}
+.stg-connect-badge.active { background: rgba(57,255,127,0.12); color: #39ff7f; border: 1px solid rgba(57,255,127,0.3); }
+.stg-connect-badge.pending { background: rgba(255,215,0,0.1); color: var(--yellow); border: 1px solid rgba(255,215,0,0.2); }
+.stg-connect-badge.inactive { background: var(--bg); color: var(--text-dim); border: 1px solid var(--border); }
+.stg-connect-rate { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--primary); }
+.stg-upgrade-prompt {
+  background: rgba(0,230,210,0.03); border: 1px solid rgba(0,230,210,0.12); border-radius: 8px;
+  padding: 18px 20px;
+}
+
 /* ── Mobile ──────────────────────────────────── */
 @media (max-width: 768px) {
   #settings-app { flex-direction: column; }

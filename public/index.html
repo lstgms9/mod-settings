@@ -3,6 +3,7 @@
     <div class="stg-sidebar-title">SETTINGS</div>
     <div class="stg-nav-item active" data-section="appearance"><span class="stg-nav-icon">&#127912;</span> Appearance</div>
     <div class="stg-nav-item" data-section="ai"><span class="stg-nav-icon">&#129302;</span> AI Accounts</div>
+    <div class="stg-nav-item" data-section="revenue"><span class="stg-nav-icon">&#128176;</span> Revenue</div>
     <div class="stg-nav-item" data-section="notifications"><span class="stg-nav-icon">&#128276;</span> Notifications</div>
     <div class="stg-nav-item" data-section="region"><span class="stg-nav-icon">&#127757;</span> Language &amp; Region</div>
     <div class="stg-nav-item" data-section="privacy"><span class="stg-nav-icon">&#128274;</span> Privacy &amp; Security</div>
@@ -125,6 +126,37 @@
         <div class="stg-ai-grid" id="aiGrid"></div>
         <div class="stg-info-box">
           <strong>How it works:</strong> Paste your API key for each provider. Keys are stored on your instance. Each module that uses AI pulls from your default provider, or you can override per-module.
+        </div>
+      </div>
+    </div>
+
+    <!-- REVENUE -->
+    <div class="stg-section" id="sec-revenue">
+      <div class="stg-section-header">Revenue</div>
+      <div class="stg-section-desc">Accept payments and earn from your site.</div>
+
+      <div id="revenueContent">
+        <div class="stg-group">
+          <div class="stg-group-label">ACCEPT PAYMENTS</div>
+          <div id="connectStatus"></div>
+        </div>
+
+        <div class="stg-group">
+          <div class="stg-group-label">COMMISSION INFO</div>
+          <div class="stg-row">
+            <div><div class="stg-label">Platform fee</div><div class="stg-sublabel" id="commissionInfo">--</div></div>
+          </div>
+        </div>
+
+        <div class="stg-group">
+          <div class="stg-group-label">EARN FROM ADS</div>
+          <div class="stg-row">
+            <div><div class="stg-label">Enable ad revenue</div><div class="stg-sublabel">Earn from ads displayed on your site</div></div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="stg-toggle" data-key="adRevenue" style="opacity:0.4;pointer-events:none;"></div>
+              <span class="stg-connect-badge pending">Coming soon</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
