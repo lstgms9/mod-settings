@@ -9,6 +9,7 @@
     <div class="stg-nav-item" data-section="privacy"><span class="stg-nav-icon">&#128274;</span> Privacy &amp; Security</div>
     <div class="stg-nav-item" data-section="storage"><span class="stg-nav-icon">&#128190;</span> Data &amp; Storage</div>
     <div class="stg-nav-item" data-section="shortcuts"><span class="stg-nav-icon">&#9000;</span> Shortcuts</div>
+    <div class="stg-nav-item" data-section="team" id="stgTeamNav" style="display:none"><span class="stg-nav-icon">&#128101;</span> Team</div>
     <div class="stg-nav-item" data-section="danger"><span class="stg-nav-icon">&#9888;</span> Account</div>
   </nav>
 
@@ -408,6 +409,25 @@
         <div class="stg-shortcut-row"><span class="stg-shortcut-action">Search everything</span><div class="stg-shortcut-keys"><span class="stg-key">Ctrl</span><span class="stg-key">F</span></div></div>
         <div class="stg-shortcut-row"><span class="stg-shortcut-action">Ask AI</span><div class="stg-shortcut-keys"><span class="stg-key">Ctrl</span><span class="stg-key">J</span></div></div>
         <div class="stg-shortcut-row"><span class="stg-shortcut-action">Quick switch Thing</span><div class="stg-shortcut-keys"><span class="stg-key">Ctrl</span><span class="stg-key">T</span></div></div>
+      </div>
+    </div>
+
+    <!-- TEAM -->
+    <div class="stg-section" id="sec-team">
+      <div class="stg-section-header">Team</div>
+      <div class="stg-section-desc">Manage team members and their access to modules.</div>
+
+      <div class="stg-group">
+        <div class="stg-group-label">MEMBERS</div>
+        <div id="teamMembers"></div>
+        <div style="margin-top:12px;">
+          <button class="stg-ai-btn stg-ai-connect" id="inviteBtn" style="width:auto;padding:8px 20px;">Invite Member</button>
+        </div>
+      </div>
+
+      <div class="stg-group">
+        <div class="stg-group-label">PENDING INVITES</div>
+        <div id="teamInvites"><div class="stg-sublabel">No pending invites</div></div>
       </div>
     </div>
 
