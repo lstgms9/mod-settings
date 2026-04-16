@@ -239,7 +239,7 @@ async function loginTestUser() {
 
     // Check sections exist
     var sections = await page.$$('.stg-section');
-    sections.length === 9 ? ok('All 9 sections present') : fail('Section count', sections.length);
+    sections.length === 10 ? ok('All 10 sections present') : fail('Section count', sections.length);
 
     // Click AI nav item
     var aiNav = await page.$('.stg-nav-item[data-section="ai"]');

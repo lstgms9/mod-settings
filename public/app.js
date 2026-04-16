@@ -694,6 +694,267 @@
     }
   }
 
+  // ── Team Management ────────────────────────────────────────
+  var teamMembers = [];
+  var teamInvites = [];
+  var teamEmails = [];
+  var _userRole = 'owner';
+
+  async function loadTeam() {
+    try {
+      var data = await API.get('/team');
+      if (data.error) return;
+      teamMembers = data;
+      renderTeamMembers();
+    } catch {}
+    try {
+      var inv = await API.get('/team/invites');
+      if (!inv.error) { teamInvites = inv; renderTeamInvites(); }
+    } catch {}
+    try {
+      var emails = await API.get('/team/emails');
+      if (!emails.error) teamEmails = emails;
+    } catch {}
+  }
+
+  function roleBadgeClass(role) {
+    if (role === 'owner') return 'stg-role-owner';
+    if (role === 'admin') return 'stg-role-admin';
+    return 'stg-role-member';
+  }
+
+  function renderTeamMembers() {
+    var el = document.getElementById('teamMembers');
+    if (!el) return;
+    if (!teamMembers.length) { el.innerHTML = '<div class="stg-sublabel">No team members yet</div>'; return; }
+    var html = '';
+    for (var i = 0; i < teamMembers.length; i++) {
+      var m = teamMembers[i];
+      if (!m.role) m.role = 'member';
+      html += '<div class="stg-team-row" data-userid="' + m.id + '">' +
+        '<div class="stg-team-avatar">' + esc(m.avatar || '??') + '</div>' +
+        '<div class="stg-team-info">' +
+          '<div class="stg-team-name">' + esc(m.displayName || m.email) + '</div>' +
+          '<div class="stg-team-email">' + esc(m.email) + '</div>' +
+        '</div>' +
+        '<span class="stg-role-badge ' + roleBadgeClass(m.role) + '">' + m.role + '</span>';
+      if (m.role !== 'owner' && _userRole === 'owner') {
+        html += '<button class="stg-team-action" data-action="edit-access" data-userid="' + m.id + '">Edit</button>';
+        html += '<button class="stg-team-action stg-team-remove" data-action="remove" data-userid="' + m.id + '">Remove</button>';
+      } else if (m.role !== 'owner' && _userRole === 'admin') {
+        html += '<button class="stg-team-action" data-action="edit-access" data-userid="' + m.id + '">Edit</button>';
+        html += '<button class="stg-team-action stg-team-remove" data-action="remove" data-userid="' + m.id + '">Remove</button>';
+      }
+      html += '</div>';
+      // Inline edit panel (hidden by default)
+      html += '<div class="stg-team-edit-panel" id="edit-' + m.id + '" style="display:none;">';
+      if (_userRole === 'owner' && m.role !== 'owner') {
+        html += '<div class="stg-team-edit-section"><span class="stg-label">Role:</span> ';
+        html += '<button class="stg-seg-btn' + (m.role === 'admin' ? ' active' : '') + '" data-setrole="admin" data-userid="' + m.id + '">Admin</button>';
+        html += '<button class="stg-seg-btn' + (m.role === 'member' ? ' active' : '') + '" data-setrole="member" data-userid="' + m.id + '">Member</button>';
+        html += '</div>';
+      }
+      if (m.role !== 'owner') {
+        html += '<div class="stg-team-edit-section"><span class="stg-label">Module access:</span>';
+        html += '<div class="stg-team-mod-grid" id="modgrid-' + m.id + '"></div>';
+        html += '</div>';
+      }
+      html += '<div class="stg-team-edit-section"><span class="stg-label">Email addresses:</span>';
+      html += '<div class="stg-team-mod-grid" id="emailgrid-' + m.id + '"></div>';
+      html += '</div>';
+      html += '</div>';
+    }
+    el.innerHTML = html;
+  }
+
+  function renderTeamInvites() {
+    var el = document.getElementById('teamInvites');
+    if (!el) return;
+    if (!teamInvites.length) { el.innerHTML = '<div class="stg-sublabel">No pending invites</div>'; return; }
+    var html = '';
+    for (var i = 0; i < teamInvites.length; i++) {
+      var inv = teamInvites[i];
+      html += '<div class="stg-team-row">' +
+        '<div class="stg-team-avatar" style="opacity:0.5">' + esc((inv.displayName || inv.email).slice(0,2).toUpperCase()) + '</div>' +
+        '<div class="stg-team-info">' +
+          '<div class="stg-team-name">' + esc(inv.displayName || inv.email) + '</div>' +
+          '<div class="stg-team-email">' + esc(inv.email) + ' <span class="stg-connect-badge pending">Pending</span></div>' +
+        '</div>' +
+        '<button class="stg-team-action stg-team-remove" data-action="cancel-invite" data-inviteid="' + inv.id + '">Cancel</button>' +
+        '</div>';
+    }
+    el.innerHTML = html;
+  }
+
+  // System infra mods — not toggleable, every account has them
+  var INFRA_MODS = ['bill-pay', 'comms', 'settings', 'setup', 'signup', 'mods'];
+
+  function getDefaultVis(role) {
+    // admin = all on, member = build on + system off
+    var modules = platform.index.getModules();
+    var vis = {};
+    for (var i = 0; i < modules.length; i++) {
+      var mod = modules[i];
+      var group = mod.group || 'system';
+      if (group === 'public' || INFRA_MODS.indexOf(mod.module) >= 0) continue;
+      vis[mod.module] = (role === 'admin') ? true : (group === 'build');
+    }
+    return vis;
+  }
+
+  function buildModGrid(userId) {
+    var gridEl = document.getElementById('modgrid-' + userId);
+    if (!gridEl) return;
+    var member = teamMembers.find(function(m) { return m.id === userId; });
+    if (!member) return;
+    var modules = platform.index.getModules();
+    var vis = member.modVisibility || {};
+    var defaults = getDefaultVis(member.role);
+    var html = '';
+    for (var i = 0; i < modules.length; i++) {
+      var mod = modules[i];
+      var group = mod.group || 'system';
+      if (group === 'public') continue;
+      if (INFRA_MODS.indexOf(mod.module) >= 0) continue;
+      var defaultOn = defaults[mod.module] !== undefined ? defaults[mod.module] : (group === 'build');
+      var isOn = vis[mod.module] !== undefined ? vis[mod.module] : defaultOn;
+      html += '<label class="stg-team-mod-check">' +
+        '<input type="checkbox" data-mod="' + mod.module + '"' + (isOn ? ' checked' : '') + '>' +
+        '<span>' + esc(mod.label || mod.module) + '</span>' +
+        '<span class="stg-team-mod-group">' + group + '</span>' +
+        '</label>';
+    }
+    gridEl.innerHTML = html;
+    gridEl.addEventListener('change', async function(e) {
+      var cb = e.target.closest('input[type="checkbox"]');
+      if (!cb) return;
+      var modVis = {};
+      gridEl.querySelectorAll('input[type="checkbox"]').forEach(function(inp) {
+        modVis[inp.dataset.mod] = inp.checked;
+      });
+      await API.put('/team/' + userId + '/visibility', { modVisibility: modVis });
+      member.modVisibility = modVis;
+      toast('Access updated');
+    });
+  }
+
+  function buildEmailGrid(userId) {
+    var gridEl = document.getElementById('emailgrid-' + userId);
+    if (!gridEl) return;
+    if (!teamEmails.length) {
+      gridEl.innerHTML = '<span class="stg-sublabel">No domain emails — create them in Domain module</span>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < teamEmails.length; i++) {
+      var em = teamEmails[i];
+      var assigned = (em.assignedTo || []).indexOf(userId) >= 0;
+      html += '<label class="stg-team-mod-check">' +
+        '<input type="checkbox" data-emailid="' + em.id + '"' + (assigned ? ' checked' : '') + '>' +
+        '<span>' + esc(em.address) + '</span>' +
+        '</label>';
+    }
+    gridEl.innerHTML = html;
+    gridEl.addEventListener('change', async function(e) {
+      var cb = e.target.closest('input[type="checkbox"]');
+      if (!cb) return;
+      var ids = [];
+      gridEl.querySelectorAll('input[type="checkbox"]:checked').forEach(function(inp) {
+        ids.push(inp.dataset.emailid);
+      });
+      await API.put('/team/' + userId + '/emails', { emailIds: ids });
+      // Update local state
+      for (var j = 0; j < teamEmails.length; j++) {
+        var arr = teamEmails[j].assignedTo || [];
+        if (ids.indexOf(teamEmails[j].id) >= 0) {
+          if (arr.indexOf(userId) < 0) arr.push(userId);
+        } else {
+          arr = arr.filter(function(x) { return x !== userId; });
+        }
+        teamEmails[j].assignedTo = arr;
+      }
+      toast('Emails updated');
+    });
+  }
+
+  function initTeam() {
+    var container = document.getElementById('sec-team');
+    if (!container) return;
+
+    // Invite button
+    var invBtn = document.getElementById('inviteBtn');
+    if (invBtn) {
+      invBtn.addEventListener('click', async function() {
+        var email = prompt('Email address to invite:');
+        if (!email || !email.includes('@')) return;
+        var name = prompt('Display name (optional):') || '';
+        var r = await API.post('/team/invite', { email: email, displayName: name });
+        if (r.ok) { toast('Invite sent'); loadTeam(); }
+        else toast(r.error || 'Failed to invite');
+      });
+    }
+
+    // Delegated click handler for team actions
+    container.addEventListener('click', async function(e) {
+      var btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      var action = btn.dataset.action;
+      if (action === 'edit-access') {
+        var userId = btn.dataset.userid;
+        var panel = document.getElementById('edit-' + userId);
+        if (panel) {
+          var visible = panel.style.display !== 'none';
+          panel.style.display = visible ? 'none' : 'block';
+          if (!visible) { buildModGrid(userId); buildEmailGrid(userId); }
+        }
+      } else if (action === 'remove') {
+        var ok = platform.ui ? await platform.ui.confirm('Remove this team member?') : confirm('Remove?');
+        if (!ok) return;
+        var r = await API.delete('/team/' + btn.dataset.userid);
+        if (r.ok) { toast('Member removed'); loadTeam(); }
+        else toast(r.error || 'Failed');
+      } else if (action === 'cancel-invite') {
+        var ok2 = platform.ui ? await platform.ui.confirm('Cancel this invite?') : confirm('Cancel?');
+        if (!ok2) return;
+        var r2 = await API.delete('/team/invites/' + btn.dataset.inviteid);
+        if (r2.ok) { toast('Invite cancelled'); loadTeam(); }
+        else toast(r2.error || 'Failed');
+      }
+    });
+
+    // Role change buttons — also set default visibility for the new role
+    container.addEventListener('click', async function(e) {
+      var btn = e.target.closest('[data-setrole]');
+      if (!btn) return;
+      var role = btn.dataset.setrole;
+      var userId = btn.dataset.userid;
+      var r = await API.put('/team/' + userId + '/role', { role: role });
+      if (!r.ok) { toast(r.error || 'Failed'); return; }
+      // Auto-set default mod visibility for the new role
+      var defaultVis = getDefaultVis(role);
+      await API.put('/team/' + userId + '/visibility', { modVisibility: defaultVis });
+      // Update local state without re-rendering (keeps edit panel open)
+      var member = teamMembers.find(function(m) { return m.id === userId; });
+      if (member) { member.role = role; member.modVisibility = defaultVis; }
+      // Update seg button active states
+      var panel = document.getElementById('edit-' + userId);
+      if (panel) {
+        panel.querySelectorAll('[data-setrole]').forEach(function(b) {
+          b.classList.toggle('active', b.dataset.setrole === role);
+        });
+      }
+      // Update role badge on the team row
+      var row = container.querySelector('.stg-team-row[data-userid="' + userId + '"]');
+      if (row) {
+        var badge = row.querySelector('.stg-role-badge');
+        if (badge) { badge.className = 'stg-role-badge ' + roleBadgeClass(role); badge.textContent = role; }
+      }
+      // Refresh mod grid to reflect new role defaults
+      buildModGrid(userId);
+      toast('Role updated');
+    });
+  }
+
   // ── Init ────────────────────────────────────────────────────
   window.platform.module.init = async function() {
     var data = await API.get('/prefs');
@@ -703,6 +964,16 @@
       delete data.aiKeys;
       prefs = data;
     }
+
+    // Check role for team tab visibility
+    try {
+      var session = await platform.user.current();
+      if (session && session.role) _userRole = session.role;
+      if (_userRole === 'owner' || _userRole === 'admin') {
+        var teamNav = document.getElementById('stgTeamNav');
+        if (teamNav) teamNav.style.display = '';
+      }
+    } catch {}
 
     initNav();
     initSegs();
@@ -720,6 +991,8 @@
     loadServerInfo();
     loadEmails();
     initEmails();
+    initTeam();
+    if (_userRole === 'owner' || _userRole === 'admin') loadTeam();
     applyPrefs();
     applyVisual();
   };

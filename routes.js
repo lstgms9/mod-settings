@@ -343,4 +343,161 @@ module.exports = function(router, ctx) {
     }
     archive.finalize();
   });
+
+  // ── Team management routes ──────────────────────────────────
+  function requireAdmin(req, res) {
+    if (!req.user) { res.error(401, 'Not logged in'); return false; }
+    const role = req.user.role || 'owner';
+    if (role !== 'owner' && role !== 'admin') { res.error(403, 'Admin access required'); return false; }
+    return true;
+  }
+
+  // GET /team — list team members
+  router.get('/team', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const all = await storage.list('team_member', { studio: req.user.studio });
+    const members = [];
+    for (const m of all) {
+      const full = await storage.get('team_member', m.id);
+      if (full) members.push({ id: full.id, email: full.data.email, displayName: full.data.displayName, avatar: full.data.avatar, role: full.data.role || 'member', modVisibility: full.data.modVisibility || {}, lastLoginAt: full.data.lastLoginAt, createdAt: full.data.createdAt });
+    }
+    res.json(members);
+  });
+
+  // POST /team/invite — create invitation
+  router.post('/team/invite', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const { email, displayName } = req.body || {};
+    if (!email) return res.error(400, 'Missing email');
+    // Check if already a member
+    const existing = await storage.list('team_member', { email });
+    if (existing.length) return res.error(409, 'User already on team');
+    // Check for existing pending invite
+    const pendingInvites = await storage.list('team_invite', { email, status: 'pending' });
+    if (pendingInvites.length) return res.error(409, 'Invite already pending for this email');
+    const token = crypto.randomBytes(32).toString('hex');
+    const now = new Date();
+    const invite = await storage.create('team_invite', {
+      studio: req.user.studio,
+      email,
+      displayName: displayName || email.split('@')[0],
+      token,
+      invitedBy: req.user.userId || null,
+      status: 'pending',
+      createdAt: now.toISOString(),
+      expiresAt: new Date(now.getTime() + 7 * 86400000).toISOString(),
+    }, { module: 'settings', user: req.user.studio });
+    // Send invite email if SES available
+    if (process.env.AWS_ACCESS_KEY_ID) {
+      const publicUrl = req.headers.origin || req.headers.referer || '';
+      const link = `${publicUrl}?invite=${token}`;
+      try {
+        const ses = require(path.join(__dirname, '../../admin/platform-shell/lib/ses'));
+        await ses.sendEmail({
+          to: email,
+          subject: `You've been invited to join ${req.user.studio} on OkDun`,
+          html: `<p>Hi ${displayName || email},</p><p>You've been invited to join <strong>${req.user.studio}</strong>.</p><p><a href="${link}">Accept invitation</a></p><p>This link expires in 7 days.</p>`,
+        });
+      } catch {}
+    }
+    res.json({ ok: true, id: invite.id });
+  });
+
+  // PUT /team/:userId/role — change role
+  router.put('/team/:userId/role', async (req, res) => {
+    if (!req.user) return res.error(401, 'Not logged in');
+    if (req.user.role !== 'owner') return res.error(403, 'Only owner can change roles');
+    const { role } = req.body || {};
+    if (!role || !['admin', 'member'].includes(role)) return res.error(400, 'Invalid role');
+    const tm = await storage.get('team_member', req.params.userId);
+    if (!tm || tm.data.studio !== req.user.studio) return res.error(404, 'Member not found');
+    if (tm.data.role === 'owner') return res.error(403, 'Cannot change owner role');
+    await storage.update('team_member', tm.id, { role });
+    res.json({ ok: true });
+  });
+
+  // PUT /team/:userId/visibility — update mod visibility
+  router.put('/team/:userId/visibility', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const { modVisibility } = req.body || {};
+    if (!modVisibility || typeof modVisibility !== 'object') return res.error(400, 'Invalid body');
+    const tm = await storage.get('team_member', req.params.userId);
+    if (!tm || tm.data.studio !== req.user.studio) return res.error(404, 'Member not found');
+    if (tm.data.role === 'owner') return res.error(403, 'Cannot restrict owner');
+    await storage.update('team_member', tm.id, { modVisibility });
+    res.json({ ok: true });
+  });
+
+  // DELETE /team/:userId — remove member
+  router.delete('/team/:userId', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const tm = await storage.get('team_member', req.params.userId);
+    if (!tm || tm.data.studio !== req.user.studio) return res.error(404, 'Member not found');
+    if (tm.data.role === 'owner') return res.error(403, 'Cannot remove owner');
+    await storage.delete('team_member', tm.id);
+    res.json({ ok: true });
+  });
+
+  // GET /team/invites — list pending invites
+  router.get('/team/invites', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const all = await storage.list('team_invite', { studio: req.user.studio });
+    const invites = [];
+    for (const inv of all) {
+      const full = await storage.get('team_invite', inv.id);
+      if (full && full.data.status === 'pending') {
+        invites.push({ id: full.id, email: full.data.email, displayName: full.data.displayName, createdAt: full.data.createdAt, expiresAt: full.data.expiresAt });
+      }
+    }
+    res.json(invites);
+  });
+
+  // DELETE /team/invites/:id — cancel invite
+  router.delete('/team/invites/:id', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const inv = await storage.get('team_invite', req.params.id);
+    if (!inv || inv.data.studio !== req.user.studio) return res.error(404, 'Invite not found');
+    await storage.delete('team_invite', inv.id);
+    res.json({ ok: true });
+  });
+
+  // GET /team/emails — list all domain email addresses (for assignment UI)
+  router.get('/team/emails', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const all = await storage.list('email_address');
+    const emails = all.map(a => ({
+      id: a.id,
+      address: a.address || (a.data && a.data.address) || '',
+      domain: a.domain || (a.data && a.data.domain) || '',
+      assignedTo: a.assignedTo || (a.data && a.data.assignedTo) || [],
+    }));
+    res.json(emails);
+  });
+
+  // PUT /team/:userId/emails — assign email addresses to a team member
+  router.put('/team/:userId/emails', async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const { emailIds } = req.body || {};
+    if (!Array.isArray(emailIds)) return res.error(400, 'emailIds array required');
+    const tm = await storage.get('team_member', req.params.userId);
+    if (!tm || tm.data.studio !== req.user.studio) return res.error(404, 'Member not found');
+
+    // Get all email_address records
+    const all = await storage.list('email_address');
+    for (const addr of all) {
+      const full = await storage.get('email_address', addr.id);
+      if (!full) continue;
+      let assigned = full.data.assignedTo || [];
+      const shouldAssign = emailIds.includes(addr.id);
+      const isAssigned = assigned.includes(req.params.userId);
+      if (shouldAssign && !isAssigned) {
+        assigned = assigned.concat(req.params.userId);
+        await storage.update('email_address', addr.id, { assignedTo: assigned });
+      } else if (!shouldAssign && isAssigned) {
+        assigned = assigned.filter(id => id !== req.params.userId);
+        await storage.update('email_address', addr.id, { assignedTo: assigned });
+      }
+    }
+    res.json({ ok: true });
+  });
 };
