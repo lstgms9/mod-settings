@@ -3,6 +3,7 @@
     <div class="stg-sidebar-title">SETTINGS</div>
     <div class="stg-nav-item active" data-section="appearance"><span class="stg-nav-icon">&#127912;</span> Appearance</div>
     <div class="stg-nav-item" data-section="ai"><span class="stg-nav-icon">&#129302;</span> AI Accounts</div>
+    <div class="stg-nav-item" data-section="autopilot"><span class="stg-nav-icon">&#128640;</span> AI Autopilot</div>
     <div class="stg-nav-item" data-section="revenue"><span class="stg-nav-icon">&#128176;</span> Revenue</div>
     <div class="stg-nav-item" data-section="notifications"><span class="stg-nav-icon">&#128276;</span> Notifications</div>
     <div class="stg-nav-item" data-section="region"><span class="stg-nav-icon">&#127757;</span> Language &amp; Region</div>
@@ -127,6 +128,44 @@
         <div class="stg-ai-grid" id="aiGrid"></div>
         <div class="stg-info-box">
           <strong>How it works:</strong> Paste your API key for each provider. Keys are stored on your instance. Each module that uses AI pulls from your default provider, or you can override per-module.
+        </div>
+      </div>
+    </div>
+
+    <!-- AI AUTOPILOT -->
+    <div class="stg-section" id="sec-autopilot">
+      <div class="stg-section-header">AI Autopilot</div>
+      <div class="stg-section-desc">Let the AI run parts of your business — emails, replies, and daily plan tasks. Starts with Chat; other modules hook in over time.</div>
+
+      <div class="stg-group">
+        <div class="stg-group-label">GLOBAL</div>
+        <div class="stg-row">
+          <div><div class="stg-label">Autopilot</div><div class="stg-sublabel">Master switch. When off, AI does nothing automatically.</div></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="stg-toggle" data-key="autopilotEnabled"></div><span>OFF</span>
+          </div>
+        </div>
+        <div class="stg-row">
+          <div><div class="stg-label">Mode</div><div class="stg-sublabel">Stub = canned replies for testing. Live = calls the AI provider.</div></div>
+          <div class="stg-select-wrap">
+            <select class="stg-select" id="autopilotMode" data-key="autopilotMode">
+              <option value="stub">Stub (test)</option>
+              <option value="live">Live (real AI)</option>
+            </select>
+          </div>
+        </div>
+        <div class="stg-row">
+          <div><div class="stg-label">Model</div><div class="stg-sublabel">Only used in Live mode.</div></div>
+          <div class="stg-select-wrap">
+            <select class="stg-select" id="autopilotModel" data-key="autopilotModel">
+              <option value="claude-haiku-4-5">Claude Haiku 4.5 (cheapest)</option>
+              <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6 (balanced)</option>
+              <option value="claude-opus-4-7">Claude Opus 4.7 (smartest)</option>
+            </select>
+          </div>
+        </div>
+        <div class="stg-info-box">
+          <strong>What it does today:</strong> Processes your Plan tasks each day — drafts outreach emails for tasks like "Email 5 journalists". When replies arrive, AI drafts responses; meeting requests become Plan tasks for you to confirm.
         </div>
       </div>
     </div>
@@ -448,9 +487,29 @@
         </div>
       </div>
 
+      <div class="stg-group" id="myEmailsGroup" style="display:none;">
+        <div class="stg-group-label">MY EMAIL ADDRESSES</div>
+        <div id="myEmailsContent"><div class="stg-sublabel">No email addresses assigned to you yet.</div></div>
+      </div>
+
       <div class="stg-group" id="emailGroup">
         <div class="stg-group-label">EMAIL ADDRESSES</div>
         <div id="emailContent"></div>
+      </div>
+
+      <div class="stg-group">
+        <div class="stg-group-label">PASSWORD</div>
+        <div class="stg-row" style="flex-wrap:wrap;gap:8px;">
+          <div style="flex:1;min-width:200px;">
+            <div class="stg-label">Change password</div>
+            <div class="stg-sublabel">Update your login password</div>
+          </div>
+          <div id="passwordChangeForm" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="password" class="stg-input" id="currentPwInput" placeholder="Current password" style="width:160px;">
+            <input type="password" class="stg-input" id="newPwInput" placeholder="New password (8+ chars)" style="width:180px;">
+            <button class="stg-ai-btn stg-ai-connect" id="changePwBtn" style="width:auto;padding:8px 16px;">Update</button>
+          </div>
+        </div>
       </div>
 
       <div class="stg-group stg-danger-group">
