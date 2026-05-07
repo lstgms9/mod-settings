@@ -39,12 +39,23 @@
   }
 
   // ── Apply visual changes to page ─────────────────────────────
+  // Each theme drives BOTH module-content vars (--bg/--bg2/--bg3/
+  // --text/--border) AND the shell vars (--pub-bg/--pub-bg2/--pub-
+  // text/--pub-text-mid/--pub-text-dim/--pub-border). publicShellHTML
+  // uses --pub-*; without these the shell stayed locked to its
+  // hardcoded defaults and you got split rendering — dark header
+  // floating over a light theme card (or vice versa).
   var THEMES = {
-    dark:       { '--bg':'#0b0b14','--bg2':'#12121f','--bg3':'#1a1a2e','--text':'#e4e4f0','--text-mid':'#a0aab0','--text-dim':'#5a6a70','--border':'#252540','--border2':'#353555' },
-    grey:       { '--bg':'#1a1a24','--bg2':'#22222f','--bg3':'#2a2a3e','--text':'#e4e4f0','--text-mid':'#a0aab0','--text-dim':'#6a7a80','--border':'#353550','--border2':'#454565' },
-    'light-grey':{ '--bg':'#2e2e3e','--bg2':'#363648','--bg3':'#404058','--text':'#eeeef4','--text-mid':'#b0bac0','--text-dim':'#808a90','--border':'#505068','--border2':'#606078' },
-    light:      { '--bg':'#e8e8f0','--bg2':'#dcdce8','--bg3':'#d0d0e0','--text':'#1a1a2e','--text-mid':'#4a4a60','--text-dim':'#7a7a90','--border':'#c0c0d4','--border2':'#b0b0c8' },
-    white:      { '--bg':'#ffffff','--bg2':'#f4f4f8','--bg3':'#eaeaf0','--text':'#111118','--text-mid':'#444450','--text-dim':'#888898','--border':'#d8d8e4','--border2':'#c8c8d8' },
+    dark:        { '--bg':'#0b0b14','--bg2':'#12121f','--bg3':'#1a1a2e','--text':'#e4e4f0','--text-mid':'#a0aab0','--text-dim':'#5a6a70','--border':'#252540','--border2':'#353555',
+                   '--pub-bg':'#0b0b14','--pub-bg2':'#181828','--pub-text':'#e4e4f0','--pub-text-mid':'#a8a8c0','--pub-text-dim':'#7a7a9a','--pub-border':'#252540' },
+    grey:        { '--bg':'#1a1a24','--bg2':'#22222f','--bg3':'#2a2a3e','--text':'#e4e4f0','--text-mid':'#a0aab0','--text-dim':'#6a7a80','--border':'#353550','--border2':'#454565',
+                   '--pub-bg':'#1a1a24','--pub-bg2':'#22222f','--pub-text':'#e4e4f0','--pub-text-mid':'#a8b0c0','--pub-text-dim':'#7a849a','--pub-border':'#353550' },
+    'light-grey':{ '--bg':'#2e2e3e','--bg2':'#363648','--bg3':'#404058','--text':'#eeeef4','--text-mid':'#b0bac0','--text-dim':'#808a90','--border':'#505068','--border2':'#606078',
+                   '--pub-bg':'#2e2e3e','--pub-bg2':'#363648','--pub-text':'#eeeef4','--pub-text-mid':'#b8c0d0','--pub-text-dim':'#909aa8','--pub-border':'#505068' },
+    light:       { '--bg':'#e8e8f0','--bg2':'#dcdce8','--bg3':'#d0d0e0','--text':'#1a1a2e','--text-mid':'#4a4a60','--text-dim':'#7a7a90','--border':'#c0c0d4','--border2':'#b0b0c8',
+                   '--pub-bg':'#f4f4f8','--pub-bg2':'#e8e8f0','--pub-text':'#1a1a2e','--pub-text-mid':'#555570','--pub-text-dim':'#8e8ea0','--pub-border':'#c0c0d4' },
+    white:       { '--bg':'#ffffff','--bg2':'#f4f4f8','--bg3':'#eaeaf0','--text':'#111118','--text-mid':'#444450','--text-dim':'#888898','--border':'#d8d8e4','--border2':'#c8c8d8',
+                   '--pub-bg':'#ffffff','--pub-bg2':'#f8f9fa','--pub-text':'#111118','--pub-text-mid':'#444450','--pub-text-dim':'#888898','--pub-border':'#e8e8f0' },
   };
   var ACCENTS = {
     cyan: '#00e6d2', pink: '#ff3997', green: '#39ff7f', yellow: '#ffd700', orange: '#ff6b35'
@@ -514,6 +525,55 @@
       } else {
         toast(result.error || 'Failed to add');
       }
+    });
+  }
+
+  // ── My Email Addresses (member self-service) ──────────────
+  async function loadMyEmails() {
+    var container = document.getElementById('myEmailsContent');
+    if (!container) return;
+    var basePath = platform.basePath || '';
+    try {
+      var r = await fetch(basePath + '/api/mail/my-addresses', { credentials: 'same-origin' });
+      var addrs = await r.json();
+      if (!addrs.length) {
+        container.innerHTML = '<div class="stg-sublabel">No email addresses assigned to you yet.</div>';
+        return;
+      }
+      var html = '<div class="stg-email-list">';
+      for (var i = 0; i < addrs.length; i++) {
+        html += '<div class="stg-email-row"><div class="stg-email-addr">' + esc(addrs[i].address) + '</div></div>';
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    } catch(e) {
+      container.innerHTML = '<div class="stg-sublabel">Unable to load email addresses.</div>';
+    }
+  }
+
+  // ── Password Change ──────────────────────────────────────
+  function initPasswordChange() {
+    var btn = document.getElementById('changePwBtn');
+    if (!btn) return;
+    btn.addEventListener('click', async function() {
+      var cur = document.getElementById('currentPwInput');
+      var nw = document.getElementById('newPwInput');
+      if (!cur || !nw) return;
+      var currentPw = cur.value.trim();
+      var newPw = nw.value.trim();
+      if (!currentPw) { cur.style.borderColor = 'var(--red)'; cur.focus(); setTimeout(function() { cur.style.borderColor = ''; }, 1500); return; }
+      if (newPw.length < 8) { nw.style.borderColor = 'var(--red)'; nw.focus(); toast('Password must be 8+ characters'); setTimeout(function() { nw.style.borderColor = ''; }, 1500); return; }
+      var basePath = platform.basePath || '';
+      try {
+        var r = await fetch(basePath + '/api/auth/change-password', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw })
+        });
+        var data = await r.json();
+        if (data.ok) { toast('Password updated'); cur.value = ''; nw.value = ''; }
+        else toast(data.error || 'Failed to update password');
+      } catch(e) { toast('Connection error'); }
     });
   }
 
@@ -988,11 +1048,15 @@
     initRevenue();
     initExport();
     initCacheClear();
+    initPasswordChange();
     loadServerInfo();
     loadEmails();
     initEmails();
     initTeam();
     if (_userRole === 'owner' || _userRole === 'admin') loadTeam();
+    // Show assigned emails for all users
+    var myEmailsGroup = document.getElementById('myEmailsGroup');
+    if (myEmailsGroup) { myEmailsGroup.style.display = ''; loadMyEmails(); }
     applyPrefs();
     applyVisual();
   };
