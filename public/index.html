@@ -1,7 +1,11 @@
 <div id="settings-app">
   <nav class="stg-sidebar" id="stgSidebar">
     <div class="stg-sidebar-title">SETTINGS</div>
-    <div class="stg-nav-item active" data-section="appearance"><span class="stg-nav-icon">&#127912;</span> Appearance</div>
+    <!-- Account first — most-used section. The legacy data-section name
+         is still "danger" so the existing section markup matches. -->
+    <div class="stg-nav-item active" data-section="danger"><span class="stg-nav-icon">&#128100;</span> Account</div>
+    <div class="stg-nav-item" data-section="profile"><span class="stg-nav-icon">&#128483;</span> Profile</div>
+    <div class="stg-nav-item" data-section="appearance"><span class="stg-nav-icon">&#127912;</span> Appearance</div>
     <div class="stg-nav-item" data-section="ai"><span class="stg-nav-icon">&#129302;</span> AI Accounts</div>
     <div class="stg-nav-item" data-section="autopilot"><span class="stg-nav-icon">&#128640;</span> AI Autopilot</div>
     <div class="stg-nav-item" data-section="revenue"><span class="stg-nav-icon">&#128176;</span> Revenue</div>
@@ -11,13 +15,12 @@
     <div class="stg-nav-item" data-section="storage"><span class="stg-nav-icon">&#128190;</span> Data &amp; Storage</div>
     <div class="stg-nav-item" data-section="shortcuts"><span class="stg-nav-icon">&#9000;</span> Shortcuts</div>
     <div class="stg-nav-item" data-section="team" id="stgTeamNav" style="display:none"><span class="stg-nav-icon">&#128101;</span> Team</div>
-    <div class="stg-nav-item" data-section="danger"><span class="stg-nav-icon">&#9888;</span> Account</div>
   </nav>
 
   <div class="stg-main" id="stgMain">
 
     <!-- APPEARANCE -->
-    <div class="stg-section active" id="sec-appearance">
+    <div class="stg-section" id="sec-appearance">
       <div class="stg-section-header">Appearance</div>
       <div class="stg-section-desc">Customize the look and feel of your workspace.</div>
 
@@ -69,6 +72,15 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- PROFILE — public-facing identity. Editable per-user data
+         (display name, country, bio, social platforms) plus the avatar
+         picker iframe. Distinct from Account (auth, plan, danger zone). -->
+    <div class="stg-section" id="sec-profile">
+      <div class="stg-section-header">Profile</div>
+      <div class="stg-section-desc">Public-facing identity shown on your profile and in Explore lists.</div>
+
       <div class="stg-group">
         <div class="stg-group-label">AVATAR</div>
         <div class="stg-row" style="flex-direction:column;align-items:flex-start;gap:0;">
@@ -76,6 +88,55 @@
         </div>
       </div>
 
+      <div class="stg-group">
+        <div class="stg-group-label">PROFILE</div>
+        <div class="stg-row">
+          <div style="flex:1;min-width:200px;">
+            <div class="stg-label">Display name</div>
+            <div class="stg-sublabel">Shown on your profile and in lists</div>
+          </div>
+          <input type="text" class="stg-input" id="profileDisplayName" placeholder="Your name" style="width:240px;">
+        </div>
+        <div class="stg-row">
+          <div style="flex:1;min-width:200px;">
+            <div class="stg-label">Country</div>
+            <div class="stg-sublabel">Used on your profile + Explore lists</div>
+          </div>
+          <div style="display:flex;align-items:center;width:240px;">
+            <span class="stg-flag-preview" id="profileCountryFlag">&#127757;</span>
+            <select class="stg-input" id="profileCountry" style="flex:1;"></select>
+          </div>
+        </div>
+        <div class="stg-row">
+          <div style="flex:1;min-width:200px;">
+            <div class="stg-label">Region</div>
+            <div class="stg-sublabel">Used for chat / news time grouping</div>
+          </div>
+          <select class="stg-input" id="profileTimezone" style="width:240px;"></select>
+        </div>
+        <div class="stg-row">
+          <div style="flex:1;min-width:200px;">
+            <div class="stg-label">Bio</div>
+            <div class="stg-sublabel">Short description on your profile</div>
+          </div>
+          <textarea class="stg-input" id="profileBio" placeholder="A few words..." rows="2" style="width:240px;resize:vertical;"></textarea>
+        </div>
+        <div class="stg-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+          <div>
+            <div class="stg-label">Social networks</div>
+            <div class="stg-sublabel">Add the platforms you're active on</div>
+          </div>
+          <div id="profilePlatformsList" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <select class="stg-input" id="platformAddSelect" style="width:160px"></select>
+            <input type="text" class="stg-input" id="platformAddHandle" placeholder="handle / URL" style="flex:1;min-width:140px">
+            <button class="stg-ai-btn stg-ai-connect" id="platformAddBtn" style="width:auto;padding:8px 16px;">Add</button>
+          </div>
+        </div>
+        <div class="stg-row" style="justify-content:flex-end">
+          <button class="stg-ai-btn stg-ai-connect" id="profileSaveBtn" style="width:auto;padding:8px 20px;">Save profile</button>
+        </div>
+      </div>
     </div>
 
     <!-- AI ACCOUNTS -->
@@ -477,8 +538,8 @@
       </div>
     </div>
 
-    <!-- ACCOUNT -->
-    <div class="stg-section" id="sec-danger">
+    <!-- ACCOUNT (default active section) -->
+    <div class="stg-section active" id="sec-danger">
       <div class="stg-section-header">Account</div>
       <div class="stg-section-desc">Manage your account and subscription.</div>
 

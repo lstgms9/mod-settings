@@ -1,3 +1,8 @@
+/* Noto Color Emoji — flag glyphs (regional indicators) don't render
+   in Chrome on Linux without it. Pulled from Google Fonts so the
+   country flag preview / option labels show actual flags. */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+
 #settings-app {
   position: relative; width: 100%; height: 100%;
   display: flex; overflow: hidden;
@@ -153,6 +158,32 @@
 }
 .stg-ai-key-input:focus { border-color: var(--primary); }
 .stg-ai-key-input::placeholder { color: var(--text-dim); }
+/* Generic input style — used by the new Profile group (country select,
+   timezone select, display name, bio, platform handle). Matches the
+   site's dark theme + cyan focus instead of the browser default grey. */
+#settings-app .stg-input, #settings-app select.stg-input, #settings-app textarea.stg-input {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 8px 12px; font-size: 13px; font-family: inherit; color: var(--text);
+  outline: none; transition: border-color 0.2s; appearance: none;
+  -webkit-appearance: none; -moz-appearance: none;
+}
+#settings-app .stg-input:focus { border-color: var(--primary); }
+#settings-app .stg-input::placeholder { color: var(--text-dim); }
+/* Native <select> arrow */
+#settings-app select.stg-input {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%23a0aab0' d='M6 8L0 0h12z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+/* Flag preview next to the country select */
+#settings-app .stg-flag-preview {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; font-size: 24px; line-height: 1;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; margin-right: 8px;
+  font-family: 'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',sans-serif;
+}
 .stg-ai-btn {
   width: 100%; padding: 7px; border-radius: 6px; font-size: 12px; font-weight: 600;
   font-family: inherit; cursor: pointer; border: 1px solid; transition: all 0.2s;
@@ -224,11 +255,12 @@
    Embeds /signup-player so the same UI used at signup is reusable
    from settings — no rewrite. */
 .stg-avatar-frame {
-  width: 100%; height: 260px;
+  width: 100%; height: 360px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg);
   display: block;
+  overflow: hidden;
 }
 
 /* ── Font grid ───────────────────────────────── */

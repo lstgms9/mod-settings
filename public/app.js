@@ -754,6 +754,175 @@
     }
   }
 
+  // ── Profile (Account → editable per-user data) ─────────────
+  // Country list — short and covers gamoid's likely audience. Edit
+  // freely; ISO 3166-1 alpha-2 codes are the source of truth (flag
+  // unicode renders from the code, not from a sprite).
+  var COUNTRIES = [
+    ['US','United States'],['CA','Canada'],['MX','Mexico'],['BR','Brazil'],['AR','Argentina'],
+    ['GB','United Kingdom'],['IE','Ireland'],['DE','Germany'],['FR','France'],['ES','Spain'],
+    ['IT','Italy'],['NL','Netherlands'],['SE','Sweden'],['NO','Norway'],['DK','Denmark'],
+    ['FI','Finland'],['PL','Poland'],['CZ','Czechia'],['UA','Ukraine'],['RU','Russia'],
+    ['TR','Türkiye'],['GR','Greece'],['PT','Portugal'],['CH','Switzerland'],['AT','Austria'],
+    ['BE','Belgium'],['RO','Romania'],['HU','Hungary'],
+    ['JP','Japan'],['KR','South Korea'],['CN','China'],['TW','Taiwan'],['HK','Hong Kong'],
+    ['SG','Singapore'],['MY','Malaysia'],['ID','Indonesia'],['TH','Thailand'],['VN','Vietnam'],
+    ['PH','Philippines'],['IN','India'],['PK','Pakistan'],['BD','Bangladesh'],
+    ['AU','Australia'],['NZ','New Zealand'],
+    ['ZA','South Africa'],['NG','Nigeria'],['EG','Egypt'],['MA','Morocco'],['KE','Kenya'],
+    ['AE','United Arab Emirates'],['SA','Saudi Arabia'],['IL','Israel'],
+    ['CL','Chile'],['CO','Colombia'],['PE','Peru'],['UY','Uruguay'],
+  ];
+  // Region presets — coarse-grained on purpose. Damon's spec: just the
+  // 3 macro regions, not a city-by-city picker.
+  var TIMEZONES = [
+    ['Americas','Americas'],
+    ['Europe','Europe'],
+    ['Asia','Asia'],
+  ];
+  function flagEmoji(cc) {
+    if (!cc) return '';
+    var s = String(cc).trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(s)) return '';
+    return String.fromCodePoint(0x1F1E6 + s.charCodeAt(0) - 65) +
+           String.fromCodePoint(0x1F1E6 + s.charCodeAt(1) - 65);
+  }
+  // Recognised platforms — keep in sync with mod-list's PLAT_GLYPH so
+  // both the Settings picker and the Explore Social column show the
+  // same icons.
+  var PLATFORMS = [
+    ['x',         '𝕏 X / Twitter'],
+    ['instagram', '📷 Instagram'],
+    ['youtube',   '▶ YouTube'],
+    ['tiktok',    '♪ TikTok'],
+    ['twitch',    '🎮 Twitch'],
+    ['facebook',  'f Facebook'],
+    ['threads',   '@ Threads'],
+    ['linkedin',  'in LinkedIn'],
+  ];
+  // In-memory state for the picker. Mirrored into the POST body on save.
+  var _platformState = {};
+  function _platLabel(k) {
+    for (var i = 0; i < PLATFORMS.length; i++) if (PLATFORMS[i][0] === k) return PLATFORMS[i][1];
+    return k;
+  }
+  function renderPlatformRows() {
+    var host = document.getElementById('profilePlatformsList');
+    if (!host) return;
+    var keys = Object.keys(_platformState);
+    if (!keys.length) {
+      host.innerHTML = '<div class="stg-sublabel" style="opacity:.7">No networks added yet.</div>';
+      return;
+    }
+    host.innerHTML = keys.map(function(k) {
+      var handle = _platformState[k];
+      return '<div class="stg-row" style="padding:6px 10px;background:var(--bg-card,#12121f);border:1px solid var(--border,#252540);border-radius:6px;gap:8px;">' +
+        '<span style="min-width:140px;font-size:13px">' + _platLabel(k) + '</span>' +
+        '<input type="text" class="stg-input plat-row-input" data-key="' + k + '" value="' + String(handle || '').replace(/"/g,'&quot;') + '" placeholder="handle / URL" style="flex:1">' +
+        '<button class="stg-ai-btn" data-rm="' + k + '" style="width:auto;padding:6px 12px;background:transparent;border:1px solid var(--red,#ff3997);color:var(--red,#ff3997)">×</button>' +
+      '</div>';
+    }).join('');
+    Array.from(host.querySelectorAll('.plat-row-input')).forEach(function(inp) {
+      inp.addEventListener('input', function() { _platformState[inp.dataset.key] = inp.value; });
+    });
+    Array.from(host.querySelectorAll('button[data-rm]')).forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        delete _platformState[btn.dataset.rm];
+        renderPlatformRows();
+        refreshAddSelect();
+      });
+    });
+  }
+  function refreshAddSelect() {
+    var sel = document.getElementById('platformAddSelect');
+    if (!sel) return;
+    var remaining = PLATFORMS.filter(function(p) { return !(p[0] in _platformState); });
+    if (!remaining.length) {
+      sel.innerHTML = '<option value="">All added</option>';
+      sel.disabled = true;
+    } else {
+      sel.disabled = false;
+      sel.innerHTML = remaining.map(function(p) { return '<option value="' + p[0] + '">' + p[1] + '</option>'; }).join('');
+    }
+  }
+  function initProfile() {
+    var cSel = document.getElementById('profileCountry');
+    var tSel = document.getElementById('profileTimezone');
+    var flagEl = document.getElementById('profileCountryFlag');
+    if (cSel) {
+      // Country option text is just the country name. The flag emoji
+      // lives in the preview span next to the select — native option
+      // text doesn't render colour emoji reliably on Linux/Chromium.
+      cSel.innerHTML = '<option value="">— Select country —</option>' +
+        COUNTRIES.map(function(c){ return '<option value="' + c[0] + '">' + c[1] + '</option>'; }).join('');
+      cSel.addEventListener('change', function() {
+        if (flagEl) flagEl.textContent = flagEmoji(cSel.value) || '\uD83C\uDF0D';  // 🌍 fallback
+      });
+    }
+    if (tSel) {
+      tSel.innerHTML = '<option value="">— Select region —</option>' +
+        TIMEZONES.map(function(t){ return '<option value="' + t[0] + '">' + t[1] + '</option>'; }).join('');
+    }
+    // Pre-fill from /api/auth/session (carries displayName, country,
+    // timezone, bio, platforms when the user record / client.data has them).
+    fetch('/api/auth/session').then(function(r){ return r.json(); }).then(function(s){
+      if (!s || !s.loggedIn) return;
+      var dn = document.getElementById('profileDisplayName');
+      var bio = document.getElementById('profileBio');
+      if (dn) dn.value = s.displayName || s.username || '';
+      if (cSel && s.country) {
+        cSel.value = s.country;
+        if (flagEl) flagEl.textContent = flagEmoji(s.country) || '\uD83C\uDF0D';
+      }
+      if (tSel && s.timezone) tSel.value = s.timezone;
+      if (bio) bio.value = s.bio || '';
+      _platformState = (s.platforms && typeof s.platforms === 'object') ? Object.assign({}, s.platforms) : {};
+      renderPlatformRows();
+      refreshAddSelect();
+    }).catch(function(){ renderPlatformRows(); refreshAddSelect(); });
+    var btn = document.getElementById('profileSaveBtn');
+    if (btn) btn.addEventListener('click', saveProfile);
+    var addBtn = document.getElementById('platformAddBtn');
+    if (addBtn) addBtn.addEventListener('click', function() {
+      var sel = document.getElementById('platformAddSelect');
+      var inp = document.getElementById('platformAddHandle');
+      if (!sel || !sel.value) return;
+      _platformState[sel.value] = (inp && inp.value.trim()) || '';
+      if (inp) inp.value = '';
+      renderPlatformRows();
+      refreshAddSelect();
+    });
+  }
+  async function saveProfile() {
+    var dn = document.getElementById('profileDisplayName');
+    var cSel = document.getElementById('profileCountry');
+    var tSel = document.getElementById('profileTimezone');
+    var bio = document.getElementById('profileBio');
+    var btn = document.getElementById('profileSaveBtn');
+    var payload = {
+      displayName: dn ? dn.value.trim() : null,
+      country:     cSel ? cSel.value || null : null,
+      timezone:    tSel ? tSel.value || null : null,
+      bio:         bio ? bio.value.trim() : null,
+      platforms:   _platformState,
+    };
+    if (btn) { btn.disabled = true; btn.dataset.orig = btn.textContent; btn.textContent = 'Saving…'; }
+    try {
+      var r = await fetch('/api/auth/profile', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (r.ok) {
+        if (btn) { btn.textContent = 'Saved ✓'; setTimeout(function(){ btn.disabled = false; btn.textContent = btn.dataset.orig || 'Save profile'; }, 1200); }
+      } else if (btn) {
+        btn.textContent = 'Failed'; btn.disabled = false;
+        setTimeout(function(){ btn.textContent = btn.dataset.orig || 'Save profile'; }, 1500);
+      }
+    } catch (e) {
+      if (btn) { btn.textContent = 'Network error'; btn.disabled = false; }
+    }
+  }
+
   // ── Team Management ────────────────────────────────────────
   var teamMembers = [];
   var teamInvites = [];
@@ -1052,6 +1221,7 @@
     loadServerInfo();
     loadEmails();
     initEmails();
+    initProfile();
     initTeam();
     if (_userRole === 'owner' || _userRole === 'admin') loadTeam();
     // Show assigned emails for all users
