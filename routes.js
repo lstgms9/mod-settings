@@ -76,7 +76,7 @@ module.exports = function(router, ctx) {
         const c = await storage.get('client', req.user.slug);
         if (c && c.data) {
           prefs.plan = c.data.tier || c.data.plan || 'free';
-          prefs.displayName = c.data.displayName || c.data.handle || req.user.email;
+          prefs.displayName = c.data.displayName || c.data.username || c.data.handle || req.user.email;
           prefs.email = c.data.email || req.user.email;
         }
       } catch (_) {}

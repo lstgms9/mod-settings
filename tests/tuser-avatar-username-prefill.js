@@ -18,20 +18,18 @@ function fail(t, e){ console.log('  FAIL:', t, '-', e || ''); failed++; }
   var stamp = Date.now();
   var email = 'tuser-avu-' + stamp + '@example.com';
   var pw = 'tuser1234';
-  var handle = 'tunm' + stamp.toString().slice(-6);  // unique handle
+  var username = 'tunm' + stamp.toString().slice(-6);  // unique username
   var displayName = 'TUser Display ' + stamp;
 
   await p.request.post(BASE + '/api/auth/signup', {
-    data: { email: email, password: pw, tier: 'dev', displayName: displayName, handle: handle },
+    data: { email: email, password: pw, tier: 'dev', displayName: displayName, username: username },
   });
   await p.request.post(BASE + '/api/auth/client-login', { data: { email: email, password: pw } });
 
-  // First: confirm session surfaces handle + username.
+  // First: confirm session surfaces username.
   var sj = await (await p.request.get(BASE + '/api/auth/session')).json();
-  if (sj.handle === handle) ok('session.handle = ' + handle);
-  else fail('session.handle missing/wrong', sj.handle);
-  if (sj.username === handle) ok('session.username = handle (' + handle + ')');
-  else fail('session.username should fall back to handle', sj.username);
+  if (sj.username === username) ok('session.username = ' + username);
+  else fail('session.username missing/wrong', sj.username);
 
   // Now load the avatar iframe page directly and check the name input.
   await p.goto(BASE + '/signup-player?embed=settings', { waitUntil: 'networkidle' });
@@ -41,8 +39,8 @@ function fail(t, e){ console.log('  FAIL:', t, '-', e || ''); failed++; }
     return i ? i.value : null;
   });
   ok('avatar nameInput value: "' + inputVal + '"');
-  if (inputVal === handle) ok('avatar nameInput pre-filled with handle');
-  else fail('avatar nameInput not pre-filled', 'wanted=' + handle + ' got=' + inputVal);
+  if (inputVal === username) ok('avatar nameInput pre-filled with username');
+  else fail('avatar nameInput not pre-filled', 'wanted=' + username + ' got=' + inputVal);
 
   await b.close();
   console.log('\n  ' + passed + ' PASSED, ' + failed + ' FAILED');
