@@ -8,16 +8,27 @@ const archiver = require('archiver');
 
 module.exports = function(router, ctx) {
   const { storage } = ctx;
-  const usersDir = path.join(__dirname, '../../instances/inst-dev/storage/users');
+  // Default to inst-dev (okdun.ai platform shell). When the module is
+  // running inside a tenant (gamoid etc.), req.instanceSlug is set and
+  // resolveUsersDir(req) routes the read/write to that tenant's store.
+  const fallbackUsersDir = path.join(__dirname, '../../instances/inst-dev/storage/users');
   const storageDir = path.join(__dirname, '../../instances/inst-dev/storage');
+  const INSTANCES_DIR = ctx.instancesDir || path.join(__dirname, '../../instances');
+
+  function resolveUsersDir(req) {
+    if (req && req.instanceSlug) return path.join(INSTANCES_DIR, req.instanceSlug, 'storage', 'users');
+    return fallbackUsersDir;
+  }
 
   // ── helpers ──────────────────────────────────────────────────
-  function readUser(studio) {
-    const f = path.join(usersDir, studio + '.json');
+  function readUser(studio, req) {
+    const dir = resolveUsersDir(req);
+    const f = path.join(dir, studio + '.json');
     try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; }
   }
-  function writeUser(studio, data) {
-    fs.writeFileSync(path.join(usersDir, studio + '.json'), JSON.stringify(data, null, 2));
+  function writeUser(studio, data, req) {
+    const dir = resolveUsersDir(req);
+    fs.writeFileSync(path.join(dir, studio + '.json'), JSON.stringify(data, null, 2));
   }
 
   async function getSettingsRecord(studio) {
@@ -46,7 +57,7 @@ module.exports = function(router, ctx) {
       prefs.aiKeys = masked;
     }
     // include 2fa status from user file
-    const user = readUser(req.user.studio);
+    const user = readUser(req.user.studio, req);
     if (user && user.tfa) {
       prefs.tfa = { method: user.tfa.method, enabled: true };
     } else {
@@ -132,10 +143,10 @@ module.exports = function(router, ctx) {
       return res.error(500, 'QR generation failed');
     }
     // store pending secret on user (not active until verified)
-    const user = readUser(req.user.studio);
+    const user = readUser(req.user.studio, req);
     if (!user) return res.error(404, 'User not found');
     user.tfaPending = { method: 'totp', secret: secret.base32 };
-    writeUser(req.user.studio, user);
+    writeUser(req.user.studio, user, req);
     res.json({
       qr: qrDataUrl,
       secret: secret.base32,
@@ -148,7 +159,7 @@ module.exports = function(router, ctx) {
     if (!req.user) return res.error(401, 'Not logged in');
     const { code } = req.body || {};
     if (!code) return res.error(400, 'Missing code');
-    const user = readUser(req.user.studio);
+    const user = readUser(req.user.studio, req);
     if (!user || !user.tfaPending || user.tfaPending.method !== 'totp') {
       return res.error(400, 'No pending TOTP setup');
     }
@@ -165,18 +176,18 @@ module.exports = function(router, ctx) {
     // activate 2FA
     user.tfa = { method: 'totp', secret: user.tfaPending.secret };
     delete user.tfaPending;
-    writeUser(req.user.studio, user);
+    writeUser(req.user.studio, user, req);
     res.json({ ok: true, method: 'totp' });
   });
 
   // ── 2FA: email setup — send test code ───────────────────────
   router.post('/2fa/setup-email', async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');
-    const user = readUser(req.user.studio);
+    const user = readUser(req.user.studio, req);
     if (!user) return res.error(404, 'User not found');
     const code = String(Math.floor(100000 + Math.random() * 900000));
     user.tfaPending = { method: 'email', code, expires: Date.now() + 600000 }; // 10min
-    writeUser(req.user.studio, user);
+    writeUser(req.user.studio, user, req);
     // send via SES if available
     if (process.env.AWS_ACCESS_KEY_ID) {
       try {
@@ -198,30 +209,30 @@ module.exports = function(router, ctx) {
     if (!req.user) return res.error(401, 'Not logged in');
     const { code } = req.body || {};
     if (!code) return res.error(400, 'Missing code');
-    const user = readUser(req.user.studio);
+    const user = readUser(req.user.studio, req);
     if (!user || !user.tfaPending || user.tfaPending.method !== 'email') {
       return res.error(400, 'No pending email 2FA setup');
     }
     if (user.tfaPending.expires < Date.now()) {
       delete user.tfaPending;
-      writeUser(req.user.studio, user);
+      writeUser(req.user.studio, user, req);
       return res.error(400, 'Code expired');
     }
     if (user.tfaPending.code !== code) return res.error(400, 'Invalid code');
     user.tfa = { method: 'email' };
     delete user.tfaPending;
-    writeUser(req.user.studio, user);
+    writeUser(req.user.studio, user, req);
     res.json({ ok: true, method: 'email' });
   });
 
   // ── 2FA: disable ────────────────────────────────────────────
   router.delete('/2fa', async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');
-    const user = readUser(req.user.studio);
+    const user = readUser(req.user.studio, req);
     if (!user) return res.error(404, 'User not found');
     delete user.tfa;
     delete user.tfaPending;
-    writeUser(req.user.studio, user);
+    writeUser(req.user.studio, user, req);
     res.json({ ok: true });
   });
 

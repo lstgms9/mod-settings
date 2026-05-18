@@ -5,6 +5,7 @@
          is still "danger" so the existing section markup matches. -->
     <div class="stg-nav-item active" data-section="danger"><span class="stg-nav-icon">&#128100;</span> Account</div>
     <div class="stg-nav-item" data-section="profile"><span class="stg-nav-icon">&#128483;</span> Profile</div>
+    <div class="stg-nav-item" data-section="mailboxes" id="stgMailboxesNav" style="display:none"><span class="stg-nav-icon">&#9993;&#xFE0F;</span> Mailboxes</div>
     <div class="stg-nav-item" data-section="appearance"><span class="stg-nav-icon">&#127912;</span> Appearance</div>
     <div class="stg-nav-item" data-section="ai"><span class="stg-nav-icon">&#129302;</span> AI Accounts</div>
     <div class="stg-nav-item" data-section="autopilot"><span class="stg-nav-icon">&#128640;</span> AI Autopilot</div>
@@ -136,6 +137,41 @@
         <div class="stg-row" style="justify-content:flex-end">
           <button class="stg-ai-btn stg-ai-connect" id="profileSaveBtn" style="width:auto;padding:8px 20px;">Save profile</button>
         </div>
+      </div>
+    </div>
+
+    <!-- MAILBOXES — studio-only. Owner manages every mailbox under the
+         studio's subdomain (<slug>.<studioMailDomain>): create, assign
+         to a dev, delete. Server enforces owner-only; nav item itself
+         is hidden for non-studio plans. -->
+    <div class="stg-section" id="sec-mailboxes">
+      <div class="stg-section-header">Studio Mailboxes</div>
+      <div class="stg-section-desc">Email addresses under your studio's subdomain. Assign a mailbox to a dev to give them mail access.</div>
+
+      <div class="stg-group">
+        <div class="stg-group-label">EXISTING</div>
+        <div id="mbxList" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <div id="mbxListEmpty" class="stg-sublabel" style="display:none;padding:14px 0;">No mailboxes yet — create one below.</div>
+      </div>
+
+      <div class="stg-group">
+        <div class="stg-group-label">CREATE A NEW MAILBOX</div>
+        <div class="stg-row" style="align-items:flex-end;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:220px;">
+            <div class="stg-label">Local part</div>
+            <div class="stg-sublabel" id="mbxDomainHint">e.g. marketing → marketing@&lt;slug&gt;.gamoids.com</div>
+            <input type="text" class="stg-input" id="mbxNewLocal" placeholder="marketing" maxlength="20" autocapitalize="off" spellcheck="false" style="margin-top:4px;width:100%;">
+          </div>
+          <div style="flex:1;min-width:220px;">
+            <div class="stg-label">Assign to</div>
+            <div class="stg-sublabel">Optional — leave empty to keep owner-only.</div>
+            <select class="stg-input" id="mbxNewAssign" style="margin-top:4px;width:100%;">
+              <option value="">— Owner only —</option>
+            </select>
+          </div>
+          <button class="stg-ai-btn stg-ai-connect" id="mbxAddBtn" style="padding:10px 20px;">Create mailbox</button>
+        </div>
+        <div id="mbxErr" class="stg-sublabel" style="color:var(--red,#ff3997);display:none;margin-top:6px"></div>
       </div>
     </div>
 
@@ -547,7 +583,7 @@
         <div class="stg-group-label">PLAN</div>
         <div class="stg-row">
           <div><div class="stg-label">Current plan</div><div class="stg-sublabel" id="planInfo">Free</div></div>
-          <button class="stg-ai-btn stg-ai-connect" style="width:auto;padding:8px 20px;">Manage Plan</button>
+          <button class="stg-ai-btn stg-ai-connect" id="planManageBtn" style="width:auto;padding:8px 20px;">Manage Plan</button>
         </div>
         <div class="stg-row">
           <div><div class="stg-label">Business domain</div><div class="stg-sublabel stg-mono-cyan" id="domainInfo">yourbiz.okdun.ai</div></div>

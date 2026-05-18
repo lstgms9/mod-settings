@@ -1184,6 +1184,389 @@
     });
   }
 
+  // ── Manage Plan ─────────────────────────────────────────────
+  // Click "Manage Plan" → modal showing the user's current tier +
+  // upgrade options pulled from the instance's SIGNUP_CONFIG (same
+  // tier data signup uses, so marketing copy stays consistent).
+  // Picking a paid tier sets the bill-pay handoff and lands on /bill-pay
+  // exactly like the signup flow does for paid tiers — reuses existing
+  // Stripe checkout instead of inventing a parallel path.
+  async function loadTiers() {
+    // Prefer inline SIGNUP_CONFIG (set by the public shell). Fall back
+    // to /api/signup/config if the embed isn't present.
+    if (window.SIGNUP_CONFIG && Array.isArray(window.SIGNUP_CONFIG.tiers)) return window.SIGNUP_CONFIG.tiers;
+    try {
+      var r = await fetch('/api/signup/config');
+      if (r.ok) { var c = await r.json(); if (c && Array.isArray(c.tiers)) return c.tiers; }
+    } catch (e) {}
+    return [];
+  }
+  function currentTierKey() {
+    // Map session.role → tier id used in SIGNUP_CONFIG.
+    if (_userRole === 'studio') return 'studio';
+    if (_userRole === 'dev')    return 'dev';
+    return 'player'; // free / unknown
+  }
+  function openPlanModal() {
+    var existing = document.getElementById('stgPlanModal');
+    if (existing) existing.remove();
+    loadTiers().then(function(tiers) {
+      var cur = currentTierKey();
+      var rows = tiers.map(function(t) {
+        var isCur = t.id === cur;
+        var isPaid = (t.monthly || t.price || 0) > 0;
+        var priceLabel = isPaid ? ('$' + (t.monthly || t.price) + '/mo') : 'Free';
+        var btn = isCur
+          ? '<button class="stg-ai-btn" disabled style="opacity:.5;cursor:default">CURRENT</button>'
+          : '<button class="stg-ai-btn stg-ai-connect" data-tier="' + t.id + '">' + (isPaid ? 'UPGRADE' : 'SWITCH') + '</button>';
+        var color = t.color || 'var(--primary)';
+        return '<div class="stg-plan-row" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg2,#12121f);border:1px solid var(--border,#252540);border-radius:8px;margin-bottom:10px">' +
+          '<div style="flex:1">' +
+            '<div style="font-family:var(--font-head,Bungee);color:' + color + ';font-size:16px">' + (t.name || t.id).toUpperCase() + '</div>' +
+            '<div style="font-size:13px;color:var(--text-mid,#a0aab0);margin-top:4px">' + (t.tagline || t.description || '') + '</div>' +
+          '</div>' +
+          '<div style="text-align:right;margin-left:18px">' +
+            '<div style="font-family:var(--font-mono,monospace);color:var(--text,#e4e4f0);font-size:18px;margin-bottom:6px">' + priceLabel + '</div>' +
+            btn +
+          '</div>' +
+        '</div>';
+      }).join('');
+      var html =
+        '<div id="stgPlanModalBg" style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px">' +
+          '<div style="background:var(--bg,#0b0b14);border:1px solid var(--border,#252540);border-radius:14px;padding:28px;width:520px;max-width:90vw;max-height:85vh;overflow:auto;position:relative">' +
+            '<button id="stgPlanClose" style="position:absolute;top:10px;right:14px;background:none;border:0;color:var(--text-mid,#a0aab0);font-size:22px;cursor:pointer">&times;</button>' +
+            '<h2 style="font-family:var(--font-head,Bungee);margin:0 0 6px;color:var(--text,#e4e4f0);font-size:20px">Manage Plan</h2>' +
+            '<p style="margin:0 0 18px;font-size:13px;color:var(--text-mid,#a0aab0)">Current: <strong style="color:var(--text,#e4e4f0)">' + cur.toUpperCase() + '</strong>. Upgrades route through Stripe.</p>' +
+            (tiers.length ? rows : '<div style="color:var(--text-mid,#a0aab0);font-size:14px">No tier config available.</div>') +
+          '</div>' +
+        '</div>';
+      var wrap = document.createElement('div');
+      wrap.id = 'stgPlanModal';
+      wrap.innerHTML = html;
+      document.body.appendChild(wrap);
+      var bg = document.getElementById('stgPlanModalBg');
+      var closeBtn = document.getElementById('stgPlanClose');
+      function shut() { wrap.remove(); }
+      closeBtn.addEventListener('click', shut);
+      bg.addEventListener('click', function(e) { if (e.target === bg) shut(); });
+      wrap.querySelectorAll('button[data-tier]').forEach(function(b) {
+        b.addEventListener('click', async function() {
+          var tierId = b.dataset.tier;
+          var t = tiers.find(function(x) { return x.id === tierId; });
+          if (!t) return;
+          // First-time studio upgrade needs a subdomain slug — open
+          // the slug-picker modal, validate live, then post upgrade.
+          var isStudio = (tierId === 'studio' || tierId === 'studio_pro');
+          if (isStudio) {
+            // Probe whether the user already has a locked slug — if so
+            // we can upgrade straight without re-prompting.
+            try {
+              var sesRes = await fetch('/api/auth/session');
+              var ses = await sesRes.json();
+              // If session reveals an existing studio thing slug, skip
+              // the picker. Otherwise show it.
+              var hasLockedSlug = !!(ses && ses.studioSlug);
+              if (!hasLockedSlug) {
+                openStudioSlugPicker(tierId, t, b);
+                return;
+              }
+            } catch (e) {}
+          }
+          await doUpgradeTier(tierId, t, b, null);
+        });
+      });
+    });
+  }
+  function initPlanManage() {
+    var btn = document.getElementById('planManageBtn');
+    if (btn) btn.addEventListener('click', openPlanModal);
+  }
+
+  // ── Studio Mailboxes ────────────────────────────────────────
+  // Surface the Mailboxes nav item only for studio-tier plans.
+  // Reads from /api/auth/session for plan + studioSlug, then renders
+  // existing email_addresses + a create form whose options come from
+  // /api/chat/external/team-members (dev things owned by this studio).
+  var _mbxSlug = null, _mbxDomain = null, _mbxList = [], _mbxTeam = [];
+  async function initMailboxes() {
+    var ses;
+    try { ses = await (await fetch('/api/auth/session')).json(); } catch (e) { ses = {}; }
+    var plan = (ses && ses.plan) || 'free';
+    var isStudio = (plan === 'studio' || plan === 'studio_pro');
+    var nav = document.getElementById('stgMailboxesNav');
+    if (nav) nav.style.display = isStudio ? '' : 'none';
+    if (!isStudio) return;
+    _mbxSlug = (ses && ses.studioSlug) || null;
+    // Parent domain — pull from inlined SIGNUP_CONFIG.studioMailDomain
+    // if present, fall back to gamoids.com (matches server default).
+    var parentDomain = (window.SIGNUP_CONFIG && window.SIGNUP_CONFIG.studioMailDomain) || 'gamoids.com';
+    _mbxDomain = _mbxSlug ? (_mbxSlug + '.' + parentDomain) : parentDomain;
+    var hint = document.getElementById('mbxDomainHint');
+    if (hint) hint.textContent = 'e.g. marketing → marketing@' + _mbxDomain;
+
+    // Load existing mailboxes + team members in parallel.
+    try {
+      var [addrRes, teamRes] = await Promise.all([
+        fetch('/api/chat/my-addresses'),
+        fetch('/api/chat/external/team-members'),
+      ]);
+      _mbxList = await addrRes.json().catch(function(){ return []; });
+      _mbxTeam = await teamRes.json().catch(function(){ return []; });
+    } catch (e) { _mbxList = []; _mbxTeam = []; }
+    // Filter to mailboxes under this studio's domain.
+    _mbxList = (_mbxList || []).filter(function(a) {
+      return a && (a.domain === _mbxDomain || (a.address && a.address.indexOf('@' + _mbxDomain) !== -1));
+    });
+    renderMailboxList();
+    populateTeamPicker(document.getElementById('mbxNewAssign'));
+    var add = document.getElementById('mbxAddBtn');
+    if (add) add.addEventListener('click', onMailboxCreate);
+  }
+  function renderMailboxList() {
+    var host = document.getElementById('mbxList');
+    var empty = document.getElementById('mbxListEmpty');
+    if (!host) return;
+    host.innerHTML = '';
+    if (!_mbxList.length) {
+      if (empty) empty.style.display = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    _mbxList.forEach(function(addr) {
+      var row = document.createElement('div');
+      row.className = 'stg-mbx-row';
+      row.style.cssText = 'display:grid;grid-template-columns:1fr 220px auto;align-items:center;gap:14px;padding:10px 14px;background:var(--bg2,#12121f);border:1px solid var(--border,#252540);border-radius:8px;';
+      var full = addr.address || ((addr.data && addr.data.fullAddress) || '');
+      if (full.indexOf('@') === -1 && addr.domain) full = full + '@' + addr.domain;
+      var assigned = (addr.data && addr.data.assignedTo) || addr.assignedTo || [];
+      var assignNames = assigned.map(function(uid) {
+        var t = _mbxTeam.find(function(x) { return x.userId === uid || x.id === uid; });
+        return t ? (t.name || t.id) : uid;
+      });
+      var assignLabel = assignNames.length ? 'assigned to ' + assignNames.join(', ') : 'owner only';
+      row.innerHTML =
+        '<div style="min-width:0;overflow:hidden;">' +
+          '<div style="font-family:var(--font-mono,monospace);color:var(--text,#e4e4f0);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHTML(full) + '</div>' +
+          '<div class="stg-sublabel" style="font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHTML(assignLabel) + '</div>' +
+        '</div>' +
+        '<select class="stg-input mbx-reassign" data-id="' + addr.id + '" style="width:100%;">' +
+          '<option value="">— Owner only —</option>' +
+        '</select>' +
+        '<button class="stg-ai-btn mbx-del" data-id="' + addr.id + '" style="background:transparent;color:var(--red,#ff3997);border:1px solid var(--border,#252540);padding:6px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">Delete</button>';
+      host.appendChild(row);
+      var sel = row.querySelector('select.mbx-reassign');
+      populateTeamPicker(sel, assigned[0] || '');
+      sel.addEventListener('change', function() { onMailboxReassign(addr.id, sel.value ? [sel.value] : []); });
+      row.querySelector('.mbx-del').addEventListener('click', function() { onMailboxDelete(addr.id); });
+    });
+  }
+  function populateTeamPicker(sel, selectedUserId) {
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Owner only —</option>';
+    _mbxTeam.forEach(function(t) {
+      var opt = document.createElement('option');
+      opt.value = t.userId || t.id;
+      opt.textContent = t.name || t.id;
+      if (selectedUserId && (t.userId === selectedUserId || t.id === selectedUserId)) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+  function escapeHTML(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+  function showMbxErr(msg) {
+    var el = document.getElementById('mbxErr');
+    if (!el) return;
+    if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
+    el.style.display = '';
+    el.textContent = msg;
+    setTimeout(function() { if (el.textContent === msg) showMbxErr(''); }, 4500);
+  }
+  async function onMailboxCreate() {
+    var input = document.getElementById('mbxNewLocal');
+    var sel = document.getElementById('mbxNewAssign');
+    var btn = document.getElementById('mbxAddBtn');
+    var local = (input.value || '').toLowerCase().replace(/[^a-z0-9._-]/g, '');
+    if (!local) { showMbxErr('Local part required.'); return; }
+    if (local.length > 20) { showMbxErr('Max 20 chars.'); return; }
+    if (!_mbxDomain) { showMbxErr('Studio domain unresolved.'); return; }
+    var assignedTo = sel.value ? [sel.value] : [];
+    btn.disabled = true;
+    var oldText = btn.textContent;
+    btn.textContent = 'Creating…';
+    try {
+      var r = await fetch('/api/chat/external/addresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: local, domain: _mbxDomain, assignedTo: assignedTo }),
+      });
+      var j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Create failed');
+      input.value = '';
+      sel.value = '';
+      _mbxList.unshift(j);
+      renderMailboxList();
+    } catch (e) {
+      showMbxErr(e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+    }
+  }
+  async function onMailboxReassign(id, assignedTo) {
+    try {
+      var r = await fetch('/api/chat/external/addresses/' + encodeURIComponent(id), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignedTo: assignedTo }),
+      });
+      var j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Reassign failed');
+      // Patch local cache then re-render so label updates.
+      var idx = _mbxList.findIndex(function(a) { return a.id === id; });
+      if (idx !== -1) {
+        if (_mbxList[idx].data) _mbxList[idx].data.assignedTo = assignedTo;
+        else _mbxList[idx].assignedTo = assignedTo;
+      }
+      renderMailboxList();
+    } catch (e) { showMbxErr(e.message); }
+  }
+  async function onMailboxDelete(id) {
+    if (!confirm('Delete this mailbox? This cannot be undone.')) return;
+    try {
+      var r = await fetch('/api/chat/external/addresses/' + encodeURIComponent(id), { method: 'DELETE' });
+      var j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Delete failed');
+      _mbxList = _mbxList.filter(function(a) { return a.id !== id; });
+      renderMailboxList();
+    } catch (e) { showMbxErr(e.message); }
+  }
+
+  // Studio slug picker — modal that opens when the user clicks a paid
+  // studio tier for the first time. Live URL preview, debounced
+  // availability check against /api/auth/check-studio-slug, hard
+  // warning that the slug is permanent.
+  async function doUpgradeTier(tierId, t, srcBtn, studioSlug) {
+    if (srcBtn) { srcBtn.disabled = true; srcBtn.textContent = 'UPDATING...'; }
+    try {
+      var body = { tier: tierId };
+      if (studioSlug) body.studioSlug = studioSlug;
+      var r = await fetch('/api/auth/upgrade-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      var j = await r.json();
+      if (!r.ok || !j.ok) throw new Error(j.error || 'Upgrade failed');
+      toast('Plan updated to ' + (t.name || tierId).toUpperCase());
+      var planEl = document.getElementById('planInfo');
+      if (planEl) planEl.textContent = (t.name || tierId).charAt(0).toUpperCase() + (t.name || tierId).slice(1).toLowerCase();
+      var planModal = document.getElementById('stgPlanModal');
+      if (planModal) planModal.remove();
+      var slugModal = document.getElementById('stgSlugModal');
+      if (slugModal) slugModal.remove();
+      setTimeout(function() { location.reload(); }, 600);
+    } catch (e) {
+      if (srcBtn) { srcBtn.disabled = false; srcBtn.textContent = 'RETRY'; }
+      toast('Upgrade failed: ' + e.message);
+      throw e;
+    }
+  }
+  function openStudioSlugPicker(tierId, t, srcBtn) {
+    var existing = document.getElementById('stgSlugModal');
+    if (existing) existing.remove();
+    // Read parent mail domain from inlined SIGNUP_CONFIG if available;
+    // fall back to gamoid.io.
+    var mailDomain = (window.INSTANCE_MAIL_DOMAIN || 'gamoids.com');
+    var html =
+      '<div id="stgSlugModalBg" style="position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px">' +
+        '<div style="background:var(--bg,#0b0b14);border:1px solid var(--border,#252540);border-radius:14px;padding:28px;width:500px;max-width:90vw;position:relative">' +
+          '<button id="stgSlugClose" style="position:absolute;top:10px;right:14px;background:none;border:0;color:var(--text-mid,#a0aab0);font-size:22px;cursor:pointer">&times;</button>' +
+          '<h2 style="font-family:var(--font-head,Bungee);margin:0 0 6px;color:var(--text,#e4e4f0);font-size:20px">Choose your studio URL</h2>' +
+          '<p style="margin:0 0 14px;font-size:13px;color:var(--text-mid,#a0aab0);line-height:1.45">Pick the subdomain for your studio. This becomes your website AND your email domain. <strong style="color:var(--red,#ff3997)">It can&rsquo;t be changed later</strong> — choose carefully.</p>' +
+          '<div style="display:flex;align-items:center;background:var(--bg2,#12121f);border:1px solid var(--border,#252540);border-radius:8px;padding:4px 4px 4px 12px;margin-bottom:8px">' +
+            '<input id="stgSlugIn" type="text" placeholder="gamebolina" maxlength="30" autocapitalize="off" spellcheck="false" autocomplete="off" style="flex:1;background:transparent;border:none;color:var(--text,#e4e4f0);font-family:var(--font-mono,monospace);font-size:15px;outline:none;padding:8px 0">' +
+            '<span style="font-family:var(--font-mono,monospace);font-size:15px;color:var(--text-mid,#a0aab0);padding:8px 12px 8px 4px">.' + mailDomain + '</span>' +
+          '</div>' +
+          '<div id="stgSlugStatus" style="font-size:12px;min-height:18px;font-family:var(--font-mono,monospace);color:var(--text-mid,#a0aab0)">3-30 chars, lowercase letters, numbers, hyphens.</div>' +
+          '<div style="background:rgba(255,57,151,0.08);border:1px solid rgba(255,57,151,0.3);border-radius:8px;padding:10px 12px;margin:14px 0;font-size:13px;color:var(--text,#e4e4f0);line-height:1.4">' +
+            '<strong style="color:var(--red,#ff3997)">Heads up:</strong> Your studio website (<span id="stgSlugPreview1" style="color:var(--primary)">…</span>) and emails (<span id="stgSlugPreview2" style="color:var(--primary)">…@…</span>) will use this URL forever.' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+            '<button id="stgSlugCancel" class="stg-ai-btn" style="background:transparent;color:var(--text-mid,#a0aab0);border:1px solid var(--border,#252540);padding:10px 18px;border-radius:8px;cursor:pointer">Cancel</button>' +
+            '<button id="stgSlugConfirm" class="stg-ai-btn stg-ai-connect" disabled style="padding:10px 22px;opacity:.5">Confirm &amp; Upgrade</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    var wrap = document.createElement('div');
+    wrap.id = 'stgSlugModal';
+    wrap.innerHTML = html;
+    document.body.appendChild(wrap);
+    var bg = document.getElementById('stgSlugModalBg');
+    var input = document.getElementById('stgSlugIn');
+    var status = document.getElementById('stgSlugStatus');
+    var preview1 = document.getElementById('stgSlugPreview1');
+    var preview2 = document.getElementById('stgSlugPreview2');
+    var confirm = document.getElementById('stgSlugConfirm');
+    function shut() { wrap.remove(); }
+    document.getElementById('stgSlugClose').addEventListener('click', shut);
+    document.getElementById('stgSlugCancel').addEventListener('click', shut);
+    bg.addEventListener('click', function(e) { if (e.target === bg) shut(); });
+    input.focus();
+    var checkTimer = null, lastChecked = '', okStr = false;
+    function setStatus(text, color) {
+      status.textContent = text;
+      status.style.color = color || 'var(--text-mid,#a0aab0)';
+    }
+    function setConfirmEnabled(en) {
+      confirm.disabled = !en;
+      confirm.style.opacity = en ? '1' : '.5';
+      confirm.style.cursor = en ? 'pointer' : 'default';
+    }
+    function refreshPreview() {
+      var v = (input.value || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+      if (v !== input.value) input.value = v;
+      preview1.textContent = (v || '<slug>') + '.' + mailDomain;
+      preview2.textContent = 'you@' + (v || '<slug>') + '.' + mailDomain;
+      if (!v) { setStatus('3-30 chars, lowercase letters, numbers, hyphens.'); setConfirmEnabled(false); return; }
+      if (v.length < 3) { setStatus('Too short (3 chars min).', 'var(--red,#ff3997)'); setConfirmEnabled(false); return; }
+      setStatus('Checking availability…');
+      setConfirmEnabled(false);
+      clearTimeout(checkTimer);
+      checkTimer = setTimeout(async function() {
+        try {
+          var r = await fetch('/api/auth/check-studio-slug?slug=' + encodeURIComponent(v));
+          var j = await r.json();
+          if (input.value !== v) return; // user kept typing
+          lastChecked = v;
+          if (j && j.ok) {
+            setStatus('✓ available', '#39ff7f');
+            okStr = true;
+            setConfirmEnabled(true);
+          } else {
+            var reasons = { reserved: 'Reserved name — pick another.', taken: 'Taken — pick another.', format: 'Invalid format.', empty: 'Required.' };
+            setStatus('✗ ' + (reasons[j && j.reason] || 'Not available'), 'var(--red,#ff3997)');
+            okStr = false;
+            setConfirmEnabled(false);
+          }
+        } catch (e) {
+          setStatus('Network error — try again', 'var(--red,#ff3997)');
+        }
+      }, 300);
+    }
+    input.addEventListener('input', refreshPreview);
+    refreshPreview();
+    confirm.addEventListener('click', async function() {
+      var v = (input.value || '').toLowerCase();
+      if (!v || !okStr || v !== lastChecked) return;
+      confirm.disabled = true;
+      confirm.textContent = 'UPGRADING…';
+      try { await doUpgradeTier(tierId, t, srcBtn, v); }
+      catch (e) {
+        confirm.disabled = false;
+        confirm.textContent = 'Confirm & Upgrade';
+      }
+    });
+  }
+
   // ── Init ────────────────────────────────────────────────────
   window.platform.module.init = async function() {
     var data = await API.get('/prefs');
@@ -1222,6 +1605,8 @@
     loadEmails();
     initEmails();
     initProfile();
+    initPlanManage();
+    initMailboxes();
     initTeam();
     if (_userRole === 'owner' || _userRole === 'admin') loadTeam();
     // Show assigned emails for all users
