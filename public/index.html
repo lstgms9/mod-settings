@@ -79,7 +79,10 @@
          (display name, country, bio, social platforms) plus the avatar
          picker iframe. Distinct from Account (auth, plan, danger zone). -->
     <div class="stg-section" id="sec-profile">
-      <div class="stg-section-header">Profile</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div class="stg-section-header" style="margin:0;">Profile</div>
+        <button class="stg-ai-btn stg-ai-connect" id="profileSaveBtn" style="width:auto;padding:8px 20px;">Save profile</button>
+      </div>
       <div class="stg-section-desc">Public-facing identity shown on your profile and in Explore lists.</div>
 
       <div class="stg-group">
@@ -133,9 +136,6 @@
             <input type="text" class="stg-input" id="platformAddHandle" placeholder="handle / URL" style="flex:1;min-width:140px">
             <button class="stg-ai-btn stg-ai-connect" id="platformAddBtn" style="width:auto;padding:8px 16px;">Add</button>
           </div>
-        </div>
-        <div class="stg-row" style="justify-content:flex-end">
-          <button class="stg-ai-btn stg-ai-connect" id="profileSaveBtn" style="width:auto;padding:8px 20px;">Save profile</button>
         </div>
       </div>
     </div>
