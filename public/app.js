@@ -750,6 +750,25 @@
       if (toggle) { toggle.classList.add('on'); }
       if (label) { label.textContent = 'ON'; label.style.color = '#39ff7f'; }
     }
+    // identity (display name + email) at the top of Account. prefs
+    // route returns these for both user-level and client-level
+    // accounts; falls back to session if prefs is missing them.
+    var idName = prefs.displayName;
+    var idEmail = prefs.email;
+    if (!idName || !idEmail) {
+      try {
+        var ses = await platform.user.current();
+        if (ses) {
+          idName = idName || ses.displayName || ses.username || ses.email || ses.slug;
+          idEmail = idEmail || ses.email;
+        }
+      } catch (_) {}
+    }
+    var nameEl = document.getElementById('accountDisplayName');
+    if (nameEl && idName) nameEl.textContent = idName;
+    var emailEl = document.getElementById('accountEmail');
+    if (emailEl && idEmail) emailEl.textContent = idEmail;
+
     // plan info — show "<TierName> plan" (e.g. "Dev plan", "Studio plan").
     // Falls back to session.tier when prefs.plan is missing (client-level
     // sessions may not have the user-level plan field).
