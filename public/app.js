@@ -1299,7 +1299,11 @@
     try { ses = await (await fetch('/api/auth/session')).json(); } catch (e) { ses = {}; }
     var plan = (ses && ses.plan) || 'free';
     var isStudio = (plan === 'studio' || plan === 'studio_pro');
-    var isCompany = !!(ses && (ses.superOwner || ses.role === 'super_owner' || ses.gamoidEmployee));
+    // Company mailboxes: tenant owner (damon for gamoid.io) gets them
+    // automatically; super_owner + flagged employees also qualify.
+    var tenantSlug = window.INSTANCE_SLUG || null;
+    var isTenantOwner = !!(ses && tenantSlug && ses.slug === tenantSlug);
+    var isCompany = isTenantOwner || !!(ses && (ses.superOwner || ses.role === 'super_owner' || ses.gamoidEmployee));
     var nav = document.getElementById('stgMailboxesNav');
     if (nav) nav.style.display = (isStudio || isCompany) ? '' : 'none';
     if (!isStudio && !isCompany) return;
@@ -1317,11 +1321,22 @@
       // Mailboxes pane shows them an actual address on first load
       // (instead of an empty list). One-shot; subsequent loads find
       // the existing record.
+      // Auto-mint the viewer's own @<companyDomain> mailbox. Pick
+      // the most identity-stable local-part:
+      //   - tenant owner (damon, with slug=tenant-slug='gamoid' and
+      //     studio='damon'): use studio so we get damon@gamoid.io,
+      //     not gamoid@gamoid.io;
+      //   - everyone else (lstgms9, employees): use slug — that's
+      //     their permanent identifier on the platform. (`username`
+      //     can be a vanity name like "dgb" and shifts with renames.)
       try {
+        var localPart = (ses.studio && ses.studio !== ses.slug)
+          ? ses.studio
+          : (ses.slug || ses.studio);
         await fetch('/api/auth/company-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ local: ses.slug || ses.studio }),
+          body: JSON.stringify({ local: localPart }),
         });
       } catch (e) {}
     } else {
