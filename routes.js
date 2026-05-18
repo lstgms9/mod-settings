@@ -63,11 +63,23 @@ module.exports = function(router, ctx) {
     } else {
       prefs.tfa = { enabled: false };
     }
-    // include plan info
+    // include plan info — user-level record first, then fall back to
+    // the client record (gamoid public signups create only a client,
+    // not a user-level file, so prefs.plan would otherwise stay
+    // undefined and the UI would show the HTML default "Free").
     if (user) {
       prefs.plan = user.plan || 'free';
       prefs.displayName = user.displayName || user.studio;
       prefs.email = user.email;
+    } else if (req.user.role === 'client') {
+      try {
+        const c = await storage.get('client', req.user.slug);
+        if (c && c.data) {
+          prefs.plan = c.data.tier || c.data.plan || 'free';
+          prefs.displayName = c.data.displayName || c.data.handle || req.user.email;
+          prefs.email = c.data.email || req.user.email;
+        }
+      } catch (_) {}
     }
     res.json(prefs);
   });

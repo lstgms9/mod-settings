@@ -578,7 +578,10 @@
   }
 
   // ── Revenue / Stripe Connect ───────────────────────────────
-  var TIER_NAMES = { free: 'Free', lite: 'OK Lite', standard: 'OK Standard', pro: 'OK Pro' };
+  var TIER_NAMES = {
+    free: 'Free', lite: 'OK Lite', standard: 'OK Standard', pro: 'OK Pro',
+    player: 'Player', dev: 'Dev', studio: 'Studio', studio_pro: 'Studio Pro',
+  };
   var TIER_PRICES = { free: '$0', lite: '$3/mo', standard: '$7/mo', pro: '$10/mo' };
 
   async function loadConnectStatus() {
@@ -698,7 +701,7 @@
   }
 
   // ── Apply loaded prefs to UI ────────────────────────────────
-  function applyPrefs() {
+  async function applyPrefs() {
     // seg controls
     document.querySelectorAll('#settings-app .stg-seg').forEach(function(seg) {
       var key = seg.dataset.key;
@@ -747,10 +750,19 @@
       if (toggle) { toggle.classList.add('on'); }
       if (label) { label.textContent = 'ON'; label.style.color = '#39ff7f'; }
     }
-    // plan info
-    if (prefs.plan) {
+    // plan info — show "<TierName> plan" (e.g. "Dev plan", "Studio plan").
+    // Falls back to session.tier when prefs.plan is missing (client-level
+    // sessions may not have the user-level plan field).
+    var planVal = prefs.plan;
+    if (!planVal) {
+      try {
+        var ses = await platform.user.current();
+        planVal = ses && ses.tier;
+      } catch (_) {}
+    }
+    if (planVal) {
       var planEl = document.getElementById('planInfo');
-      if (planEl) planEl.textContent = prefs.plan.charAt(0).toUpperCase() + prefs.plan.slice(1);
+      if (planEl) planEl.textContent = (TIER_NAMES[planVal] || (planVal.charAt(0).toUpperCase() + planVal.slice(1))) + ' plan';
     }
   }
 
