@@ -1282,27 +1282,61 @@
     if (btn) btn.addEventListener('click', openPlanModal);
   }
 
-  // ── Studio Mailboxes ────────────────────────────────────────
-  // Surface the Mailboxes nav item only for studio-tier plans.
-  // Reads from /api/auth/session for plan + studioSlug, then renders
-  // existing email_addresses + a create form whose options come from
-  // /api/chat/external/team-members (dev things owned by this studio).
-  var _mbxSlug = null, _mbxDomain = null, _mbxList = [], _mbxTeam = [];
+  // ── Mailboxes ───────────────────────────────────────────────
+  // Two parallel surfaces:
+  //   - Studio tier viewer  → manages <slug>.gamoids.com mailboxes
+  //                            (their studio's client-facing emails).
+  //   - super_owner / gamoidEmployee → manages @gamoid.io mailboxes
+  //                            (Gamoid Ltd company emails). Super-
+  //                            owner auto-gets <slug>@gamoid.io minted
+  //                            on first Mailboxes load.
+  // Both can be true (super_owner who also has a test studio); we
+  // show whichever applies — but the more common case is one of the
+  // two. The nav item is visible if either applies.
+  var _mbxSlug = null, _mbxDomain = null, _mbxList = [], _mbxTeam = [], _mbxMode = null;
   async function initMailboxes() {
     var ses;
     try { ses = await (await fetch('/api/auth/session')).json(); } catch (e) { ses = {}; }
     var plan = (ses && ses.plan) || 'free';
     var isStudio = (plan === 'studio' || plan === 'studio_pro');
+    var isCompany = !!(ses && (ses.superOwner || ses.role === 'super_owner' || ses.gamoidEmployee));
     var nav = document.getElementById('stgMailboxesNav');
-    if (nav) nav.style.display = isStudio ? '' : 'none';
-    if (!isStudio) return;
-    _mbxSlug = (ses && ses.studioSlug) || null;
-    // Parent domain — pull from inlined SIGNUP_CONFIG.studioMailDomain
-    // if present, fall back to gamoids.com (matches server default).
-    var parentDomain = (window.SIGNUP_CONFIG && window.SIGNUP_CONFIG.studioMailDomain) || 'gamoids.com';
-    _mbxDomain = _mbxSlug ? (_mbxSlug + '.' + parentDomain) : parentDomain;
+    if (nav) nav.style.display = (isStudio || isCompany) ? '' : 'none';
+    if (!isStudio && !isCompany) return;
+
+    // Company takes priority for super_owner — gamoid employees see
+    // their @gamoid.io mailboxes, not whatever studio they may have
+    // created for testing. Studio-only users see studio mailboxes.
+    var companyDomain = (window.INSTANCE_MAIL && window.INSTANCE_MAIL.companyMailDomain) || 'gamoid.io';
+    var studioParent  = (window.INSTANCE_MAIL && window.INSTANCE_MAIL.studioMailDomain)  || 'gamoids.com';
+    if (isCompany) {
+      _mbxMode = 'company';
+      _mbxDomain = companyDomain;
+      _mbxSlug = null;
+      // Auto-mint the super-owner's own @gamoid.io mailbox so the
+      // Mailboxes pane shows them an actual address on first load
+      // (instead of an empty list). One-shot; subsequent loads find
+      // the existing record.
+      try {
+        await fetch('/api/auth/company-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ local: ses.slug || ses.studio }),
+        });
+      } catch (e) {}
+    } else {
+      _mbxMode = 'studio';
+      _mbxSlug = (ses && ses.studioSlug) || null;
+      _mbxDomain = _mbxSlug ? (_mbxSlug + '.' + studioParent) : studioParent;
+    }
     var hint = document.getElementById('mbxDomainHint');
     if (hint) hint.textContent = 'e.g. marketing → marketing@' + _mbxDomain;
+    var header = document.querySelector('#sec-mailboxes .stg-section-header');
+    var sub = document.querySelector('#sec-mailboxes .stg-section-desc');
+    if (header) header.textContent = (_mbxMode === 'company') ? 'Company Mailboxes' : 'Studio Mailboxes';
+    if (sub) sub.textContent = (_mbxMode === 'company')
+      ? 'Email addresses under your gamoid.io company domain. Assign mailboxes to Gamoid employees.'
+      : "Email addresses under your studio's subdomain. Assign a mailbox to a dev to give them mail access.";
 
     // Load existing mailboxes + team members in parallel.
     try {
@@ -1313,14 +1347,21 @@
       _mbxList = await addrRes.json().catch(function(){ return []; });
       _mbxTeam = await teamRes.json().catch(function(){ return []; });
     } catch (e) { _mbxList = []; _mbxTeam = []; }
-    // Filter to mailboxes under this studio's domain.
+    // Filter to mailboxes under THIS surface's domain only — never
+    // mix gamoid.io and gamoids.com on the same screen.
     _mbxList = (_mbxList || []).filter(function(a) {
-      return a && (a.domain === _mbxDomain || (a.address && a.address.indexOf('@' + _mbxDomain) !== -1));
+      var d = a.domain || (a.data && a.data.domain) || '';
+      if (a.address && a.address.indexOf('@') !== -1) d = a.address.split('@')[1];
+      return d === _mbxDomain;
     });
     renderMailboxList();
     populateTeamPicker(document.getElementById('mbxNewAssign'));
     var add = document.getElementById('mbxAddBtn');
-    if (add) add.addEventListener('click', onMailboxCreate);
+    if (add) {
+      var clone = add.cloneNode(true);  // strip any stale listener
+      add.parentNode.replaceChild(clone, add);
+      clone.addEventListener('click', onMailboxCreate);
+    }
   }
   function renderMailboxList() {
     var host = document.getElementById('mbxList');
@@ -1387,29 +1428,53 @@
     var local = (input.value || '').toLowerCase().replace(/[^a-z0-9._-]/g, '');
     if (!local) { showMbxErr('Local part required.'); return; }
     if (local.length > 20) { showMbxErr('Max 20 chars.'); return; }
-    if (!_mbxDomain) { showMbxErr('Studio domain unresolved.'); return; }
+    if (!_mbxDomain) { showMbxErr('Domain unresolved.'); return; }
     var assignedTo = sel.value ? [sel.value] : [];
     btn.disabled = true;
     var oldText = btn.textContent;
     btn.textContent = 'Creating…';
     try {
-      var r = await fetch('/api/chat/external/addresses', {
+      var url, payload;
+      if (_mbxMode === 'company') {
+        // Company mailboxes go through the super-owner-only admin route
+        // so the CF rule + storage record are written together with the
+        // correct ownerId='gamoid' tag.
+        url = '/api/auth/company-email';
+        payload = { local: local, userId: assignedTo[0] || null };
+      } else {
+        url = '/api/chat/external/addresses';
+        payload = { address: local, domain: _mbxDomain, assignedTo: assignedTo };
+      }
+      var r = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address: local, domain: _mbxDomain, assignedTo: assignedTo }),
+        body: JSON.stringify(payload),
       });
       var j = await r.json();
-      if (!r.ok) throw new Error(j.error || 'Create failed');
+      if (!r.ok || j.ok === false) throw new Error((j && j.error) || 'Create failed');
       input.value = '';
       sel.value = '';
-      _mbxList.unshift(j);
-      renderMailboxList();
+      // Refresh by re-reading — the company endpoint returns a slim
+      // {ok,address,id} so we can't just unshift the record directly.
+      await refreshMailboxList();
     } catch (e) {
       showMbxErr(e.message);
     } finally {
       btn.disabled = false;
       btn.textContent = oldText;
     }
+  }
+  async function refreshMailboxList() {
+    try {
+      var addrRes = await fetch('/api/chat/my-addresses');
+      var rows = await addrRes.json();
+      _mbxList = (rows || []).filter(function(a) {
+        var d = a.domain || (a.data && a.data.domain) || '';
+        if (a.address && a.address.indexOf('@') !== -1) d = a.address.split('@')[1];
+        return d === _mbxDomain;
+      });
+      renderMailboxList();
+    } catch (e) {}
   }
   async function onMailboxReassign(id, assignedTo) {
     try {
