@@ -437,3 +437,118 @@
   .stg-font-grid { grid-template-columns: 1fr 1fr; }
   .stg-row { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
+
+/* ═══ Account section — merged Account+Profile redesign ═══
+   Header row: title left, tier badge right (colored like signup).
+   Duet row:   two equal-height boxes (Avatar / Details).
+   Info box:   bio + social + press, full width.
+   Plus EMAIL ADDRESSES / PASSWORD / DANGER ZONE below. */
+
+.stg-acct-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.stg-tier-badge {
+  font-family: var(--font-head); font-size: 14px; letter-spacing: 0.12em;
+  padding: 10px 22px; border-radius: 8px; cursor: pointer;
+  background: var(--tier-color, var(--primary));
+  color: var(--tier-fg, #0b0b14);
+  border: 1px solid transparent;
+  text-transform: uppercase;
+  transition: transform 0.1s, box-shadow 0.15s;
+  box-shadow: 0 2px 12px -2px var(--tier-color, var(--primary));
+}
+.stg-tier-badge:hover { transform: translateY(-1px); box-shadow: 0 4px 16px -2px var(--tier-color, var(--primary)); }
+.stg-tier-badge[data-tier="player"]     { --tier-color: #3dc8ff; --tier-fg: #0b0b14; }
+.stg-tier-badge[data-tier="dev"]        { --tier-color: #39ff7f; --tier-fg: #0b0b14; }
+.stg-tier-badge[data-tier="studio"]     { --tier-color: #ffe03d; --tier-fg: #0b0b14; }
+.stg-tier-badge[data-tier="studio_pro"] { --tier-color: #ff3997; --tier-fg: #ffffff; }
+.stg-tier-badge[data-tier="free"]       { --tier-color: #5a6a70; --tier-fg: #ffffff; }
+
+/* Two-box duet row — Avatar | Details. Same height enforced by grid. */
+.stg-acct-duet {
+  display: grid;
+  /* Picker iframe needs ~440px to fit Back/Change/Save in a row;
+     narrower clips the Save button. */
+  grid-template-columns: minmax(440px, 480px) 1fr;
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 18px;
+}
+.stg-acct-box {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 18px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.stg-acct-box .stg-group-label { margin: 0; }
+.stg-acct-avatar .stg-avatar-frame {
+  flex: 1 1 auto; min-height: 320px; height: auto;
+}
+.stg-acct-details { gap: 14px; }
+
+/* Detail pair row: left field | arrow | right field (or CTA) */
+.stg-acct-pair {
+  display: grid;
+  grid-template-columns: 1fr 24px 1fr;
+  align-items: end; gap: 8px;
+}
+.stg-acct-pair > label {
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-dim);
+}
+.stg-acct-pair > label .stg-input,
+.stg-acct-pair > label .stg-acct-static {
+  font-size: 14px; text-transform: none; letter-spacing: normal;
+  color: var(--text); padding: 8px 10px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  min-height: 36px; box-sizing: border-box;
+  font-family: inherit;
+}
+.stg-acct-pair > label select.stg-input { padding-right: 28px; }
+.stg-acct-pair > label .stg-input[readonly] { color: var(--primary); font-family: var(--font-mono); font-size: 13px; }
+.stg-acct-pair > label .stg-acct-static {
+  display: flex; align-items: center; color: var(--text);
+}
+.stg-acct-arrow {
+  align-self: center; color: var(--text-dim); font-size: 16px;
+  text-align: center; padding-top: 22px;
+}
+.stg-acct-spacer { display: block; }
+.stg-acct-cta { align-self: end; height: 36px; padding: 0 18px; white-space: nowrap; }
+.stg-acct-flagrow { display: flex; align-items: center; gap: 6px; }
+.stg-acct-flagrow .stg-flag-preview { flex: 0 0 auto; }
+.stg-acct-flagrow .stg-input { flex: 1; }
+
+/* INFO BOX */
+.stg-acct-info { gap: 14px; margin-bottom: 18px; }
+.stg-acct-info-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.stg-info-field { display: flex; flex-direction: column; gap: 6px; }
+.stg-info-label {
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim);
+}
+.stg-info-field textarea.stg-input {
+  width: 100%; box-sizing: border-box; resize: vertical; min-height: 64px;
+  padding: 10px 12px;
+}
+.stg-info-platforms { display: flex; flex-direction: column; gap: 6px; }
+.stg-info-platforms-add {
+  display: grid; grid-template-columns: 160px 1fr auto; gap: 8px; align-items: center;
+}
+.stg-info-platforms-add .stg-input { padding: 8px 10px; }
+
+/* Merged email addresses box content padding */
+.stg-acct-myemails:empty { display: none; }
+.stg-acct-myemails > * + * { margin-top: 6px; }
+
+/* Responsive — stack the duet on narrow viewports */
+@media (max-width: 900px) {
+  .stg-acct-duet { grid-template-columns: 1fr; }
+  .stg-acct-pair { grid-template-columns: 1fr; }
+  .stg-acct-pair .stg-acct-arrow { display: none; }
+  .stg-acct-pair .stg-acct-cta { justify-self: start; }
+  .stg-info-platforms-add { grid-template-columns: 1fr; }
+}

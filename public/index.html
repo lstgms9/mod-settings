@@ -1,10 +1,10 @@
 <div id="settings-app">
   <nav class="stg-sidebar" id="stgSidebar">
     <div class="stg-sidebar-title">SETTINGS</div>
-    <!-- Account first — most-used section. The legacy data-section name
-         is still "danger" so the existing section markup matches. -->
+    <!-- Account is the merged Account + Profile section. The data-section
+         name remains "danger" so existing section-switching JS still works
+         without renames. -->
     <div class="stg-nav-item active" data-section="danger"><span class="stg-nav-icon">&#128100;</span> Account</div>
-    <div class="stg-nav-item" data-section="profile"><span class="stg-nav-icon">&#128483;</span> Profile</div>
     <div class="stg-nav-item" data-section="mailboxes" id="stgMailboxesNav" style="display:none"><span class="stg-nav-icon">&#9993;&#xFE0F;</span> Mailboxes</div>
     <div class="stg-nav-item" data-section="appearance"><span class="stg-nav-icon">&#127912;</span> Appearance</div>
     <div class="stg-nav-item" data-section="ai"><span class="stg-nav-icon">&#129302;</span> AI Accounts</div>
@@ -75,70 +75,7 @@
 
     </div>
 
-    <!-- PROFILE — public-facing identity. Editable per-user data
-         (display name, country, bio, social platforms) plus the avatar
-         picker iframe. Distinct from Account (auth, plan, danger zone). -->
-    <div class="stg-section" id="sec-profile">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-        <div class="stg-section-header" style="margin:0;">Profile</div>
-        <button class="stg-ai-btn stg-ai-connect" id="profileSaveBtn" style="width:auto;padding:8px 20px;">Save profile</button>
-      </div>
-      <div class="stg-section-desc">Public-facing identity shown on your profile and in Explore lists.</div>
-
-      <div class="stg-group">
-        <div class="stg-group-label">AVATAR</div>
-        <div class="stg-row" style="flex-direction:column;align-items:flex-start;gap:0;">
-          <iframe class="stg-avatar-frame" id="stgAvatarFrame" src="/signup-player?embed=settings" loading="lazy" title="Change name & avatar"></iframe>
-        </div>
-      </div>
-
-      <div class="stg-group">
-        <div class="stg-group-label">PROFILE</div>
-        <div class="stg-row">
-          <div style="flex:1;min-width:200px;">
-            <div class="stg-label">Display name</div>
-            <div class="stg-sublabel">Shown on your profile and in lists</div>
-          </div>
-          <input type="text" class="stg-input" id="profileDisplayName" placeholder="Your name" style="width:240px;">
-        </div>
-        <div class="stg-row">
-          <div style="flex:1;min-width:200px;">
-            <div class="stg-label">Country</div>
-            <div class="stg-sublabel">Used on your profile + Explore lists</div>
-          </div>
-          <div style="display:flex;align-items:center;width:240px;">
-            <span class="stg-flag-preview" id="profileCountryFlag">&#127757;</span>
-            <select class="stg-input" id="profileCountry" style="flex:1;"></select>
-          </div>
-        </div>
-        <div class="stg-row">
-          <div style="flex:1;min-width:200px;">
-            <div class="stg-label">Region</div>
-            <div class="stg-sublabel">Used for chat / news time grouping</div>
-          </div>
-          <select class="stg-input" id="profileTimezone" style="width:240px;"></select>
-        </div>
-        <div class="stg-row">
-          <div style="flex:1;min-width:200px;">
-            <div class="stg-label">Bio</div>
-            <div class="stg-sublabel">Short description on your profile</div>
-          </div>
-          <textarea class="stg-input" id="profileBio" placeholder="A few words..." rows="2" style="width:240px;resize:vertical;"></textarea>
-        </div>
-        <div class="stg-row" style="flex-direction:column;align-items:stretch;gap:8px;">
-          <div>
-            <div class="stg-label">Social networks</div>
-            <div class="stg-sublabel">Add the platforms you're active on</div>
-          </div>
-          <div id="profilePlatformsList" style="display:flex;flex-direction:column;gap:6px;"></div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <select class="stg-input" id="platformAddSelect" style="width:160px"></select>
-            <input type="text" class="stg-input" id="platformAddHandle" placeholder="handle / URL" style="flex:1;min-width:140px">
-            <button class="stg-ai-btn stg-ai-connect" id="platformAddBtn" style="width:auto;padding:8px 16px;">Add</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- (Profile section removed — merged into Account below.) -->
 
     <!-- MAILBOXES — studio-only. Owner manages every mailbox under the
          studio's subdomain (<slug>.<studioMailDomain>): create, assign
@@ -574,40 +511,94 @@
       </div>
     </div>
 
-    <!-- ACCOUNT (default active section) -->
+    <!-- ACCOUNT (merged with Profile). Layout:
+           HEADER ROW: title + subtitle + tier badge (right)
+           DUET ROW:   Avatar (left) | Details (right) — equal height
+           INFO BOX:   bio + social + press
+           EMAIL ADDRESSES (one box)
+           PASSWORD
+           DANGER ZONE
+         Bottom-right Save profile button writes bio + social.
+    -->
     <div class="stg-section active" id="sec-danger">
-      <div class="stg-section-header">Account</div>
-      <div class="stg-section-desc">Manage your account and subscription.</div>
-
-      <div class="stg-group">
-        <div class="stg-group-label">IDENTITY</div>
-        <div class="stg-row">
-          <div><div class="stg-label">Display name</div><div class="stg-sublabel" id="accountDisplayName">—</div></div>
+      <div class="stg-acct-head">
+        <div>
+          <div class="stg-section-header" style="margin:0;">Account</div>
+          <div class="stg-section-desc" style="margin:0;">Manage your account and subscription.</div>
         </div>
-        <div class="stg-row">
-          <div><div class="stg-label">Email</div><div class="stg-sublabel stg-mono-cyan" id="accountEmail">—</div></div>
+        <button class="stg-tier-badge" id="accountTierBadge" type="button" data-tier="">—</button>
+      </div>
+
+      <!-- AVATAR + DETAILS duet -->
+      <div class="stg-acct-duet">
+        <div class="stg-acct-box stg-acct-avatar">
+          <div class="stg-group-label">AVATAR</div>
+          <iframe class="stg-avatar-frame" id="stgAvatarFrame" src="/signup-player?embed=settings" loading="lazy" title="Change name & avatar"></iframe>
+        </div>
+        <div class="stg-acct-box stg-acct-details">
+          <div class="stg-group-label">DETAILS</div>
+          <div class="stg-acct-pair">
+            <label>Username<input type="text" class="stg-input" id="accountUsername" placeholder="username"></label>
+            <span class="stg-acct-arrow">→</span>
+            <label>Display name<input type="text" class="stg-input" id="profileDisplayName" placeholder="Your name"></label>
+          </div>
+          <div class="stg-acct-pair">
+            <label>Email<input type="text" class="stg-input stg-mono-cyan" id="accountEmail" placeholder="you@example.com" readonly></label>
+            <span class="stg-acct-arrow">→</span>
+            <label>Recovery email<input type="email" class="stg-input" id="accountRecoveryEmail" placeholder="backup@example.com"></label>
+          </div>
+          <div class="stg-acct-pair">
+            <label>Current plan<div class="stg-acct-static" id="planInfo">Free plan</div></label>
+            <span class="stg-acct-spacer"></span>
+            <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="planManageBtn">Manage Plan</button>
+          </div>
+          <div class="stg-acct-pair">
+            <label>Country
+              <div class="stg-acct-flagrow">
+                <span class="stg-flag-preview" id="profileCountryFlag">&#127757;</span>
+                <select class="stg-input" id="profileCountry"></select>
+              </div>
+            </label>
+            <span class="stg-acct-arrow">→</span>
+            <label>Region<select class="stg-input" id="profileTimezone"></select></label>
+          </div>
         </div>
       </div>
 
-      <div class="stg-group">
-        <div class="stg-group-label">PLAN</div>
-        <div class="stg-row">
-          <div><div class="stg-label">Current plan</div><div class="stg-sublabel" id="planInfo">Free</div></div>
-          <button class="stg-ai-btn stg-ai-connect" id="planManageBtn" style="width:auto;padding:8px 20px;">Manage Plan</button>
+      <!-- INFO BOX — public-facing profile content -->
+      <div class="stg-acct-box stg-acct-info">
+        <div class="stg-acct-info-head">
+          <div class="stg-group-label" style="margin:0;">INFO</div>
+          <button class="stg-ai-btn stg-ai-connect" id="profileSaveBtn" style="width:auto;padding:6px 16px;">Save profile</button>
         </div>
-        <div class="stg-row">
-          <div><div class="stg-label">Business domain</div><div class="stg-sublabel stg-mono-cyan" id="domainInfo">yourbiz.okdun.ai</div></div>
-          <button class="stg-ai-btn stg-ai-connect" style="width:auto;padding:8px 20px;">Custom Domain</button>
-        </div>
+        <label class="stg-info-field">
+          <span class="stg-info-label">Bio</span>
+          <textarea class="stg-input" id="profileBio" placeholder="A short description shown on your profile…" rows="3"></textarea>
+        </label>
+        <label class="stg-info-field">
+          <span class="stg-info-label">Social networks</span>
+          <div id="profilePlatformsList" class="stg-info-platforms"></div>
+          <div class="stg-info-platforms-add">
+            <select class="stg-input" id="platformAddSelect"></select>
+            <input type="text" class="stg-input" id="platformAddHandle" placeholder="@handle or URL">
+            <button class="stg-ai-btn stg-ai-connect" id="platformAddBtn">Add</button>
+          </div>
+        </label>
+        <label class="stg-info-field">
+          <span class="stg-info-label">Press outlets</span>
+          <div id="profilePressList" class="stg-info-platforms"></div>
+          <div class="stg-info-platforms-add">
+            <input type="text" class="stg-input" id="pressAddName" placeholder="Outlet name">
+            <input type="text" class="stg-input" id="pressAddUrl" placeholder="URL">
+            <button class="stg-ai-btn stg-ai-connect" id="pressAddBtn">Add</button>
+          </div>
+        </label>
       </div>
 
-      <div class="stg-group" id="myEmailsGroup" style="display:none;">
-        <div class="stg-group-label">MY EMAIL ADDRESSES</div>
-        <div id="myEmailsContent"><div class="stg-sublabel">No email addresses assigned to you yet.</div></div>
-      </div>
-
+      <!-- EMAIL ADDRESSES (single merged box; was MY + ALL) -->
       <div class="stg-group" id="emailGroup">
         <div class="stg-group-label">EMAIL ADDRESSES</div>
+        <div id="myEmailsContent" class="stg-acct-myemails"></div>
         <div id="emailContent"></div>
       </div>
 

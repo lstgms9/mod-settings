@@ -764,24 +764,37 @@
         }
       } catch (_) {}
     }
-    var nameEl = document.getElementById('accountDisplayName');
-    if (nameEl && idName) nameEl.textContent = idName;
+    // Populate Details box. Username + Display name are editable; email
+    // is read-only (changing it requires re-verification, future work).
+    var dn = document.getElementById('profileDisplayName');
+    if (dn && idName && !dn.value) dn.value = idName;
+    var unEl = document.getElementById('accountUsername');
+    if (unEl && !unEl.value) {
+      var unVal = prefs.username || (await (async function(){
+        try { var s = await platform.user.current(); return s && (s.username || s.handle); } catch(_) { return null; }
+      })());
+      if (unVal) unEl.value = unVal;
+    }
     var emailEl = document.getElementById('accountEmail');
-    if (emailEl && idEmail) emailEl.textContent = idEmail;
+    if (emailEl && idEmail) emailEl.value = idEmail;
 
-    // plan info — show "<TierName> plan" (e.g. "Dev plan", "Studio plan").
-    // Falls back to session.tier when prefs.plan is missing (client-level
-    // sessions may not have the user-level plan field).
+    // plan info — show "<TierName> plan" + colored tier badge.
     var planVal = prefs.plan;
     if (!planVal) {
       try {
-        var ses = await platform.user.current();
-        planVal = ses && ses.tier;
+        var ses2 = await platform.user.current();
+        planVal = ses2 && ses2.tier;
       } catch (_) {}
     }
     if (planVal) {
       var planEl = document.getElementById('planInfo');
-      if (planEl) planEl.textContent = (TIER_NAMES[planVal] || (planVal.charAt(0).toUpperCase() + planVal.slice(1))) + ' plan';
+      var label = (TIER_NAMES[planVal] || (planVal.charAt(0).toUpperCase() + planVal.slice(1))) + ' plan';
+      if (planEl) planEl.textContent = label;
+      var badge = document.getElementById('accountTierBadge');
+      if (badge) {
+        badge.setAttribute('data-tier', planVal);
+        badge.textContent = (TIER_NAMES[planVal] || planVal).toUpperCase();
+      }
     }
   }
 
@@ -922,6 +935,46 @@
       if (inp) inp.value = '';
       renderPlatformRows();
       refreshAddSelect();
+    });
+    // Press outlets — local-state only for now. Backend storage TBD;
+    // we render the rows so the layout is complete and saves don't
+    // crash. State persists for the session and is included in the
+    // saveProfile payload (server currently ignores unknown fields).
+    renderPressRows();
+    var pAddBtn = document.getElementById('pressAddBtn');
+    if (pAddBtn) pAddBtn.addEventListener('click', function() {
+      var nameI = document.getElementById('pressAddName');
+      var urlI = document.getElementById('pressAddUrl');
+      var name = nameI && nameI.value.trim();
+      var url = urlI && urlI.value.trim();
+      if (!name) return;
+      _pressState.push({ name: name, url: url || '' });
+      if (nameI) nameI.value = '';
+      if (urlI) urlI.value = '';
+      renderPressRows();
+    });
+  }
+
+  var _pressState = [];
+  function renderPressRows() {
+    var host = document.getElementById('profilePressList');
+    if (!host) return;
+    if (!_pressState.length) {
+      host.innerHTML = '<div class="stg-sublabel" style="opacity:.7">No press outlets added yet.</div>';
+      return;
+    }
+    host.innerHTML = _pressState.map(function(r, i) {
+      return '<div class="stg-row" style="padding:6px 10px;background:var(--bg-card,#12121f);border:1px solid var(--border,#252540);border-radius:6px;gap:8px;">' +
+        '<span style="min-width:140px;font-size:13px">' + (r.name || '').replace(/</g,'&lt;') + '</span>' +
+        '<a href="' + (r.url || '#').replace(/"/g,'&quot;') + '" target="_blank" rel="noopener" style="flex:1;font-size:12px;color:var(--primary);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.url || '').replace(/</g,'&lt;') + '</a>' +
+        '<button class="stg-ai-btn" data-press-rm="' + i + '" style="width:auto;padding:6px 12px;background:transparent;border:1px solid var(--red,#ff3997);color:var(--red,#ff3997)">×</button>' +
+      '</div>';
+    }).join('');
+    Array.from(host.querySelectorAll('[data-press-rm]')).forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        _pressState.splice(Number(btn.dataset.pressRm), 1);
+        renderPressRows();
+      });
     });
   }
   async function saveProfile() {
@@ -1311,6 +1364,11 @@
   function initPlanManage() {
     var btn = document.getElementById('planManageBtn');
     if (btn) btn.addEventListener('click', openPlanModal);
+    // Tier badge in the Account header acts as a secondary affordance —
+    // clicking it also opens the same plan modal so the colored chip
+    // doubles as a "manage" trigger.
+    var badge = document.getElementById('accountTierBadge');
+    if (badge) badge.addEventListener('click', openPlanModal);
   }
 
   // ── Mailboxes ───────────────────────────────────────────────
