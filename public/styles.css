@@ -561,6 +561,29 @@
 }
 .stg-acct-arrow { display: none; }
 .stg-acct-spacer { display: block; }
+
+/* Locked identity field (Username, Studio Slug) — must not look
+   editable. Mono-styled value over a muted bg with a dotted border
+   so it reads "fixed" without the affordance of an input. */
+.stg-acct-pair > label .stg-acct-locked {
+  font-family: var(--font-mono, monospace);
+  font-size: 14px; color: var(--text);
+  padding: 8px 10px; min-height: 36px; box-sizing: border-box;
+  display: flex; align-items: center;
+  background: rgba(255,255,255,0.02);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  cursor: not-allowed; user-select: text;
+}
+.stg-locked-tag {
+  display: inline-block; margin-left: 6px;
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 1px 6px; border-radius: 3px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  vertical-align: middle;
+}
 .stg-acct-cta { align-self: end; height: 36px; padding: 0 18px; white-space: nowrap; }
 .stg-acct-flagrow { display: flex; align-items: center; gap: 6px; }
 .stg-acct-flagrow .stg-flag-preview { flex: 0 0 auto; }

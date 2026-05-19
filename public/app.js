@@ -785,11 +785,17 @@
     var dn = document.getElementById('profileDisplayName');
     if (dn && idName && !dn.value) dn.value = idName;
     var unEl = document.getElementById('accountUsername');
-    if (unEl && !unEl.value) {
+    if (unEl) {
       var unVal = prefs.username || (await (async function(){
         try { var s = await platform.user.current(); return s && (s.username || s.handle); } catch(_) { return null; }
       })());
-      if (unVal) unEl.value = unVal;
+      if (unVal) {
+        // accountUsername is a locked static display (not an input). The
+        // username is the user identity — @-mentions, mailbox local-part,
+        // profile slug — and renaming would orphan all of those refs.
+        if (unEl.tagName === 'INPUT') { unEl.value = unVal; unEl.readOnly = true; }
+        else { unEl.textContent = unVal; }
+      }
     }
     // EMAIL = username@<studioSlug>.gamoids.com (studio-tier accounts).
     // Studio name rendered as a highlighted chip. Pre-studio users see
@@ -811,6 +817,28 @@
     // RECOVERY EMAIL = the original signup address (read-only).
     var recEl = document.getElementById('accountRecoveryEmail');
     if (recEl && idEmail) recEl.value = idEmail;
+
+    // STUDIO row — only rendered for studio-tier viewers. Slug is locked
+    // (subdomain + mailbox + DNS + DKIM all keyed off it); name is the
+    // only studio identity field a user can edit post-signup.
+    try {
+      var stRow = document.getElementById('accountStudioRow');
+      var sesObj3 = await platform.user.current();
+      var isStudioTier3 = sesObj3 && (sesObj3.tier === 'studio' || sesObj3.tier === 'studio_pro' || sesObj3.plan === 'studio' || sesObj3.plan === 'studio_pro');
+      if (stRow && isStudioTier3 && sesObj3.studioSlug) {
+        stRow.style.display = '';
+        var slugEl = document.getElementById('accountStudioSlug');
+        if (slugEl) slugEl.textContent = sesObj3.studioSlug;
+        var snEl = document.getElementById('accountStudioName');
+        if (snEl) {
+          var things2 = await fetch('/_api/storage/list?type=thing').then(function(r){ return r.json(); }).catch(function(){ return []; });
+          var myStudio2 = Array.isArray(things2) ? things2.find(function(t) {
+            return t.kind === 'studio' && (t.slug === sesObj3.studioSlug || t.owner_user_id === sesObj3.slug);
+          }) : null;
+          if (myStudio2 && (myStudio2.name || myStudio2.studioName)) snEl.value = myStudio2.name || myStudio2.studioName;
+        }
+      }
+    } catch (e) {}
 
     // plan info — show "<TierName> plan" + colored tier badge.
     var planVal = prefs.plan;
