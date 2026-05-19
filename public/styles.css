@@ -561,6 +561,18 @@
 }
 .stg-acct-arrow { display: none; }
 .stg-acct-spacer { display: block; }
+/* Plan row: text + Manage Plan button inline on the same line, not
+   stacked. Button hugs the plan name on the left rather than
+   floating in the right column. */
+.stg-acct-pair-plan { grid-template-columns: 1fr; }
+.stg-acct-planrow { display: flex; align-items: center; gap: 12px; min-height: 36px; }
+.stg-acct-planrow .stg-acct-static { padding: 0; min-height: 0; flex: 0 0 auto; white-space: nowrap; }
+/* Manage Plan button: hug content, sit immediately right of the
+   plan name (don't stretch to fill the column like a bottom-row CTA). */
+.stg-acct-planrow .stg-acct-cta {
+  align-self: auto; width: auto; height: 32px;
+  padding: 0 14px; font-size: 12px; flex: 0 0 auto;
+}
 
 /* Locked identity field (Username, Studio Slug) — must not look
    editable. Mono-styled value over a muted bg with a dotted border

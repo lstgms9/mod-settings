@@ -1822,6 +1822,22 @@
 
   // ── Init ────────────────────────────────────────────────────
   window.platform.module.init = async function() {
+    // Fill any [data-tenant-brand] placeholders with the current
+    // tenant's display name. mod-settings is multi-tenant, so we read
+    // from window.SIGNUP_CONFIG.heroTitle when present, otherwise
+    // capitalize INSTANCE_SLUG, otherwise leave the placeholder
+    // ("this site") in place.
+    try {
+      var brand = (window.SIGNUP_CONFIG && (window.SIGNUP_CONFIG.heroTitle || '').trim())
+        || (window.INSTANCE_SLUG && window.INSTANCE_SLUG.charAt(0).toUpperCase() + window.INSTANCE_SLUG.slice(1))
+        || '';
+      if (brand) {
+        document.querySelectorAll('[data-tenant-brand]').forEach(function(el) {
+          el.textContent = brand;
+        });
+      }
+    } catch (_) {}
+
     var data = await API.get('/prefs');
     if (data && !data.error) {
       // separate AI keys from prefs

@@ -391,15 +391,8 @@
 
       <div class="stg-group">
         <div class="stg-group-label">VISIBILITY</div>
-        <div class="stg-row"><div><div class="stg-label">Public profile</div><div class="stg-sublabel">Show your business on OkDun directory</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="publicProfile"></div><span class="stg-toggle-label">ON</span></div></div>
+        <div class="stg-row"><div><div class="stg-label">Public profile</div><div class="stg-sublabel">Show your business on the <span data-tenant-brand>this site</span> directory</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="publicProfile"></div><span class="stg-toggle-label">ON</span></div></div>
         <div class="stg-row"><div><div class="stg-label">Online status</div><div class="stg-sublabel">Let others see when you're active</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="onlineStatus"></div><span class="stg-toggle-label">ON</span></div></div>
-        <div class="stg-row"><div><div class="stg-label">Analytics sharing</div><div class="stg-sublabel">Help improve OkDun with anonymous usage data</div></div><div class="stg-toggle-wrap"><div class="stg-toggle" data-key="analytics"></div><span class="stg-toggle-label">OFF</span></div></div>
-      </div>
-
-      <div class="stg-group">
-        <div class="stg-group-label">AI PRIVACY</div>
-        <div class="stg-row"><div><div class="stg-label">AI data training opt-out</div><div class="stg-sublabel">Prevent your content from being used to train AI models</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="aiOptOut"></div><span class="stg-toggle-label">ON</span></div></div>
-        <div class="stg-row"><div><div class="stg-label">AI conversation logging</div><div class="stg-sublabel">Store AI interactions locally for your reference</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="aiLogging"></div><span class="stg-toggle-label">ON</span></div></div>
       </div>
     </div>
 
@@ -545,10 +538,13 @@
             <label>Email<div class="stg-acct-email" id="accountEmail" data-fallback="you@example.com">—</div></label>
             <label>Recovery email<input type="text" class="stg-input stg-mono-cyan" id="accountRecoveryEmail" placeholder="—" readonly></label>
           </div>
-          <div class="stg-acct-pair">
-            <label>Current plan<div class="stg-acct-static" id="planInfo">Free plan</div></label>
-            <span class="stg-acct-spacer"></span>
-            <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="planManageBtn">Manage Plan</button>
+          <div class="stg-acct-pair stg-acct-pair-plan">
+            <label>Current plan
+              <div class="stg-acct-planrow">
+                <div class="stg-acct-static" id="planInfo">Free plan</div>
+                <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="planManageBtn">Manage Plan</button>
+              </div>
+            </label>
           </div>
           <div class="stg-acct-pair">
             <label>Country
