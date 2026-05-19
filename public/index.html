@@ -1,21 +1,29 @@
 <div id="settings-app">
   <nav class="stg-sidebar" id="stgSidebar">
     <div class="stg-sidebar-title">SETTINGS</div>
-    <!-- Account is the merged Account + Profile section. The data-section
-         name remains "danger" so existing section-switching JS still works
-         without renames. -->
+    <!-- Visible sidebar order (per Damon, while we ship the platform):
+           Account            — everyone
+           Appearance         — everyone
+           Privacy & Security — tier 1+ (dev and up)
+           Notifications      — tier 1+
+           AI Accounts        — tier 2+ (studio and up)
+           Mailboxes          — studio-tier viewers (existing JS reveal)
+           Team               — owner/admin (existing JS reveal)
+         Items below are commented out for now — uncomment to restore. -->
     <div class="stg-nav-item active" data-section="danger"><span class="stg-nav-icon">&#128100;</span> Account</div>
-    <div class="stg-nav-item" data-section="mailboxes" id="stgMailboxesNav" style="display:none"><span class="stg-nav-icon">&#9993;&#xFE0F;</span> Mailboxes</div>
     <div class="stg-nav-item" data-section="appearance"><span class="stg-nav-icon">&#127912;</span> Appearance</div>
-    <div class="stg-nav-item" data-section="ai"><span class="stg-nav-icon">&#129302;</span> AI Accounts</div>
+    <div class="stg-nav-item" data-section="privacy" data-min-tier="1"><span class="stg-nav-icon">&#128274;</span> Privacy &amp; Security</div>
+    <div class="stg-nav-item" data-section="notifications" data-min-tier="1"><span class="stg-nav-icon">&#128276;</span> Notifications</div>
+    <div class="stg-nav-item" data-section="ai" data-min-tier="2"><span class="stg-nav-icon">&#129302;</span> AI Accounts</div>
+    <div class="stg-nav-item" data-section="mailboxes" id="stgMailboxesNav" style="display:none"><span class="stg-nav-icon">&#9993;&#xFE0F;</span> Mailboxes</div>
+    <div class="stg-nav-item" data-section="team" id="stgTeamNav" style="display:none"><span class="stg-nav-icon">&#128101;</span> Team</div>
+    <!-- Hidden-for-now nav entries:
     <div class="stg-nav-item" data-section="autopilot"><span class="stg-nav-icon">&#128640;</span> AI Autopilot</div>
     <div class="stg-nav-item" data-section="revenue"><span class="stg-nav-icon">&#128176;</span> Revenue</div>
-    <div class="stg-nav-item" data-section="notifications"><span class="stg-nav-icon">&#128276;</span> Notifications</div>
     <div class="stg-nav-item" data-section="region"><span class="stg-nav-icon">&#127757;</span> Language &amp; Region</div>
-    <div class="stg-nav-item" data-section="privacy"><span class="stg-nav-icon">&#128274;</span> Privacy &amp; Security</div>
     <div class="stg-nav-item" data-section="storage"><span class="stg-nav-icon">&#128190;</span> Data &amp; Storage</div>
     <div class="stg-nav-item" data-section="shortcuts"><span class="stg-nav-icon">&#9000;</span> Shortcuts</div>
-    <div class="stg-nav-item" data-section="team" id="stgTeamNav" style="display:none"><span class="stg-nav-icon">&#128101;</span> Team</div>
+    -->
   </nav>
 
   <div class="stg-main" id="stgMain">
@@ -268,25 +276,10 @@
         <div class="stg-group-label">CHANNELS</div>
         <div class="stg-row"><div><div class="stg-label">Email notifications</div><div class="stg-sublabel">New mail, replies, forwards</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="notifEmail"></div><span class="stg-toggle-label">ON</span></div></div>
         <div class="stg-row"><div><div class="stg-label">Social media alerts</div><div class="stg-sublabel">Mentions, DMs, comments</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="notifSocial"></div><span class="stg-toggle-label">ON</span></div></div>
-        <div class="stg-row"><div><div class="stg-label">Planner reminders</div><div class="stg-sublabel">Task due dates, sprint starts</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="notifPlanner"></div><span class="stg-toggle-label">ON</span></div></div>
-        <div class="stg-row"><div><div class="stg-label">Billing alerts</div><div class="stg-sublabel">Payment received, failed, low balance</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="notifBilling"></div><span class="stg-toggle-label">ON</span></div></div>
+        <!-- Planner reminders + Billing alerts rows removed. -->
       </div>
 
-      <div class="stg-group">
-        <div class="stg-group-label">QUIET HOURS</div>
-        <div class="stg-row">
-          <div><div class="stg-label">Do not disturb</div><div class="stg-sublabel">Mute all sounds and banners</div></div>
-          <div class="stg-toggle-wrap"><div class="stg-toggle" data-key="dnd"></div><span class="stg-toggle-label">OFF</span></div>
-        </div>
-        <div class="stg-row">
-          <div><div class="stg-label">Schedule</div><div class="stg-sublabel">Auto-enable quiet hours</div></div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="time" value="22:00" class="stg-time-input" data-key="quietStart">
-            <span style="color:var(--text-dim);font-size:12px">to</span>
-            <input type="time" value="08:00" class="stg-time-input" data-key="quietEnd">
-          </div>
-        </div>
-      </div>
+      <!-- QUIET HOURS group removed. -->
     </div>
 
     <!-- LANGUAGE & REGION -->

@@ -111,6 +111,22 @@
       if (el) el.classList.add('active');
       if (sec === 'revenue') loadConnectStatus();
     });
+    // Tier-gate sidebar items via data-min-tier. Hide entries whose
+    // required tier exceeds the viewer's. Player=0, Dev=1, Studio=2,
+    // Studio_Pro=3. Tenant owner / super_owner sees everything.
+    (async function() {
+      try {
+        var s = await platform.user.current();
+        if (!s) return;
+        if (s.role === 'owner' || s.superOwner) return;
+        var levels = { player: 0, dev: 1, studio: 2, studio_pro: 3 };
+        var tier = (typeof s.tier === 'number') ? s.tier : (levels[s.tier] || 0);
+        sidebar.querySelectorAll('.stg-nav-item[data-min-tier]').forEach(function(el) {
+          var req = Number(el.dataset.minTier || 0);
+          if (tier < req) el.style.display = 'none';
+        });
+      } catch (e) {}
+    })();
   }
 
   // ── Segmented controls ──────────────────────────────────────
