@@ -823,10 +823,12 @@
     // only studio identity field a user can edit post-signup.
     try {
       var stRow = document.getElementById('accountStudioRow');
+      var stNameRow = document.getElementById('accountStudioNameRow');
       var sesObj3 = await platform.user.current();
       var isStudioTier3 = sesObj3 && (sesObj3.tier === 'studio' || sesObj3.tier === 'studio_pro' || sesObj3.plan === 'studio' || sesObj3.plan === 'studio_pro');
       if (stRow && isStudioTier3 && sesObj3.studioSlug) {
         stRow.style.display = '';
+        if (stNameRow) stNameRow.style.display = '';
         var slugEl = document.getElementById('accountStudioSlug');
         if (slugEl) slugEl.textContent = sesObj3.studioSlug;
         var snEl = document.getElementById('accountStudioName');
@@ -1457,6 +1459,36 @@
     // doubles as a "manage" trigger.
     var badge = document.getElementById('accountTierBadge');
     if (badge) badge.addEventListener('click', openPlanModal);
+    // Delete account — single confirm() prompt then POST to
+    // /api/auth/delete-account (server wipes the client + studio
+    // thing and clears the session). Bare for now; long-term policy
+    // is a 90-day grace period with reminder emails instead of
+    // self-serve delete.
+    var del = document.getElementById('deleteBtn');
+    if (del) del.addEventListener('click', async function() {
+      var ok = window.confirm('Delete your account and studio?\n\nThis removes your client record and the studio thing on the server. The action cannot be undone.\n\nPress OK to delete, Cancel to keep your account.');
+      if (!ok) return;
+      del.disabled = true; del.textContent = 'Deleting…';
+      try {
+        var r = await fetch('/api/auth/delete-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirm: true }),
+        });
+        var j = await r.json().catch(function() { return null; });
+        if (r.ok && j && j.ok) {
+          // Account is gone — bounce to /signup so the now-stale
+          // session can't render any more authenticated views.
+          location.href = '/signup';
+        } else {
+          del.disabled = false; del.textContent = 'Delete Account';
+          alert('Delete failed: ' + ((j && j.error) || 'unknown'));
+        }
+      } catch (e) {
+        del.disabled = false; del.textContent = 'Delete Account';
+        alert('Delete failed: ' + (e && e.message || e));
+      }
+    });
   }
 
   // ── Mailboxes ───────────────────────────────────────────────

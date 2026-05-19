@@ -526,13 +526,17 @@
         </div>
         <div class="stg-acct-box stg-acct-details">
           <div class="stg-group-label">DETAILS</div>
-          <div class="stg-acct-pair">
-            <label>Username <span class="stg-locked-tag" title="Permanent — can't be changed">locked</span><div class="stg-acct-static stg-acct-locked" id="accountUsername">—</div></label>
+          <div class="stg-acct-pair stg-acct-pair-full">
             <label>Display name<input type="text" class="stg-input" id="profileDisplayName" placeholder="Your name"></label>
           </div>
-          <div class="stg-acct-pair stg-acct-pair-studio" id="accountStudioRow" style="display:none">
+          <div class="stg-acct-pair stg-acct-pair-full">
+            <label>Username<div class="stg-acct-static stg-acct-locked" id="accountUsername" title="Permanent — can't be changed">—</div></label>
+          </div>
+          <div class="stg-acct-pair stg-acct-pair-full stg-acct-pair-studio" id="accountStudioNameRow" style="display:none">
             <label>Studio name<input type="text" class="stg-input" id="accountStudioName" placeholder="Your studio"></label>
-            <label>Studio slug <span class="stg-locked-tag" title="Permanent — subdomain &amp; mailbox owner">locked</span><div class="stg-acct-static stg-acct-locked" id="accountStudioSlug">—</div></label>
+          </div>
+          <div class="stg-acct-pair stg-acct-pair-full stg-acct-pair-studio" id="accountStudioRow" style="display:none">
+            <label>Studio slug<div class="stg-acct-static stg-acct-locked" id="accountStudioSlug" title="Permanent — subdomain &amp; mailbox owner">—</div></label>
           </div>
           <div class="stg-acct-pair">
             <label>Email<div class="stg-acct-email" id="accountEmail" data-fallback="you@example.com">—</div></label>
@@ -609,12 +613,8 @@
       <div class="stg-group stg-danger-group">
         <div class="stg-group-label">DANGER ZONE</div>
         <div class="stg-row">
-          <div><div class="stg-label">Deactivate account</div><div class="stg-sublabel">Temporarily disable your business</div></div>
-          <button class="stg-btn-danger" id="deactivateBtn">Deactivate</button>
-        </div>
-        <div class="stg-row">
-          <div><div class="stg-label">Delete account</div><div class="stg-sublabel">Permanently remove all data -- cannot be undone</div></div>
-          <button class="stg-btn-danger" id="deleteBtn">Delete Everything</button>
+          <div><div class="stg-label">Delete account</div><div class="stg-sublabel">Permanently remove your account and studio — cannot be undone.</div></div>
+          <button class="stg-btn-danger" id="deleteBtn">Delete Account</button>
         </div>
       </div>
     </div>
