@@ -517,7 +517,12 @@
           <div class="stg-section-header" style="margin:0;">Account</div>
           <div class="stg-section-desc" style="margin:0;">Manage your account and subscription.</div>
         </div>
-        <button class="stg-tier-badge" id="accountTierBadge" type="button" data-tier="">—</button>
+        <div class="stg-acct-head-right">
+          <!-- Studio identity chip — logo when the studio has one,
+               otherwise the studio name. Only renders for tier 2+. -->
+          <a class="stg-acct-studio-chip" id="accountStudioChip" href="#" style="display:none"></a>
+          <button class="stg-tier-badge" id="accountTierBadge" type="button" data-tier="">—</button>
+        </div>
       </div>
 
       <!-- AVATAR + DETAILS duet -->

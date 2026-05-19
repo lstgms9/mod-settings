@@ -830,6 +830,32 @@
         badge.textContent = (TIER_NAMES[planVal] || planVal).toUpperCase();
       }
     }
+    // Studio identity chip — name or logo. Renders to the LEFT of the
+    // tier badge for studio-tier viewers. Logo wins when uploaded;
+    // otherwise the studio name (or slug if no name).
+    try {
+      var chip = document.getElementById('accountStudioChip');
+      var sesObj = await platform.user.current();
+      var isStudioTier = sesObj && (sesObj.tier === 'studio' || sesObj.tier === 'studio_pro' || sesObj.plan === 'studio' || sesObj.plan === 'studio_pro');
+      if (chip && isStudioTier && sesObj.studioSlug) {
+        var things = await fetch('/_api/storage/list?type=thing').then(function(r){ return r.json(); }).catch(function(){ return []; });
+        var st = Array.isArray(things) ? things.find(function(t){
+          return t.kind === 'studio' && (t.slug === sesObj.studioSlug || t.owner_user_id === sesObj.slug);
+        }) : null;
+        var name = (st && (st.name || st.slug)) || sesObj.studioSlug;
+        var logo = st && st.meta && st.meta.logoFileId;
+        if (!logo) logo = st && st.studioLogoFileId;
+        var html = '';
+        if (logo) html += '<img src="/_instance/files/' + esc(logo) + '" alt="' + esc(name) + '">';
+        html += '<span class="stg-acct-studio-chip-name">' + esc(name) + '</span>';
+        chip.innerHTML = html;
+        chip.href = '/explore/thingi';
+        chip.title = name;
+        chip.style.display = 'inline-flex';
+      } else if (chip) {
+        chip.style.display = 'none';
+      }
+    } catch (e) {}
   }
 
   // ── Profile (Account → editable per-user data) ─────────────
