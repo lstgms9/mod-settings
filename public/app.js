@@ -1540,24 +1540,20 @@
     _mbxList.forEach(function(addr) {
       var row = document.createElement('div');
       row.className = 'stg-mbx-row';
-      row.style.cssText = 'display:grid;grid-template-columns:1fr 220px auto;align-items:center;gap:14px;padding:10px 14px;background:var(--bg2,#12121f);border:1px solid var(--border,#252540);border-radius:8px;';
+      // Full email gets a full row of its own. The pulldown + delete
+      // sit on a secondary row below so the email never gets truncated.
+      row.style.cssText = 'display:flex;flex-direction:column;gap:8px;padding:10px 14px;background:var(--bg2,#12121f);border:1px solid var(--border,#252540);border-radius:8px;';
       var full = addr.address || ((addr.data && addr.data.fullAddress) || '');
       if (full.indexOf('@') === -1 && addr.domain) full = full + '@' + addr.domain;
       var assigned = (addr.data && addr.data.assignedTo) || addr.assignedTo || [];
-      var assignNames = assigned.map(function(uid) {
-        var t = _mbxTeam.find(function(x) { return x.userId === uid || x.id === uid; });
-        return t ? (t.name || t.id) : uid;
-      });
-      var assignLabel = assignNames.length ? 'assigned to ' + assignNames.join(', ') : 'owner only';
       row.innerHTML =
-        '<div style="min-width:0;overflow:hidden;">' +
-          '<div style="font-family:var(--font-mono,monospace);color:var(--text,#e4e4f0);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHTML(full) + '</div>' +
-          '<div class="stg-sublabel" style="font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHTML(assignLabel) + '</div>' +
-        '</div>' +
-        '<select class="stg-input mbx-reassign" data-id="' + addr.id + '" style="width:100%;">' +
-          '<option value="">— Owner only —</option>' +
-        '</select>' +
-        '<button class="stg-ai-btn mbx-del" data-id="' + addr.id + '" style="background:transparent;color:var(--red,#ff3997);border:1px solid var(--border,#252540);padding:6px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">Delete</button>';
+        '<div style="font-family:var(--font-mono,monospace);color:var(--text,#e4e4f0);font-size:14px;word-break:break-all;line-height:1.3;">' + escapeHTML(full) + '</div>' +
+        '<div style="display:flex;gap:8px;align-items:center;">' +
+          '<select class="stg-input mbx-reassign" data-id="' + addr.id + '" style="flex:1;min-width:0;">' +
+            '<option value="">— Owner only —</option>' +
+          '</select>' +
+          '<button class="stg-ai-btn mbx-del" data-id="' + addr.id + '" style="background:transparent;color:var(--red,#ff3997);border:1px solid var(--border,#252540);padding:6px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">Delete</button>' +
+        '</div>';
       host.appendChild(row);
       var sel = row.querySelector('select.mbx-reassign');
       populateTeamPicker(sel, assigned[0] || '');
