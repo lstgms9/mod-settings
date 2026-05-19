@@ -253,9 +253,11 @@
 
 /* ── Avatar (sprite picker) ────────────────────
    Embeds /signup-player so the same UI used at signup is reusable
-   from settings — no rewrite. */
+   from settings — no rewrite. Height tall enough that the picker
+   (avatar + arrows + swatches + Back/Change + Photo/Local/Assets +
+   Save) fits without an internal scrollbar. */
 .stg-avatar-frame {
-  width: 100%; height: 360px;
+  width: 100%; height: 460px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg);
@@ -487,19 +489,19 @@
 }
 .stg-acct-details { gap: 14px; }
 
-/* Detail pair row: left field | arrow | right field (or CTA) */
+/* Detail pair row: left field | right field (or CTA). Arrow column
+   removed — pairs are clearly related without the visual cue. */
 .stg-acct-pair {
   display: grid;
-  grid-template-columns: 1fr 24px 1fr;
-  align-items: end; gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  align-items: end; gap: 12px;
 }
 .stg-acct-pair > label {
   display: flex; flex-direction: column; gap: 4px;
   font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--text-dim);
 }
-.stg-acct-pair > label .stg-input,
-.stg-acct-pair > label .stg-acct-static {
+.stg-acct-pair > label .stg-input {
   font-size: 14px; text-transform: none; letter-spacing: normal;
   color: var(--text); padding: 8px 10px;
   background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
@@ -508,13 +510,16 @@
 }
 .stg-acct-pair > label select.stg-input { padding-right: 28px; }
 .stg-acct-pair > label .stg-input[readonly] { color: var(--primary); font-family: var(--font-mono); font-size: 13px; }
+/* Static value (e.g. Current plan) — looks like text, NOT an input.
+   No bg / border / box so users don't mistake it for editable. */
 .stg-acct-pair > label .stg-acct-static {
-  display: flex; align-items: center; color: var(--text);
+  font-size: 14px; text-transform: none; letter-spacing: normal;
+  color: var(--text); font-family: inherit;
+  padding: 8px 0; min-height: 36px; box-sizing: border-box;
+  display: flex; align-items: center;
+  background: transparent; border: 0;
 }
-.stg-acct-arrow {
-  align-self: center; color: var(--text-dim); font-size: 16px;
-  text-align: center; padding-top: 22px;
-}
+.stg-acct-arrow { display: none; }
 .stg-acct-spacer { display: block; }
 .stg-acct-cta { align-self: end; height: 36px; padding: 0 18px; white-space: nowrap; }
 .stg-acct-flagrow { display: flex; align-items: center; gap: 6px; }
