@@ -552,3 +552,14 @@
   .stg-acct-pair .stg-acct-cta { justify-self: start; }
   .stg-info-platforms-add { grid-template-columns: 1fr; }
 }
+
+/* ═══ Mailboxes — side-by-side existing|create ═══ */
+.stg-mbx-duet {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+  align-items: stretch;
+}
+.stg-mbx-existing, .stg-mbx-create { display: flex; flex-direction: column; gap: 14px; }
+.stg-mbx-existing #mbxList { flex: 1 1 auto; }
+@media (max-width: 900px) {
+  .stg-mbx-duet { grid-template-columns: 1fr; }
+}

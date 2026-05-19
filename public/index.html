@@ -47,10 +47,7 @@
             <button class="stg-seg-btn" data-val="orange" style="color:#ff6b35">&#9679; Orange</button>
           </div>
         </div>
-        <div class="stg-row">
-          <div><div class="stg-label">Scanline overlay</div><div class="stg-sublabel">CRT retro effect on screen</div></div>
-          <div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="scanlines"></div><span class="stg-toggle-label">ON</span></div>
-        </div>
+        <!-- Scanline overlay toggle removed — feature retired. -->
       </div>
 
       <div class="stg-group">
@@ -85,30 +82,31 @@
       <div class="stg-section-header">Studio Mailboxes</div>
       <div class="stg-section-desc">Email addresses under your studio's subdomain. Assign a mailbox to a dev to give them mail access.</div>
 
-      <div class="stg-group">
-        <div class="stg-group-label">EXISTING</div>
-        <div id="mbxList" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div id="mbxListEmpty" class="stg-sublabel" style="display:none;padding:14px 0;">No mailboxes yet — create one below.</div>
-      </div>
+      <!-- Side-by-side: EXISTING on the left, CREATE NEW on the right. -->
+      <div class="stg-mbx-duet">
+        <div class="stg-acct-box stg-mbx-existing">
+          <div class="stg-group-label">EXISTING</div>
+          <div id="mbxList" style="display:flex;flex-direction:column;gap:8px;"></div>
+          <div id="mbxListEmpty" class="stg-sublabel" style="display:none;padding:14px 0;">No mailboxes yet — create one on the right.</div>
+        </div>
 
-      <div class="stg-group">
-        <div class="stg-group-label">CREATE A NEW MAILBOX</div>
-        <div class="stg-row" style="align-items:flex-end;gap:10px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:220px;">
-            <div class="stg-label">Local part</div>
-            <div class="stg-sublabel" id="mbxDomainHint">e.g. marketing → marketing@&lt;slug&gt;.gamoids.com</div>
-            <input type="text" class="stg-input" id="mbxNewLocal" placeholder="marketing" maxlength="20" autocapitalize="off" spellcheck="false" style="margin-top:4px;width:100%;">
+        <div class="stg-acct-box stg-mbx-create">
+          <div class="stg-group-label">CREATE A NEW MAILBOX</div>
+          <div class="stg-info-field">
+            <span class="stg-info-label">Local part</span>
+            <input type="text" class="stg-input" id="mbxNewLocal" placeholder="marketing" maxlength="20" autocapitalize="off" spellcheck="false">
+            <span class="stg-sublabel" id="mbxDomainHint">e.g. marketing → marketing@&lt;slug&gt;.gamoids.com</span>
           </div>
-          <div style="flex:1;min-width:220px;">
-            <div class="stg-label">Assign to</div>
-            <div class="stg-sublabel">Optional — leave empty to keep owner-only.</div>
-            <select class="stg-input" id="mbxNewAssign" style="margin-top:4px;width:100%;">
+          <div class="stg-info-field">
+            <span class="stg-info-label">Assign to</span>
+            <select class="stg-input" id="mbxNewAssign">
               <option value="">— Owner only —</option>
             </select>
+            <span class="stg-sublabel">Optional — leave empty to keep owner-only.</span>
           </div>
-          <button class="stg-ai-btn stg-ai-connect" id="mbxAddBtn" style="padding:10px 20px;">Create mailbox</button>
+          <button class="stg-ai-btn stg-ai-connect" id="mbxAddBtn" style="padding:10px 20px;align-self:flex-end;">Create mailbox</button>
+          <div id="mbxErr" class="stg-sublabel" style="color:var(--red,#ff3997);display:none;"></div>
         </div>
-        <div id="mbxErr" class="stg-sublabel" style="color:var(--red,#ff3997);display:none;margin-top:6px"></div>
       </div>
     </div>
 
@@ -595,12 +593,7 @@
         </label>
       </div>
 
-      <!-- EMAIL ADDRESSES (single merged box; was MY + ALL) -->
-      <div class="stg-group" id="emailGroup">
-        <div class="stg-group-label">EMAIL ADDRESSES</div>
-        <div id="myEmailsContent" class="stg-acct-myemails"></div>
-        <div id="emailContent"></div>
-      </div>
+      <!-- EMAIL ADDRESSES removed — covered by the Mailboxes sidebar entry. -->
 
       <div class="stg-group">
         <div class="stg-group-label">PASSWORD</div>

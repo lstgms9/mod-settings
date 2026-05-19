@@ -158,7 +158,9 @@ function fail(t, e){ console.log('  FAIL:', t, '-', e || ''); failed++; }
   var hasEmail = order.some(function(g){ return /EMAIL ADDRESSES/i.test(g || ''); });
   var hasPwd = order.some(function(g){ return /PASSWORD/i.test(g || ''); });
   var hasDanger = order.some(function(g){ return /DANGER/i.test(g || ''); });
-  if (hasEmail && hasPwd && hasDanger) ok('email + password + danger present');
+  if (hasEmail) fail('EMAIL ADDRESSES still in Account section — should be removed (Mailboxes covers it)');
+  else ok('EMAIL ADDRESSES correctly absent (covered by sidebar Mailboxes entry)');
+  if (hasPwd && hasDanger) ok('password + danger present');
   else fail('bottom-section groups incomplete', JSON.stringify(order));
 
   // 7. Tier badge click → opens Manage Plan modal.
