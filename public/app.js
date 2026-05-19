@@ -791,8 +791,26 @@
       })());
       if (unVal) unEl.value = unVal;
     }
+    // EMAIL = username@<studioSlug>.gamoids.com (studio-tier accounts).
+    // Studio name rendered as a highlighted chip. Pre-studio users see
+    // their plain signup email instead.
     var emailEl = document.getElementById('accountEmail');
-    if (emailEl && idEmail) emailEl.value = idEmail;
+    if (emailEl) {
+      var sesObj = null;
+      try { sesObj = await platform.user.current(); } catch (_) {}
+      var studioSlug = sesObj && sesObj.studioSlug;
+      var unameForEmail = (unEl && unEl.value) || (sesObj && (sesObj.username || sesObj.handle)) || '';
+      if (studioSlug && unameForEmail) {
+        emailEl.innerHTML =
+          esc(unameForEmail) +
+          '@<span class="stg-acct-email-studio">' + esc(studioSlug) + '</span>.gamoids.com';
+      } else if (idEmail) {
+        emailEl.textContent = idEmail;
+      }
+    }
+    // RECOVERY EMAIL = the original signup address (read-only).
+    var recEl = document.getElementById('accountRecoveryEmail');
+    if (recEl && idEmail) recEl.value = idEmail;
 
     // plan info — show "<TierName> plan" + colored tier badge.
     var planVal = prefs.plan;

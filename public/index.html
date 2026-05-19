@@ -534,9 +534,8 @@
             <label>Display name<input type="text" class="stg-input" id="profileDisplayName" placeholder="Your name"></label>
           </div>
           <div class="stg-acct-pair">
-            <label>Email<input type="text" class="stg-input stg-mono-cyan" id="accountEmail" placeholder="you@example.com" readonly></label>
-            <span class="stg-acct-arrow">→</span>
-            <label>Recovery email<input type="email" class="stg-input" id="accountRecoveryEmail" placeholder="backup@example.com"></label>
+            <label>Email<div class="stg-acct-email" id="accountEmail" data-fallback="you@example.com">—</div></label>
+            <label>Recovery email<input type="text" class="stg-input stg-mono-cyan" id="accountRecoveryEmail" placeholder="—" readonly></label>
           </div>
           <div class="stg-acct-pair">
             <label>Current plan<div class="stg-acct-static" id="planInfo">Free plan</div></label>

@@ -510,6 +510,28 @@
 }
 .stg-acct-pair > label select.stg-input { padding-right: 28px; }
 .stg-acct-pair > label .stg-input[readonly] { color: var(--primary); font-family: var(--font-mono); font-size: 13px; }
+/* Composite email display: username@<studio-pill>.gamoids.com.
+   The studio-name portion is highlighted so the user sees their
+   studio identity at a glance — and that it's not editable here. */
+.stg-acct-email {
+  /* Use the regular text font instead of monospace — monospace at
+     13px renders @ ambiguously close to a, which read as a typo. */
+  font-family: inherit; font-size: 14px;
+  color: var(--primary);
+  /* Parent label has text-transform:uppercase + letter-spacing — clear
+     both so the email reads as-typed. */
+  text-transform: none; letter-spacing: normal;
+  padding: 8px 10px; min-height: 36px; box-sizing: border-box;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow: hidden;
+  white-space: nowrap;
+}
+.stg-acct-email .stg-acct-email-studio {
+  background: rgba(255,57,151,0.15); color: var(--red, #ff3997);
+  border: 1px solid rgba(255,57,151,0.4); border-radius: 4px;
+  padding: 1px 6px; margin: 0 1px;
+  font-weight: 600;
+}
 /* Static value (e.g. Current plan) — looks like text, NOT an input.
    No bg / border / box so users don't mistake it for editable. */
 .stg-acct-pair > label .stg-acct-static {
