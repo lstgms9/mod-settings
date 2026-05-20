@@ -594,6 +594,66 @@
   text-transform: none; letter-spacing: normal;
   flex: 1 0 100%;
 }
+
+/* ── Confirm modal (replaces window.confirm) ─────────────── */
+.stg-modal-bg {
+  position: fixed; inset: 0; z-index: 9000;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.7);
+}
+.stg-modal-bg.open { display: flex; }
+.stg-modal {
+  background: var(--bg2, #12121f);
+  border: 1px solid var(--border, #252540);
+  border-radius: 10px;
+  padding: 24px;
+  max-width: 440px; width: calc(100% - 32px);
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+.stg-modal-close {
+  position: absolute; top: 10px; right: 14px;
+  background: none; border: none;
+  color: var(--text-dim, #5a6a70);
+  font-size: 22px; line-height: 1; cursor: pointer;
+  padding: 0; margin: 0;
+}
+.stg-modal-close:hover { color: var(--text, #e4e4f0); }
+.stg-modal-title {
+  font-family: var(--font-head, sans-serif);
+  font-size: 18px; margin: 0 0 12px;
+  letter-spacing: 0.05em; color: var(--text, #e4e4f0);
+}
+.stg-modal-body {
+  font-size: 14px; line-height: 1.5;
+  color: var(--text-mid, #a0aab0);
+  margin-bottom: 20px;
+}
+.stg-modal-body strong { color: var(--text, #e4e4f0); }
+.stg-modal-actions {
+  display: flex; justify-content: flex-end; gap: 10px;
+}
+.stg-modal-btn {
+  padding: 8px 18px; border-radius: 6px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; border: 1px solid transparent;
+  font-family: inherit;
+}
+.stg-modal-btn-cancel {
+  background: transparent;
+  border-color: var(--border, #252540);
+  color: var(--text-mid, #a0aab0);
+}
+.stg-modal-btn-cancel:hover { color: var(--text, #e4e4f0); border-color: var(--border2, #353555); }
+.stg-modal-btn-confirm {
+  background: var(--primary, #00e6d2);
+  color: #0b0b14;
+}
+.stg-modal-btn-confirm:hover { opacity: 0.9; }
+.stg-modal-btn-confirm.danger {
+  background: var(--red, #ff3997);
+  color: #0b0b14;
+}
 .stg-acct-planrow .stg-acct-static { padding: 0; min-height: 0; flex: 0 0 auto; white-space: nowrap; }
 .stg-acct-planrow .stg-acct-cta {
   align-self: auto; width: auto; height: 32px;

@@ -1524,15 +1524,16 @@
       });
       unSave.addEventListener('click', async function() {
         var v = unInp.value.trim().toLowerCase();
-        // Confirm the 30-day lock BEFORE firing the rename. The
-        // cooldown is enforced server-side and the message after
-        // the fact already says so — but a pre-flight confirm keeps
-        // someone from accidentally burning their one-change window.
-        var ok = window.confirm(
-          'Change username to "' + v + '"?\n\n' +
-          'You can only change your username once every 30 days. After saving, you will not be able to change it again until 30 days from now.\n\n' +
-          'Press OK to save, Cancel to keep your current username.'
-        );
+        // Confirm the 30-day lock BEFORE firing the rename. In-app
+        // modal — no native window.confirm chrome.
+        var ok = await showConfirmModal({
+          title: 'Change username?',
+          bodyHtml:
+            'New username: <strong>@' + v.replace(/[<>&]/g, function(c) { return ({ '<':'&lt;', '>':'&gt;', '&':'&amp;' })[c]; }) + '</strong><br><br>' +
+            'You can only change your username <strong>once every 30 days</strong>. After saving, you won\'t be able to change it again until then.',
+          confirmText: 'Change',
+          cancelText: 'Cancel',
+        });
         if (!ok) return;
         unSave.disabled = true;
         unSave.textContent = 'Saving…';
@@ -1575,7 +1576,15 @@
     // self-serve delete.
     var del = document.getElementById('deleteBtn');
     if (del) del.addEventListener('click', async function() {
-      var ok = window.confirm('Delete your account and studio?\n\nThis removes your client record and the studio thing on the server. The action cannot be undone.\n\nPress OK to delete, Cancel to keep your account.');
+      var ok = await showConfirmModal({
+        title: 'Delete account?',
+        bodyHtml:
+          'This removes your <strong>client record</strong> and <strong>studio thing</strong> from the server. ' +
+          'The action <strong>cannot be undone</strong>.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        danger: true,
+      });
       if (!ok) return;
       del.disabled = true; del.textContent = 'Deleting…';
       try {
@@ -1962,6 +1971,51 @@
   }
 
   // ── Init ────────────────────────────────────────────────────
+  // Promise-based confirm modal — replaces window.confirm() so
+  // dialogs match the rest of the app's chrome. Returns a Promise
+  // that resolves to true (confirm) or false (cancel / backdrop /
+  // Escape). Supports a `danger` flag that switches the confirm
+  // button to red for destructive actions.
+  function showConfirmModal(opts) {
+    opts = opts || {};
+    return new Promise(function(resolve) {
+      var bg = document.getElementById('stgConfirmBg');
+      var title = document.getElementById('stgConfirmTitle');
+      var body = document.getElementById('stgConfirmBody');
+      var okBtn = document.getElementById('stgConfirmOk');
+      var cancelBtn = document.getElementById('stgConfirmCancel');
+      var closeX = document.getElementById('stgConfirmCloseX');
+      if (!bg || !okBtn || !cancelBtn) { resolve(window.confirm(opts.body || 'Confirm?')); return; }
+      title.textContent = opts.title || 'Confirm';
+      // body can be plain text or HTML — accept the riskier opt-in.
+      if (opts.bodyHtml) body.innerHTML = opts.bodyHtml; else body.textContent = opts.body || '';
+      okBtn.textContent = opts.confirmText || 'OK';
+      cancelBtn.textContent = opts.cancelText || 'Cancel';
+      okBtn.classList.toggle('danger', !!opts.danger);
+      function cleanup() {
+        bg.classList.remove('open');
+        bg.removeEventListener('mousedown', backdropDown);
+        bg.removeEventListener('mouseup', backdropUp);
+        document.removeEventListener('keydown', onKey);
+        okBtn.onclick = null; cancelBtn.onclick = null; closeX.onclick = null;
+      }
+      function close(v) { cleanup(); resolve(v); }
+      okBtn.onclick = function() { close(true); };
+      cancelBtn.onclick = function() { close(false); };
+      closeX.onclick = function() { close(false); };
+      var _md = false;
+      function backdropDown(e) { _md = (e.target === bg); }
+      function backdropUp(e) { if (_md && e.target === bg) close(false); _md = false; }
+      bg.addEventListener('mousedown', backdropDown);
+      bg.addEventListener('mouseup', backdropUp);
+      function onKey(e) { if (e.key === 'Escape') close(false); }
+      document.addEventListener('keydown', onKey);
+      bg.classList.add('open');
+      setTimeout(function() { okBtn.focus(); }, 30);
+    });
+  }
+  window._stgConfirm = showConfirmModal;
+
   window.platform.module.init = async function() {
     // Fill any [data-tenant-brand] placeholders with the current
     // tenant's display name. mod-settings is multi-tenant, so we read

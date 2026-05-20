@@ -626,5 +626,20 @@
 
   </div>
 </div>
+
+<!-- Confirm modal — shared by username change, delete account, etc.
+     showConfirmModal({ title, body, confirmText, cancelText }) → Promise<bool>. -->
+<div class="stg-modal-bg" id="stgConfirmBg" aria-hidden="true">
+  <div class="stg-modal" role="dialog" aria-modal="true" aria-labelledby="stgConfirmTitle">
+    <button class="stg-modal-close" id="stgConfirmCloseX" aria-label="Close">&times;</button>
+    <h2 id="stgConfirmTitle" class="stg-modal-title">Confirm</h2>
+    <div class="stg-modal-body" id="stgConfirmBody"></div>
+    <div class="stg-modal-actions">
+      <button class="stg-modal-btn stg-modal-btn-cancel" id="stgConfirmCancel">Cancel</button>
+      <button class="stg-modal-btn stg-modal-btn-confirm" id="stgConfirmOk">OK</button>
+    </div>
+  </div>
+</div>
+
 <link rel="stylesheet" href="styles.css">
 <script src="app.js"></script>
