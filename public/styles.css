@@ -579,21 +579,19 @@
 .stg-acct-userrow .stg-acct-username-input { flex: 1 1 auto; min-width: 160px; }
 .stg-acct-userrow .stg-acct-cta { width: auto; height: 30px; padding: 0 14px; font-size: 12px; flex: 0 0 auto; }
 .stg-acct-userrow .stg-acct-cta:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Single hint slot — sits immediately under the input row. Defaults
+   to the orange "1 change per 30 days" notice; overwritten by the
+   live availability text (✓ available / ✗ taken / Checking…) while
+   typing; flips to "Saved. Next change in N days" after a save. */
 .stg-acct-username-hint {
   font-size: 12px; color: var(--text-dim);
   text-transform: none; letter-spacing: normal;
   flex: 1 0 100%;
+  margin-top: 2px;
 }
+.stg-acct-username-hint.stg-acct-username-hint-default { color: #ff8c42; }
 .stg-acct-username-hint.bad { color: var(--red, #ff3997); }
 .stg-acct-username-hint.ok  { color: var(--green, #39ff7f); }
-/* Persistent cooldown notice — orange, sits below the row so the
-   "1 change per 30 days" rule is visible BEFORE the user types,
-   not just after they save. */
-.stg-acct-username-note {
-  font-size: 12px; color: #ff8c42;
-  text-transform: none; letter-spacing: normal;
-  flex: 1 0 100%;
-}
 
 /* ── Confirm modal (replaces window.confirm) ─────────────── */
 .stg-modal-bg {

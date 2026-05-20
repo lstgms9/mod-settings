@@ -802,7 +802,6 @@
       var changedAt = prefs.usernameChangedAt;
       var hintEl = document.getElementById('usernameHint');
       var saveBtn = document.getElementById('usernameSaveBtn');
-      var noteEl = document.getElementById('usernameNote');
       if (hintEl && changedAt) {
         var ms = Date.parse(changedAt) + 30 * 24 * 60 * 60 * 1000 - Date.now();
         if (ms > 0) {
@@ -811,9 +810,6 @@
           hintEl.className = 'stg-acct-username-hint';
           if (unEl && unEl.tagName === 'INPUT') unEl.readOnly = true;
           if (saveBtn) saveBtn.disabled = true;
-          // Hide the "1/30 days" pre-warning when the cooldown is
-          // already active — the hint above already says it.
-          if (noteEl) noteEl.style.display = 'none';
         }
       }
     }
@@ -1489,14 +1485,18 @@
     var unHint = document.getElementById('usernameHint');
     if (unInp && unSave && unInp.tagName === 'INPUT' && !unInp.readOnly) {
       var unCheckTimer = null;
+      function restoreDefaultHint() {
+        unHint.textContent = 'You can change your username once every 30 days. Choose carefully.';
+        unHint.className = 'stg-acct-username-hint stg-acct-username-hint-default';
+      }
       unInp.addEventListener('input', function() {
         var v = unInp.value.trim().toLowerCase();
         if (v !== unInp.value) unInp.value = v;
         var orig = unInp.dataset.original || '';
         unSave.disabled = true;
+        if (!v || v === orig) { restoreDefaultHint(); return; }
         unHint.textContent = '';
         unHint.className = 'stg-acct-username-hint';
-        if (!v || v === orig) return;
         if (!/^[a-z0-9_-]{3,20}$/.test(v)) {
           unHint.textContent = '3–20 chars, a–z, 0–9, _ -';
           unHint.className = 'stg-acct-username-hint bad';
@@ -1550,9 +1550,6 @@
             unInp.readOnly = true;
             unHint.textContent = 'Saved. Next change in 30 days.';
             unHint.className = 'stg-acct-username-hint ok';
-            // Cooldown is now active — pre-warning becomes redundant.
-            var noteEl2 = document.getElementById('usernameNote');
-            if (noteEl2) noteEl2.style.display = 'none';
           } else if (r.status === 429 && d.daysRemaining) {
             unHint.textContent = 'Already changed recently. ' + d.daysRemaining + ' day' + (d.daysRemaining === 1 ? '' : 's') + ' until next change.';
             unHint.className = 'stg-acct-username-hint bad';
