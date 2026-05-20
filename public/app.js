@@ -807,9 +807,11 @@
       var studioSlug = sesObj && sesObj.studioSlug;
       var unameForEmail = (unEl && unEl.value) || (sesObj && (sesObj.username || sesObj.handle)) || '';
       if (studioSlug && unameForEmail) {
-        emailEl.innerHTML =
-          esc(unameForEmail) +
-          '@<span class="stg-acct-email-studio">' + esc(studioSlug) + '</span>.gamoids.com';
+        // Plain text composite — the slug used to render in a red
+        // highlight box but that drew the eye to a field the user
+        // can't edit (slug is locked) and added visible margins on
+        // either side. Same content, no decoration.
+        emailEl.textContent = unameForEmail + '@' + studioSlug + '.gamoids.com';
       } else if (idEmail) {
         emailEl.textContent = idEmail;
       }
