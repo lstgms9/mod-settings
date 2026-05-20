@@ -594,12 +594,12 @@
   text-transform: none; letter-spacing: 0;
   margin-left: 8px;
 }
-/* Inline availability status — populated by JS during typing /
-   after save. Lives inline in the label row, right-aligned. */
+/* Availability + post-save status — sits as its own row immediately
+   BELOW the input/save row. Empty until the user types or saves. */
 .stg-acct-username-hint {
   font-size: 12px; font-weight: 600;
   text-transform: none; letter-spacing: 0;
-  margin-left: auto;
+  margin-top: 4px; min-height: 14px;
 }
 .stg-acct-username-hint.bad { color: var(--red, #ff3997); }
 .stg-acct-username-hint.ok  { color: var(--green, #39ff7f); }
