@@ -505,25 +505,28 @@
 .stg-acct-avatar .stg-avatar-frame {
   flex: 1 1 auto; min-height: 320px; height: auto;
 }
-.stg-acct-details { gap: 14px; }
+/* Vertical rhythm tuned ~20% tighter than the default (gap 14→10,
+   input pad 8→5, min-height 36→30). Font sizes unchanged — the
+   user reads the same, the box just takes less screen. */
+.stg-acct-details { gap: 10px; }
 
 /* Detail pair row: left field | right field (or CTA). Arrow column
    removed — pairs are clearly related without the visual cue. */
 .stg-acct-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  align-items: end; gap: 12px;
+  align-items: end; gap: 10px;
 }
 .stg-acct-pair > label {
-  display: flex; flex-direction: column; gap: 4px;
+  display: flex; flex-direction: column; gap: 3px;
   font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--text-dim);
 }
 .stg-acct-pair > label .stg-input {
   font-size: 14px; text-transform: none; letter-spacing: normal;
-  color: var(--text); padding: 8px 10px;
+  color: var(--text); padding: 5px 10px;
   background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
-  min-height: 36px; box-sizing: border-box;
+  min-height: 30px; box-sizing: border-box;
   font-family: inherit;
 }
 .stg-acct-pair > label select.stg-input { padding-right: 28px; }
@@ -539,7 +542,7 @@
   /* Parent label has text-transform:uppercase + letter-spacing — clear
      both so the email reads as-typed. */
   text-transform: none; letter-spacing: normal;
-  padding: 8px 10px; min-height: 36px; box-sizing: border-box;
+  padding: 5px 10px; min-height: 30px; box-sizing: border-box;
   background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
   display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow: hidden;
   white-space: nowrap;
@@ -555,7 +558,7 @@
 .stg-acct-pair > label .stg-acct-static {
   font-size: 14px; text-transform: none; letter-spacing: normal;
   color: var(--text); font-family: inherit;
-  padding: 8px 0; min-height: 36px; box-sizing: border-box;
+  padding: 5px 0; min-height: 30px; box-sizing: border-box;
   display: flex; align-items: center;
   background: transparent; border: 0;
 }
@@ -569,7 +572,7 @@
 /* Plan row: button right-justified at the far edge, plan name on
    the left. Replaces the earlier inline-next-to-plan version. */
 .stg-acct-pair-plan { grid-template-columns: 1fr; }
-.stg-acct-planrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
+.stg-acct-planrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 30px; }
 .stg-acct-planrow .stg-acct-static { padding: 0; min-height: 0; flex: 0 0 auto; white-space: nowrap; }
 .stg-acct-planrow .stg-acct-cta {
   align-self: auto; width: auto; height: 32px;
@@ -582,7 +585,7 @@
 .stg-acct-pair > label .stg-acct-locked {
   font-family: var(--font-mono, monospace);
   font-size: 14px; color: var(--text);
-  padding: 8px 10px; min-height: 36px; box-sizing: border-box;
+  padding: 5px 10px; min-height: 30px; box-sizing: border-box;
   display: flex; align-items: center;
   background: rgba(255,255,255,0.02);
   border: 1px dashed var(--border);
