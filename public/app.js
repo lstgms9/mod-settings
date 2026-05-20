@@ -802,6 +802,7 @@
       var changedAt = prefs.usernameChangedAt;
       var hintEl = document.getElementById('usernameHint');
       var saveBtn = document.getElementById('usernameSaveBtn');
+      var noteEl = document.getElementById('usernameNote');
       if (hintEl && changedAt) {
         var ms = Date.parse(changedAt) + 30 * 24 * 60 * 60 * 1000 - Date.now();
         if (ms > 0) {
@@ -810,6 +811,9 @@
           hintEl.className = 'stg-acct-username-hint';
           if (unEl && unEl.tagName === 'INPUT') unEl.readOnly = true;
           if (saveBtn) saveBtn.disabled = true;
+          // Hide the "1/30 days" pre-warning when the cooldown is
+          // already active — the hint above already says it.
+          if (noteEl) noteEl.style.display = 'none';
         }
       }
     }
@@ -1520,6 +1524,16 @@
       });
       unSave.addEventListener('click', async function() {
         var v = unInp.value.trim().toLowerCase();
+        // Confirm the 30-day lock BEFORE firing the rename. The
+        // cooldown is enforced server-side and the message after
+        // the fact already says so — but a pre-flight confirm keeps
+        // someone from accidentally burning their one-change window.
+        var ok = window.confirm(
+          'Change username to "' + v + '"?\n\n' +
+          'You can only change your username once every 30 days. After saving, you will not be able to change it again until 30 days from now.\n\n' +
+          'Press OK to save, Cancel to keep your current username.'
+        );
+        if (!ok) return;
         unSave.disabled = true;
         unSave.textContent = 'Saving…';
         try {
@@ -1535,6 +1549,9 @@
             unInp.readOnly = true;
             unHint.textContent = 'Saved. Next change in 30 days.';
             unHint.className = 'stg-acct-username-hint ok';
+            // Cooldown is now active — pre-warning becomes redundant.
+            var noteEl2 = document.getElementById('usernameNote');
+            if (noteEl2) noteEl2.style.display = 'none';
           } else if (r.status === 429 && d.daysRemaining) {
             unHint.textContent = 'Already changed recently. ' + d.daysRemaining + ' day' + (d.daysRemaining === 1 ? '' : 's') + ' until next change.';
             unHint.className = 'stg-acct-username-hint bad';
