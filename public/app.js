@@ -802,14 +802,17 @@
       var changedAt = prefs.usernameChangedAt;
       var hintEl = document.getElementById('usernameHint');
       var saveBtn = document.getElementById('usernameSaveBtn');
+      var asideEl = document.getElementById('usernameAside');
       if (hintEl && changedAt) {
         var ms = Date.parse(changedAt) + 30 * 24 * 60 * 60 * 1000 - Date.now();
         if (ms > 0) {
           var days = Math.ceil(ms / (24 * 60 * 60 * 1000));
           hintEl.textContent = 'Next change in ' + days + ' day' + (days === 1 ? '' : 's');
-          hintEl.className = 'stg-acct-username-hint';
+          hintEl.className = 'stg-acct-username-hint bad';
           if (unEl && unEl.tagName === 'INPUT') unEl.readOnly = true;
           if (saveBtn) saveBtn.disabled = true;
+          // The cooldown message replaces the standing aside copy.
+          if (asideEl) asideEl.style.display = 'none';
         }
       }
     }
@@ -1485,18 +1488,16 @@
     var unHint = document.getElementById('usernameHint');
     if (unInp && unSave && unInp.tagName === 'INPUT' && !unInp.readOnly) {
       var unCheckTimer = null;
-      function restoreDefaultHint() {
-        unHint.textContent = 'You can change your username once every 30 days. Choose carefully.';
-        unHint.className = 'stg-acct-username-hint stg-acct-username-hint-default';
-      }
+      // Aside (label-row cooldown copy) provides the standing notice;
+      // the hint span carries live availability + post-save messages.
       unInp.addEventListener('input', function() {
         var v = unInp.value.trim().toLowerCase();
         if (v !== unInp.value) unInp.value = v;
         var orig = unInp.dataset.original || '';
         unSave.disabled = true;
-        if (!v || v === orig) { restoreDefaultHint(); return; }
         unHint.textContent = '';
         unHint.className = 'stg-acct-username-hint';
+        if (!v || v === orig) return;
         if (!/^[a-z0-9_-]{3,20}$/.test(v)) {
           unHint.textContent = '3–20 chars, a–z, 0–9, _ -';
           unHint.className = 'stg-acct-username-hint bad';
@@ -1550,6 +1551,8 @@
             unInp.readOnly = true;
             unHint.textContent = 'Saved. Next change in 30 days.';
             unHint.className = 'stg-acct-username-hint ok';
+            var aside1 = document.getElementById('usernameAside');
+            if (aside1) aside1.style.display = 'none';
           } else if (r.status === 429 && d.daysRemaining) {
             unHint.textContent = 'Already changed recently. ' + d.daysRemaining + ' day' + (d.daysRemaining === 1 ? '' : 's') + ' until next change.';
             unHint.className = 'stg-acct-username-hint bad';

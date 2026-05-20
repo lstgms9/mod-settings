@@ -569,6 +569,12 @@
    is 2-col grid; this overrides to single column so the field spans
    the full Details box width. */
 .stg-acct-pair-full { grid-template-columns: 1fr; }
+/* Username label row: "Username" + inline cooldown aside + right-
+   aligned live status, all on one line above the input. */
+.stg-acct-username-labelrow {
+  display: flex; align-items: baseline; gap: 6px;
+  flex-wrap: wrap;
+}
 /* Plan row: button right-justified at the far edge, plan name on
    the left. Replaces the earlier inline-next-to-plan version. */
 .stg-acct-pair-plan { grid-template-columns: 1fr; }
@@ -579,17 +585,22 @@
 .stg-acct-userrow .stg-acct-username-input { flex: 1 1 auto; min-width: 160px; }
 .stg-acct-userrow .stg-acct-cta { width: auto; height: 30px; padding: 0 14px; font-size: 12px; flex: 0 0 auto; }
 .stg-acct-userrow .stg-acct-cta:disabled { opacity: 0.4; cursor: not-allowed; }
-/* Single hint slot — sits immediately under the input row. Defaults
-   to the orange "1 change per 30 days" notice; overwritten by the
-   live availability text (✓ available / ✗ taken / Checking…) while
-   typing; flips to "Saved. Next change in N days" after a save. */
-.stg-acct-username-hint {
-  font-size: 12px; color: var(--text-dim);
-  text-transform: none; letter-spacing: normal;
-  flex: 1 0 100%;
-  margin-top: 2px;
+/* Inline cooldown notice — sits right next to "Username" label
+   text, orange, regular weight, lowercase. Same idiom as the
+   "(locks at signup)" suffix on the signup form's Studio Slug. */
+.stg-acct-username-aside {
+  color: #ff8c42;
+  font-size: 11px; font-weight: 400;
+  text-transform: none; letter-spacing: 0;
+  margin-left: 8px;
 }
-.stg-acct-username-hint.stg-acct-username-hint-default { color: #ff8c42; }
+/* Inline availability status — populated by JS during typing /
+   after save. Lives inline in the label row, right-aligned. */
+.stg-acct-username-hint {
+  font-size: 12px; font-weight: 600;
+  text-transform: none; letter-spacing: 0;
+  margin-left: auto;
+}
 .stg-acct-username-hint.bad { color: var(--red, #ff3997); }
 .stg-acct-username-hint.ok  { color: var(--green, #39ff7f); }
 
