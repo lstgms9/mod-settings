@@ -529,8 +529,12 @@
           <div class="stg-acct-pair stg-acct-pair-full">
             <label>Display name<input type="text" class="stg-input" id="profileDisplayName" placeholder="Your name"></label>
           </div>
-          <div class="stg-acct-pair stg-acct-pair-full">
-            <label>Username<div class="stg-acct-static stg-acct-locked" id="accountUsername" title="Permanent — can't be changed">—</div></label>
+          <div class="stg-acct-pair stg-acct-pair-full stg-acct-pair-username">
+            <label>Username<div class="stg-acct-userrow">
+              <input type="text" class="stg-input stg-acct-username-input" id="accountUsername" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="—">
+              <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="usernameSaveBtn" disabled>Save</button>
+              <span class="stg-acct-username-hint" id="usernameHint"></span>
+            </div></label>
           </div>
           <div class="stg-acct-pair stg-acct-pair-full stg-acct-pair-studio" id="accountStudioNameRow" style="display:none">
             <label>Studio name<input type="text" class="stg-input" id="accountStudioName" placeholder="Your studio"></label>

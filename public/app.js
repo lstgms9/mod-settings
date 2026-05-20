@@ -790,11 +790,27 @@
         try { var s = await platform.user.current(); return s && (s.username || s.handle); } catch(_) { return null; }
       })());
       if (unVal) {
-        // accountUsername is a locked static display (not an input). The
-        // username is the user identity — @-mentions, mailbox local-part,
-        // profile slug — and renaming would orphan all of those refs.
-        if (unEl.tagName === 'INPUT') { unEl.value = unVal; unEl.readOnly = true; }
-        else { unEl.textContent = unVal; }
+        // Username is mutable (1 rename / 30 days). The input is the
+        // canonical editor; the Save button + hint live next to it.
+        if (unEl.tagName === 'INPUT') unEl.value = unVal;
+        else unEl.textContent = unVal;
+        unEl.dataset.original = unVal;
+      }
+      // Pre-load cooldown state from prefs.usernameChangedAt (if any)
+      // so the hint shows "next eligible: <date>" before the user even
+      // touches the field.
+      var changedAt = prefs.usernameChangedAt;
+      var hintEl = document.getElementById('usernameHint');
+      var saveBtn = document.getElementById('usernameSaveBtn');
+      if (hintEl && changedAt) {
+        var ms = Date.parse(changedAt) + 30 * 24 * 60 * 60 * 1000 - Date.now();
+        if (ms > 0) {
+          var days = Math.ceil(ms / (24 * 60 * 60 * 1000));
+          hintEl.textContent = 'Next change in ' + days + ' day' + (days === 1 ? '' : 's');
+          hintEl.className = 'stg-acct-username-hint';
+          if (unEl && unEl.tagName === 'INPUT') unEl.readOnly = true;
+          if (saveBtn) saveBtn.disabled = true;
+        }
       }
     }
     // EMAIL = username@<studioSlug>.gamoids.com (studio-tier accounts).
@@ -1461,6 +1477,80 @@
     // doubles as a "manage" trigger.
     var badge = document.getElementById('accountTierBadge');
     if (badge) badge.addEventListener('click', openPlanModal);
+    // Username Save button — debounced availability check on input,
+    // POST to /api/auth/change-username on click. Server enforces
+    // the 30-day rate limit; UI surfaces the cooldown message.
+    var unInp = document.getElementById('accountUsername');
+    var unSave = document.getElementById('usernameSaveBtn');
+    var unHint = document.getElementById('usernameHint');
+    if (unInp && unSave && unInp.tagName === 'INPUT' && !unInp.readOnly) {
+      var unCheckTimer = null;
+      unInp.addEventListener('input', function() {
+        var v = unInp.value.trim().toLowerCase();
+        if (v !== unInp.value) unInp.value = v;
+        var orig = unInp.dataset.original || '';
+        unSave.disabled = true;
+        unHint.textContent = '';
+        unHint.className = 'stg-acct-username-hint';
+        if (!v || v === orig) return;
+        if (!/^[a-z0-9_-]{3,20}$/.test(v)) {
+          unHint.textContent = '3–20 chars, a–z, 0–9, _ -';
+          unHint.className = 'stg-acct-username-hint bad';
+          return;
+        }
+        unHint.textContent = 'Checking…';
+        clearTimeout(unCheckTimer);
+        unCheckTimer = setTimeout(async function() {
+          try {
+            var r = await fetch('/api/auth/check-username?name=' + encodeURIComponent(v));
+            var d = await r.json();
+            if (d.available) {
+              unHint.textContent = '✓ available';
+              unHint.className = 'stg-acct-username-hint ok';
+              unSave.disabled = false;
+            } else {
+              unHint.textContent = '✗ ' + (d.reason || 'taken');
+              unHint.className = 'stg-acct-username-hint bad';
+            }
+          } catch (e) {
+            unHint.textContent = 'Network error';
+            unHint.className = 'stg-acct-username-hint bad';
+          }
+        }, 300);
+      });
+      unSave.addEventListener('click', async function() {
+        var v = unInp.value.trim().toLowerCase();
+        unSave.disabled = true;
+        unSave.textContent = 'Saving…';
+        try {
+          var r = await fetch('/api/auth/change-username', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: v }),
+          });
+          var d = await r.json();
+          if (r.ok && d.ok) {
+            unInp.dataset.original = d.username;
+            unInp.value = d.username;
+            unInp.readOnly = true;
+            unHint.textContent = 'Saved. Next change in 30 days.';
+            unHint.className = 'stg-acct-username-hint ok';
+          } else if (r.status === 429 && d.daysRemaining) {
+            unHint.textContent = 'Already changed recently. ' + d.daysRemaining + ' day' + (d.daysRemaining === 1 ? '' : 's') + ' until next change.';
+            unHint.className = 'stg-acct-username-hint bad';
+            unInp.readOnly = true;
+          } else {
+            unHint.textContent = (d && d.error) || 'Save failed';
+            unHint.className = 'stg-acct-username-hint bad';
+          }
+        } catch (e) {
+          unHint.textContent = 'Network error';
+          unHint.className = 'stg-acct-username-hint bad';
+        }
+        unSave.textContent = 'Save';
+      });
+    }
+
     // Delete account — single confirm() prompt then POST to
     // /api/auth/delete-account (server wipes the client + studio
     // thing and clears the session). Bare for now; long-term policy

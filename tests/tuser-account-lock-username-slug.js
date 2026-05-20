@@ -1,7 +1,7 @@
-// tuser — Settings → Account must show Username (and Studio Slug for
-// studio viewers) as LOCKED static displays, not editable inputs.
-// Identity rename is a manual ops job; the UI must not offer the
-// affordance of "click to edit".
+// tuser — Settings → Account contract (post-decoupling):
+//   • Username is an EDITABLE <input> with a Save button. Mutable
+//     server-side at one rename per 30 days.
+//   • Studio Slug stays LOCKED (.stg-acct-locked dashed static).
 
 var { chromium } = require('playwright');
 var BASE = 'http://localhost:3010';
@@ -59,15 +59,14 @@ function fail(t, e){ console.log('  FAIL:', t, '-', e || ''); failed++; }
     };
   });
 
-  // Username: must not be an editable input.
-  if (probe.username && probe.username.tag !== 'INPUT') ok('username is a static element, not an input');
-  else fail('username is still an INPUT', JSON.stringify(probe.username));
-  if (probe.username && probe.username.hasLockedClass) ok('username has .stg-acct-locked styling');
-  else fail('username missing locked class', JSON.stringify(probe.username));
-  if (probe.username && probe.username.text === username) ok('username displays the actual value (' + username + ')');
-  else fail('username text wrong', JSON.stringify(probe.username));
-  if (probe.username && probe.username.cursor === 'not-allowed') ok('username cursor:not-allowed (no edit affordance)');
-  else fail('cursor should be not-allowed', probe.username && probe.username.cursor);
+  // Username: editable INPUT, pre-filled with current value, not readOnly
+  // (first signup → no cooldown). Save button exists and starts disabled.
+  if (probe.username && probe.username.tag === 'INPUT') ok('username is an editable <input>');
+  else fail('username should be an INPUT', JSON.stringify(probe.username));
+  if (probe.username && probe.username.value === username) ok('username input pre-fills with "' + username + '"');
+  else fail('username value mismatch', JSON.stringify(probe.username));
+  if (probe.username && probe.username.readOnly === false) ok('username not readOnly (no cooldown on first signup)');
+  else fail('username should not be readOnly', JSON.stringify(probe.username));
 
   // Studio slug — visible + locked for studio viewer.
   if (probe.studioRowDisplay && probe.studioRowDisplay !== 'none') ok('studio row visible for studio-tier viewer');
