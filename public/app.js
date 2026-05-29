@@ -2137,7 +2137,9 @@
       refreshBtn.disabled = false;
     });
     runBtn.addEventListener('click', async function() {
-      if (!window.confirm('Deploy current dev code to ' + first.workers.length + ' worker(s)?')) return;
+      var msg = 'Deploy current dev code to ' + first.workers.length + ' worker(s)?';
+      var ok = platform.ui ? await platform.ui.confirm(msg) : window.confirm(msg);
+      if (!ok) return;
       runBtn.disabled = true; runBtn.textContent = 'Deploying…';
       try { await fetch('/api/settings/deploy/run', { method: 'POST', credentials: 'same-origin' }); } catch (_) {}
       var done = false;
