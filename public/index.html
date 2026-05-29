@@ -17,6 +17,9 @@
     <div class="stg-nav-item" data-section="ai" data-min-tier="2"><span class="stg-nav-icon">&#129302;</span> AI Accounts</div>
     <div class="stg-nav-item" data-section="mailboxes" id="stgMailboxesNav" style="display:none"><span class="stg-nav-icon">&#9993;&#xFE0F;</span> Mailboxes</div>
     <div class="stg-nav-item" data-section="team" id="stgTeamNav" style="display:none"><span class="stg-nav-icon">&#128101;</span> Team</div>
+    <!-- Deploy nav — only revealed for tenant owner on a master runtime
+         (WORKER_MODE unset). app.js feature-detects via /api/settings/deploy/status. -->
+    <div class="stg-nav-item" data-section="deploy" id="stgDeployNav" style="display:none"><span class="stg-nav-icon">&#128640;</span> Deploy</div>
     <!-- Hidden-for-now nav entries:
     <div class="stg-nav-item" data-section="autopilot"><span class="stg-nav-icon">&#128640;</span> AI Autopilot</div>
     <div class="stg-nav-item" data-section="revenue"><span class="stg-nav-icon">&#128176;</span> Revenue</div>
@@ -625,6 +628,33 @@
         <div class="stg-row">
           <div><div class="stg-label">Delete account</div><div class="stg-sublabel">Permanently remove your account and studio — cannot be undone.</div></div>
           <button class="stg-btn-danger" id="deleteBtn">Delete Account</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEPLOY — tenant-owner only, master-only. app.js feature-detects and reveals. -->
+    <div class="stg-section" id="sec-deploy">
+      <div class="stg-section-header">Deploy</div>
+      <div class="stg-section-desc">Ship the code you've tested on this dev box to the production worker(s).</div>
+
+      <div class="stg-group">
+        <div class="stg-group-label">WORKERS</div>
+        <div id="deployState" style="margin:0 0 12px">loading…</div>
+        <div class="stg-row">
+          <div>
+            <div class="stg-label">Roll the deploy</div>
+            <div class="stg-sublabel">rsync code, restart each worker, health-check (~25s per worker)</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="stg-seg-btn" id="deployRefresh">Refresh</button>
+            <button class="stg-btn-primary" id="deployRun">Deploy to all workers</button>
+          </div>
+        </div>
+        <div class="stg-row">
+          <div style="width:100%">
+            <div class="stg-group-label" style="margin:14px 0 6px">LOG</div>
+            <pre id="deployLog" style="margin:0;background:#0b0b14;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:280px;overflow:auto;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(empty)</pre>
+          </div>
         </div>
       </div>
     </div>

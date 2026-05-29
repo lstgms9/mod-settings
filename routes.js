@@ -523,4 +523,55 @@ module.exports = function(router, ctx) {
     }
     res.json({ ok: true });
   });
+
+  // ── Deploy gamoid (owner-only, master-only) ─────────────────────
+  // Owner of a gamoid tenant gets a small admin panel here for
+  // shipping code from master (dev.gamoid.io) to production workers
+  // (gamoid.io). Disabled on worker boxes (WORKER_MODE=1) — they
+  // shouldn't be deploying anywhere.
+  function deployGuard(req) {
+    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return 'worker-mode';
+    if (!req.user) return 'owner-only';
+    // Owner sessions don't carry `role` in the cookie (it's only set
+    // for client sessions); look up the role from the on-disk user
+    // record. Owner files have role:'owner' OR no role field (legacy).
+    var u = readUser(req.user.studio || req.user.slug, req);
+    var role = (u && u.role) || (u ? 'owner' : null);
+    if (role !== 'owner') return 'owner-only';
+    return null;
+  }
+  router.get('/deploy/status', async (req, res) => {
+    const why = deployGuard(req);
+    if (why === 'worker-mode') return res.error(404, 'Not available on workers');
+    if (why) return res.error(403, 'Owner only');
+    const { execSync, spawnSync } = require('child_process');
+    let masterSha = 'unknown', platformSha = 'unknown';
+    try { masterSha   = execSync('git -C /home/damon/okdunio rev-parse --short HEAD').toString().trim(); } catch {}
+    try { platformSha = execSync('git -C /home/damon/platform rev-parse --short HEAD').toString().trim(); } catch {}
+    let workers = [];
+    try {
+      const cfg = JSON.parse(fs.readFileSync('/home/damon/platform/scripts/gamoid-workers.json','utf8'));
+      for (const w of (cfg.workers || [])) {
+        let sha = 'unreachable';
+        try {
+          const r = spawnSync('ssh', ['-o','ConnectTimeout=5','-o','StrictHostKeyChecking=no',`${w.ssh_user}@${w.host}`,'sudo -u damon git -C /home/damon/okdunio rev-parse --short HEAD'], { timeout: 10000 });
+          if (r.status === 0) sha = r.stdout.toString().trim() || 'none';
+        } catch {}
+        workers.push({ name: w.name, host: w.host, url: w.url, sha });
+      }
+    } catch (e) {}
+    let log = '';
+    try { log = fs.readFileSync('/home/damon/platform/.runtime/deploy-gamoid.log','utf8').split('\n').slice(-40).join('\n'); } catch {}
+    res.json({ masterSha, platformSha, workers, log });
+  });
+  router.post('/deploy/run', async (req, res) => {
+    const why = deployGuard(req);
+    if (why === 'worker-mode') return res.error(404, 'Not available on workers');
+    if (why) return res.error(403, 'Owner only');
+    const { spawn } = require('child_process');
+    // Detached so a long deploy doesn't block the runtime.
+    const child = spawn('/home/damon/platform/scripts/deploy-gamoid.sh', [], { detached: true, stdio: 'ignore' });
+    child.unref();
+    res.json({ ok: true, pid: child.pid });
+  });
 };

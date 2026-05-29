@@ -2078,7 +2078,78 @@
     if (myEmailsGroup) { myEmailsGroup.style.display = ''; loadMyEmails(); }
     applyPrefs();
     applyVisual();
+    initDeployPanel();
   };
+
+  // ── Deploy panel (owner-only, master-only) ──────────────────
+  // The server-side guard in /api/settings/deploy/status returns 404
+  // on workers (WORKER_MODE=1) and 403 for non-owners. We feature-
+  // detect: a 200 response reveals the nav item + section and wires
+  // the buttons. Polls the log every 2s while a deploy is running.
+  async function initDeployPanel() {
+    var nav = document.getElementById('stgDeployNav');
+    var stateEl = document.getElementById('deployState');
+    var logEl = document.getElementById('deployLog');
+    var refreshBtn = document.getElementById('deployRefresh');
+    var runBtn = document.getElementById('deployRun');
+    if (!nav || !stateEl || !runBtn) return;
+    async function loadStatus() {
+      try {
+        var r = await fetch('/api/settings/deploy/status', { credentials: 'same-origin' });
+        if (!r.ok) return null;
+        return await r.json();
+      } catch (e) { return null; }
+    }
+    var first = await loadStatus();
+    if (!first) return;  // not owner, OR worker mode → keep hidden
+    nav.style.display = '';
+    function render(s) {
+      var rows = '<table style="width:100%;border-collapse:collapse;font-size:12px;font-family:ui-monospace,Menlo,monospace">' +
+        '<thead><tr>' +
+        '<th style="text-align:left;padding:6px 10px;color:var(--text-mid);font-size:10px;letter-spacing:.08em;text-transform:uppercase">Worker</th>' +
+        '<th style="text-align:left;padding:6px 10px;color:var(--text-mid);font-size:10px;letter-spacing:.08em;text-transform:uppercase">Host</th>' +
+        '<th style="text-align:left;padding:6px 10px;color:var(--text-mid);font-size:10px;letter-spacing:.08em;text-transform:uppercase">okdunio</th>' +
+        '<th style="text-align:left;padding:6px 10px;color:var(--text-mid);font-size:10px;letter-spacing:.08em;text-transform:uppercase">vs master</th>' +
+        '<th style="text-align:left;padding:6px 10px;color:var(--text-mid);font-size:10px;letter-spacing:.08em;text-transform:uppercase">URL</th>' +
+        '</tr></thead><tbody>';
+      (s.workers || []).forEach(function(w) {
+        var sync = (w.sha === s.masterSha);
+        var lab  = sync ? 'in sync' : ('drift from ' + s.masterSha);
+        var col  = sync ? '#39ff7f' : '#ff8c00';
+        rows += '<tr>' +
+          '<td style="padding:6px 10px;border-top:1px solid var(--border)">' + esc(w.name) + '</td>' +
+          '<td style="padding:6px 10px;border-top:1px solid var(--border)">' + esc(w.host) + '</td>' +
+          '<td style="padding:6px 10px;border-top:1px solid var(--border)">' + esc(w.sha) + '</td>' +
+          '<td style="padding:6px 10px;border-top:1px solid var(--border);color:' + col + '">' + esc(lab) + '</td>' +
+          '<td style="padding:6px 10px;border-top:1px solid var(--border)"><a href="' + esc(w.url) + '" target="_blank" style="color:var(--primary)">' + esc(w.url) + '</a></td>' +
+          '</tr>';
+      });
+      rows += '</tbody></table>' +
+        '<div style="margin-top:8px;font-size:11px;color:var(--text-mid)">Master okdunio: <b style="color:var(--text)">' + esc(s.masterSha) +
+        '</b> · platform: <b style="color:var(--text)">' + esc(s.platformSha) + '</b></div>';
+      stateEl.innerHTML = rows;
+      logEl.textContent = s.log || '(empty)';
+    }
+    render(first);
+    refreshBtn.addEventListener('click', async function() {
+      refreshBtn.disabled = true;
+      var s = await loadStatus(); if (s) render(s);
+      refreshBtn.disabled = false;
+    });
+    runBtn.addEventListener('click', async function() {
+      if (!window.confirm('Deploy current dev code to ' + first.workers.length + ' worker(s)?')) return;
+      runBtn.disabled = true; runBtn.textContent = 'Deploying…';
+      try { await fetch('/api/settings/deploy/run', { method: 'POST', credentials: 'same-origin' }); } catch (_) {}
+      var done = false;
+      while (!done) {
+        await new Promise(function(r){ setTimeout(r, 2000); });
+        var s = await loadStatus(); if (s) render(s);
+        var tail = (logEl.textContent || '').split('\n').slice(-6).join('\n');
+        if (/deploy complete|deploy halted/.test(tail)) done = true;
+      }
+      runBtn.disabled = false; runBtn.textContent = 'Deploy to all workers';
+    });
+  }
 
   // ── Destroy ─────────────────────────────────────────────────
   window.platform.module.destroy = function() {
