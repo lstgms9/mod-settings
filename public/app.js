@@ -1833,7 +1833,11 @@
     } catch (e) { showMbxErr(e.message); }
   }
   async function onMailboxDelete(id) {
-    if (!confirm('Delete this mailbox? This cannot be undone.')) return;
+    // In-app themed modal (platform.ui.confirm) — not the native browser
+    // confirm chrome. Matches every other confirm in this module.
+    var msg = 'Delete this mailbox? This cannot be undone.';
+    var ok = platform.ui ? await platform.ui.confirm(msg) : confirm(msg);
+    if (!ok) return;
     try {
       var r = await fetch('/api/chat/external/addresses/' + encodeURIComponent(id), { method: 'DELETE' });
       var j = await r.json();
