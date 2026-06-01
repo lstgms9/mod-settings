@@ -97,19 +97,46 @@
   }
 
   // ── Section nav ─────────────────────────────────────────────
+  // Persist the open section so a refresh (F5) lands back on the same
+  // tab instead of resetting to Account. Keyed per-tenant.
+  var SEC_LS = 'stgSection:' + (window.INSTANCE_SLUG || '');
+  var _navTouched = false;
+
+  // Activate a section by its data-section key. Returns false if that
+  // section has no nav item or the item is hidden (tier/role gated), so
+  // callers can skip restoring a section the viewer can't see.
+  function selectSection(sec, opts) {
+    var sidebar = document.getElementById('stgSidebar');
+    if (!sidebar || !sec) return false;
+    var item = sidebar.querySelector('.stg-nav-item[data-section="' + sec + '"]');
+    if (!item || getComputedStyle(item).display === 'none') return false;
+    sidebar.querySelectorAll('.stg-nav-item').forEach(function(n) { n.classList.remove('active'); });
+    item.classList.add('active');
+    document.querySelectorAll('#stgMain .stg-section').forEach(function(s) { s.classList.remove('active'); });
+    var el = document.getElementById('sec-' + sec);
+    if (el) el.classList.add('active');
+    if (sec === 'revenue') loadConnectStatus();
+    if (!opts || opts.persist !== false) { try { localStorage.setItem(SEC_LS, sec); } catch (e) {} }
+    return true;
+  }
+
+  // Restore the last-open section from storage. No-op if the user has
+  // already navigated this load, or the saved section isn't available.
+  function restoreSection() {
+    if (_navTouched) return false;
+    var saved; try { saved = localStorage.getItem(SEC_LS); } catch (e) {}
+    if (!saved) return false;
+    return selectSection(saved, { persist: false });
+  }
+
   function initNav() {
     var sidebar = document.getElementById('stgSidebar');
     if (!sidebar) return;
     sidebar.addEventListener('click', function(e) {
       var item = e.target.closest('.stg-nav-item');
       if (!item) return;
-      var sec = item.dataset.section;
-      sidebar.querySelectorAll('.stg-nav-item').forEach(function(n) { n.classList.remove('active'); });
-      item.classList.add('active');
-      document.querySelectorAll('#stgMain .stg-section').forEach(function(s) { s.classList.remove('active'); });
-      var el = document.getElementById('sec-' + sec);
-      if (el) el.classList.add('active');
-      if (sec === 'revenue') loadConnectStatus();
+      _navTouched = true;
+      selectSection(item.dataset.section);
     });
     // Tier-gate sidebar items via data-min-tier. Hide entries whose
     // required tier exceeds the viewer's. Player=0, Dev=1, Studio=2,
@@ -2089,6 +2116,7 @@
     if (myEmailsGroup) { myEmailsGroup.style.display = ''; loadMyEmails(); }
     applyPrefs();
     applyVisual();
+    restoreSection();
     initDeployPanel();
   };
 
@@ -2114,6 +2142,9 @@
     var first = await loadStatus();
     if (!first) return;  // not owner, OR worker mode → keep hidden
     nav.style.display = '';
+    // Deploy nav is revealed asynchronously — re-apply a saved Deploy
+    // section now that it's visible (unless the user already navigated).
+    restoreSection();
     function render(s) {
       var rows = '<table style="width:100%;border-collapse:collapse;font-size:12px;font-family:ui-monospace,Menlo,monospace">' +
         '<thead><tr>' +
