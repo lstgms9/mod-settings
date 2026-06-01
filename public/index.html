@@ -85,13 +85,14 @@
 
     <!-- (Profile section removed — merged into Account below.) -->
 
-    <!-- MAILBOXES — studio-only. Owner manages every mailbox under the
-         studio's subdomain (<slug>.<studioMailDomain>): create, assign
-         to a dev, delete. Server enforces owner-only; nav item itself
-         is hidden for non-studio plans. -->
+    <!-- MAILBOXES — studio-only. Owner manages every mailbox at the
+         studio's apex mail domain (<studioMailDomain>), slug-prefixed
+         (<slug>name@<studioMailDomain>): create, assign to a dev, delete.
+         Server enforces owner-only; nav item itself is hidden for
+         non-studio plans. -->
     <div class="stg-section" id="sec-mailboxes">
       <div class="stg-section-header">Studio Mailboxes</div>
-      <div class="stg-section-desc">Email addresses under your studio's subdomain. Assign a mailbox to a dev to give them mail access.</div>
+      <div class="stg-section-desc">Email addresses at your studio's mail domain, prefixed with your studio name. Assign a mailbox to a dev to give them mail access.</div>
 
       <!-- Side-by-side: EXISTING on the left, CREATE NEW on the right. -->
       <div class="stg-mbx-duet">
@@ -106,7 +107,7 @@
           <div class="stg-info-field">
             <span class="stg-info-label">Local part</span>
             <input type="text" class="stg-input" id="mbxNewLocal" placeholder="marketing" maxlength="20" autocapitalize="off" spellcheck="false">
-            <span class="stg-sublabel" id="mbxDomainHint">e.g. marketing → marketing@&lt;slug&gt;.gamoids.com</span>
+            <span class="stg-sublabel" id="mbxDomainHint">e.g. &lt;slug&gt;sales → &lt;slug&gt;sales@gamoids.com</span>
           </div>
           <div class="stg-info-field">
             <span class="stg-info-label">Assign to</span>

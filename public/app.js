@@ -816,21 +816,17 @@
         }
       }
     }
-    // EMAIL = username@<studioSlug>.gamoids.com (studio-tier accounts).
-    // Studio name rendered as a highlighted chip. Pre-studio users see
-    // their plain signup email instead.
+    // EMAIL = the studio's primary apex mailbox <slug>@<studioMailDomain>
+    // (apex mail model — no subdomains). Pre-studio users see their plain
+    // signup email instead.
     var emailEl = document.getElementById('accountEmail');
     if (emailEl) {
       var sesObj = null;
       try { sesObj = await platform.user.current(); } catch (_) {}
       var studioSlug = sesObj && sesObj.studioSlug;
-      var unameForEmail = (unEl && unEl.value) || (sesObj && (sesObj.username || sesObj.handle)) || '';
-      if (studioSlug && unameForEmail) {
-        // Plain text composite — the slug used to render in a red
-        // highlight box but that drew the eye to a field the user
-        // can't edit (slug is locked) and added visible margins on
-        // either side. Same content, no decoration.
-        emailEl.textContent = unameForEmail + '@' + studioSlug + '.gamoids.com';
+      if (studioSlug) {
+        var mailParent = (window.INSTANCE_MAIL && window.INSTANCE_MAIL.studioMailDomain) || 'gamoids.com';
+        emailEl.textContent = studioSlug + '@' + mailParent;
       } else if (idEmail) {
         emailEl.textContent = idEmail;
       }
@@ -840,7 +836,7 @@
     if (recEl && idEmail) recEl.value = idEmail;
 
     // STUDIO row — only rendered for studio-tier viewers. Slug is locked
-    // (subdomain + mailbox + DNS + DKIM all keyed off it); name is the
+    // (website subdomain + mailbox local-part keyed off it); name is the
     // only studio identity field a user can edit post-signup.
     try {
       var stRow = document.getElementById('accountStudioRow');
@@ -1611,7 +1607,7 @@
 
   // ── Mailboxes ───────────────────────────────────────────────
   // Two parallel surfaces:
-  //   - Studio tier viewer  → manages <slug>.gamoids.com mailboxes
+  //   - Studio tier viewer  → manages <slug>@gamoids.com (apex) mailboxes
   //                            (their studio's client-facing emails).
   //   - super_owner / gamoidEmployee → manages @gamoid.io mailboxes
   //                            (Gamoid Ltd company emails). Super-
@@ -1669,16 +1665,20 @@
     } else {
       _mbxMode = 'studio';
       _mbxSlug = (ses && ses.studioSlug) || null;
-      _mbxDomain = _mbxSlug ? (_mbxSlug + '.' + studioParent) : studioParent;
+      _mbxDomain = studioParent;  // apex mail — mailboxes live at the apex, slug-prefixed
     }
     var hint = document.getElementById('mbxDomainHint');
-    if (hint) hint.textContent = 'e.g. marketing → marketing@' + _mbxDomain;
+    if (hint) {
+      hint.textContent = (_mbxMode === 'studio' && _mbxSlug)
+        ? ('e.g. ' + _mbxSlug + 'sales → ' + _mbxSlug + 'sales@' + _mbxDomain)
+        : ('e.g. marketing → marketing@' + _mbxDomain);
+    }
     var header = document.querySelector('#sec-mailboxes .stg-section-header');
     var sub = document.querySelector('#sec-mailboxes .stg-section-desc');
     if (header) header.textContent = (_mbxMode === 'company') ? 'Company Mailboxes' : 'Studio Mailboxes';
     if (sub) sub.textContent = (_mbxMode === 'company')
       ? 'Email addresses under your gamoid.io company domain. Assign mailboxes to Gamoid employees.'
-      : "Email addresses under your studio's subdomain. Assign a mailbox to a dev to give them mail access.";
+      : ('Email addresses at ' + _mbxDomain + ', prefixed with your studio name (e.g. ' + (_mbxSlug || 'studio') + 'sales@' + _mbxDomain + '). Assign a mailbox to a dev to give them mail access.');
 
     // Load existing mailboxes + team members in parallel.
     try {
@@ -1884,7 +1884,7 @@
         '<div style="background:var(--bg,#0b0b14);border:1px solid var(--border,#252540);border-radius:14px;padding:28px;width:500px;max-width:90vw;position:relative">' +
           '<button id="stgSlugClose" style="position:absolute;top:10px;right:14px;background:none;border:0;color:var(--text-mid,#a0aab0);font-size:22px;cursor:pointer">&times;</button>' +
           '<h2 style="font-family:var(--font-head,Bungee);margin:0 0 6px;color:var(--text,#e4e4f0);font-size:20px">Choose your studio URL</h2>' +
-          '<p style="margin:0 0 14px;font-size:13px;color:var(--text-mid,#a0aab0);line-height:1.45">Pick the subdomain for your studio. This becomes your website AND your email domain. <strong style="color:var(--red,#ff3997)">It can&rsquo;t be changed later</strong> — choose carefully.</p>' +
+          '<p style="margin:0 0 14px;font-size:13px;color:var(--text-mid,#a0aab0);line-height:1.45">Pick your studio URL. It becomes your website (<strong>your-slug.' + mailDomain + '</strong>) and your studio email (<strong>your-slug@' + mailDomain + '</strong>). <strong style="color:var(--red,#ff3997)">It can&rsquo;t be changed later</strong> — choose carefully.</p>' +
           '<div style="display:flex;align-items:center;background:var(--bg2,#12121f);border:1px solid var(--border,#252540);border-radius:8px;padding:4px 4px 4px 12px;margin-bottom:8px">' +
             '<input id="stgSlugIn" type="text" placeholder="gamebolina" maxlength="30" autocapitalize="off" spellcheck="false" autocomplete="off" style="flex:1;background:transparent;border:none;color:var(--text,#e4e4f0);font-family:var(--font-mono,monospace);font-size:15px;outline:none;padding:8px 0">' +
             '<span style="font-family:var(--font-mono,monospace);font-size:15px;color:var(--text-mid,#a0aab0);padding:8px 12px 8px 4px">.' + mailDomain + '</span>' +
@@ -1928,7 +1928,7 @@
       var v = (input.value || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
       if (v !== input.value) input.value = v;
       preview1.textContent = (v || '<slug>') + '.' + mailDomain;
-      preview2.textContent = 'you@' + (v || '<slug>') + '.' + mailDomain;
+      preview2.textContent = (v || '<slug>') + '@' + mailDomain;  // apex mail — no subdomain
       if (!v) { setStatus('3-30 chars, lowercase letters, numbers, hyphens.'); setConfirmEnabled(false); return; }
       if (v.length < 3) { setStatus('Too short (3 chars min).', 'var(--red,#ff3997)'); setConfirmEnabled(false); return; }
       setStatus('Checking availability…');
