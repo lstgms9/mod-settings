@@ -1724,19 +1724,26 @@
       var full = addr.address || ((addr.data && addr.data.fullAddress) || '');
       if (full.indexOf('@') === -1 && addr.domain) full = full + '@' + addr.domain;
       var assigned = (addr.data && addr.data.assignedTo) || addr.assignedTo || [];
+      // The default studio mailbox (<slug>@<apex>) can't be deleted — show
+      // a "Default" tag instead of a Delete button. Only created mailboxes
+      // are deletable. Server enforces this too.
+      var isPrimary = !!(addr.isPrimary || (addr.data && addr.data.isPrimary));
       row.innerHTML =
         '<div style="font-family:var(--font-mono,monospace);color:var(--text,#e4e4f0);font-size:14px;word-break:break-all;line-height:1.3;">' + escapeHTML(full) + '</div>' +
         '<div style="display:flex;gap:8px;align-items:center;">' +
           '<select class="stg-input mbx-reassign" data-id="' + addr.id + '" style="flex:1;min-width:0;">' +
             '<option value="">— Owner only —</option>' +
           '</select>' +
-          '<button class="stg-ai-btn mbx-del" data-id="' + addr.id + '" style="background:transparent;color:var(--red,#ff3997);border:1px solid var(--border,#252540);padding:6px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">Delete</button>' +
+          (isPrimary
+            ? '<span class="stg-sublabel" title="Your studio\'s default mailbox — can\'t be deleted" style="white-space:nowrap;padding:6px 14px;opacity:.7;">Default</span>'
+            : '<button class="stg-ai-btn mbx-del" data-id="' + addr.id + '" style="background:transparent;color:var(--red,#ff3997);border:1px solid var(--border,#252540);padding:6px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">Delete</button>') +
         '</div>';
       host.appendChild(row);
       var sel = row.querySelector('select.mbx-reassign');
       populateTeamPicker(sel, assigned[0] || '');
       sel.addEventListener('change', function() { onMailboxReassign(addr.id, sel.value ? [sel.value] : []); });
-      row.querySelector('.mbx-del').addEventListener('click', function() { onMailboxDelete(addr.id); });
+      var delEl = row.querySelector('.mbx-del');
+      if (delEl) delEl.addEventListener('click', function() { onMailboxDelete(addr.id); });
     });
   }
   function populateTeamPicker(sel, selectedUserId) {
