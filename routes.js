@@ -562,16 +562,35 @@ module.exports = function(router, ctx) {
     } catch (e) {}
     let log = '';
     try {
-      // Group the log into deploy-run blocks (each starts with "deploy started")
-      // and show the MOST RECENT run first, so you don't scroll to find it. A
-      // blank line separates runs; we keep the newest 8.
+      // The raw deploy log is a cryptic line-per-step stream in append order, so
+      // the newest run is buried at the bottom. Collapse each run into ONE
+      // readable line — icon · when · outcome · what shipped — newest first.
       const lines = fs.readFileSync('/home/damon/platform/.runtime/deploy-gamoid.log','utf8').split('\n').filter(Boolean);
-      const blocks = [];
+      const runs = [];
       for (const l of lines) {
-        if (l.includes('deploy started') || blocks.length === 0) blocks.push([l]);
-        else blocks[blocks.length - 1].push(l);
+        if (/── (deploy started|status)/.test(l) || runs.length === 0) runs.push([]);
+        runs[runs.length - 1].push(l);
       }
-      log = blocks.reverse().slice(0, 8).map(b => b.join('\n')).join('\n\n');
+      const tsOf = l => (l.match(/^\[([^\]]+)\]/) || [, ''])[1];
+      const summarize = (run) => {
+        const head = run.find(l => /── (deploy started|status)/.test(l)) || run[0] || '';
+        const when = tsOf(head);
+        const plat = (head.match(/platform=([0-9a-f]+)/) || [, '?'])[1];
+        if (head.includes('── status')) return 'ℹ️  ' + when + '   status check   ·   platform ' + plat;
+        const ok = run.find(l => l.includes('OK —'));
+        const failed = run.find(l => /FAIL|halt|rsync error|\bERROR\b/i.test(l));
+        const done = run.some(l => l.includes('deploy complete'));
+        if (ok) {
+          const m = ok.match(/okdunio:\s*([0-9a-f]+)\s*→\s*([0-9a-f]+).*health:\s*(\d+)/);
+          const from = m ? m[1] : '?', to = m ? m[2] : '?', health = m ? m[3] : '?';
+          const okd = (from === to) ? ('okdunio ' + to + ' (no change)') : ('okdunio ' + from + '→' + to);
+          return (health === '200' ? '✅' : '⚠️') + '  ' + when + '   deployed   ·   platform ' + plat + '   ·   ' + okd + '   ·   w1 health ' + health;
+        }
+        if (failed) return '❌  ' + when + '   FAILED   ·   platform ' + plat;
+        if (done)   return '✅  ' + when + '   complete   ·   platform ' + plat;
+        return '⏳  ' + when + '   in progress…   ·   platform ' + plat;
+      };
+      log = runs.reverse().slice(0, 12).map(summarize).join('\n');
     } catch {}
     res.json({ masterSha, platformSha, workers, log });
   });
