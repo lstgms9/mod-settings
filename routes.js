@@ -561,7 +561,18 @@ module.exports = function(router, ctx) {
       }
     } catch (e) {}
     let log = '';
-    try { log = fs.readFileSync('/home/damon/platform/.runtime/deploy-gamoid.log','utf8').split('\n').slice(-40).join('\n'); } catch {}
+    try {
+      // Group the log into deploy-run blocks (each starts with "deploy started")
+      // and show the MOST RECENT run first, so you don't scroll to find it. A
+      // blank line separates runs; we keep the newest 8.
+      const lines = fs.readFileSync('/home/damon/platform/.runtime/deploy-gamoid.log','utf8').split('\n').filter(Boolean);
+      const blocks = [];
+      for (const l of lines) {
+        if (l.includes('deploy started') || blocks.length === 0) blocks.push([l]);
+        else blocks[blocks.length - 1].push(l);
+      }
+      log = blocks.reverse().slice(0, 8).map(b => b.join('\n')).join('\n\n');
+    } catch {}
     res.json({ masterSha, platformSha, workers, log });
   });
   router.post('/deploy/run', async (req, res) => {
