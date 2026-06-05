@@ -378,8 +378,28 @@
         prefs._tfaEnabled = true;
         label.textContent = 'ON';
         label.style.color = '#39ff7f';
-        panel.classList.remove('visible');
-        toast('2FA enabled via Authenticator App');
+        var codes = Array.isArray(r.recoveryCodes) ? r.recoveryCodes : [];
+        if (codes.length) {
+          // Show the one-time recovery codes — they're never shown again.
+          panel.innerHTML =
+            '<div class="stg-tfa-recovery" style="padding:8px">' +
+              '<h4 style="margin:0 0 6px">Save your recovery codes</h4>' +
+              '<p style="margin:0 0 10px;opacity:.8;font-size:13px">Each works once if you lose your authenticator. Store them safely — they won’t be shown again.</p>' +
+              '<div class="stg-tfa-codes" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-family:ui-monospace,monospace;margin-bottom:12px">' +
+                codes.map(function(c){ return '<code style="background:#0b0b14;border:1px solid var(--border,#333);border-radius:4px;padding:6px 8px;letter-spacing:1px">' + c + '</code>'; }).join('') +
+              '</div>' +
+              '<button class="stg-btn-primary" id="tfaRecCopy">Copy codes</button> ' +
+              '<button class="stg-seg-btn" id="tfaRecDone">Done</button>' +
+            '</div>';
+          var copyBtn = document.getElementById('tfaRecCopy');
+          if (copyBtn) copyBtn.addEventListener('click', function(){ try { navigator.clipboard.writeText(codes.join('\n')); toast('Recovery codes copied'); } catch(e) { toast('Select and copy them manually'); } });
+          var doneBtn = document.getElementById('tfaRecDone');
+          if (doneBtn) doneBtn.addEventListener('click', function(){ panel.classList.remove('visible'); });
+          toast('2FA enabled — save your recovery codes');
+        } else {
+          panel.classList.remove('visible');
+          toast('2FA enabled via Authenticator App');
+        }
       } else {
         toast(r.error || 'Invalid code');
       }

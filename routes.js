@@ -185,11 +185,16 @@ module.exports = function(router, ctx) {
     });
     const delta = totp.validate({ token: code, window: 1 });
     if (delta === null) return res.error(400, 'Invalid code');
-    // activate 2FA
-    user.tfa = { method: 'totp', secret: user.tfaPending.secret };
+    // activate 2FA + mint one-time recovery codes. Shown to the user ONCE
+    // (returned cleartext here); only sha256 hashes are stored, so a leaked
+    // user file can't be used to log in. Each code works once (consumed at
+    // login). Lose your authenticator → use one of these to get back in.
+    const recoveryCodes = Array.from({ length: 8 }, () => crypto.randomBytes(5).toString('hex'));
+    const recovery = recoveryCodes.map(c => crypto.createHash('sha256').update(c).digest('hex'));
+    user.tfa = { method: 'totp', secret: user.tfaPending.secret, recovery };
     delete user.tfaPending;
     writeUser(req.user.studio, user, req);
-    res.json({ ok: true, method: 'totp' });
+    res.json({ ok: true, method: 'totp', recoveryCodes });
   });
 
   // ── 2FA: email setup — send test code ───────────────────────
