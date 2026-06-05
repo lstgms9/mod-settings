@@ -138,9 +138,16 @@ module.exports = function(router, ctx) {
   // ── 2FA: TOTP setup ─────────────────────────────────────────
   router.post('/2fa/setup-totp', async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');
+    // Issuer = the vertical's brand (what the user sees in their Authenticator
+    // app, e.g. "Gamoid: damon"), derived from the tenant slug. End users have
+    // no idea what "OkDun" is. Falls back to OkDun for the platform itself.
+    // Issuer/label are display-only in the otpauth URI — they don't affect the
+    // generated codes — so changing this only matters for new enrollments.
+    const slug = req.instanceSlug;
+    const issuer = (slug && slug !== 'inst-dev') ? (slug.charAt(0).toUpperCase() + slug.slice(1)) : 'OkDun';
     const secret = new Secret({ size: 20 });
     const totp = new TOTP({
-      issuer: 'OkDun',
+      issuer,
       label: req.user.studio,
       algorithm: 'SHA1',
       digits: 6,
