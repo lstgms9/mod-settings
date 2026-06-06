@@ -20,6 +20,7 @@
     <!-- Deploy nav — only revealed for tenant owner on a master runtime
          (WORKER_MODE unset). app.js feature-detects via /api/settings/deploy/status. -->
     <div class="stg-nav-item" data-section="deploy" id="stgDeployNav" style="display:none"><span class="stg-nav-icon">&#128640;</span> Deploy</div>
+    <div class="stg-nav-item" data-section="securebox" id="stgSecureBoxNav" style="display:none"><span class="stg-nav-icon">&#128274;</span> Secure a box</div>
     <!-- Hidden-for-now nav entries:
     <div class="stg-nav-item" data-section="autopilot"><span class="stg-nav-icon">&#128640;</span> AI Autopilot</div>
     <div class="stg-nav-item" data-section="revenue"><span class="stg-nav-icon">&#128176;</span> Revenue</div>
@@ -657,6 +658,23 @@
             <pre id="deployLog" style="margin:0;background:#0b0b14;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:280px;overflow:auto;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(empty)</pre>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- SECURE A BOX — owner only. 2FA-protect SSH on any server by IP + root password. -->
+    <div class="stg-section" id="sec-securebox">
+      <div class="stg-section-header">Secure a box</div>
+      <div class="stg-section-desc">Turn on SSH 2FA for any server using your existing authenticator code. Enter its IP and root password — we log in, set it up, and switch it on.</div>
+      <div class="stg-group">
+        <div class="stg-group-label">&#9888; BEFORE YOU START</div>
+        <div class="stg-sublabel" style="margin:0 0 14px">Open a PuTTY/SSH session to the box first and <b>keep it open</b>. If a 2FA login fails afterwards, run <code>bash /root/2fa-revert.sh</code> in that session (or the provider console) to undo it. Your authenticator code (the one you already use) becomes the box's login code too.</div>
+        <div class="stg-row"><div style="width:100%"><div class="stg-label">Box IP / host</div><input id="sbIp" placeholder="89.117.60.193" autocomplete="off" autocapitalize="off" spellcheck="false" style="width:100%;padding:8px 10px;background:#0b0b14;border:1px solid var(--border,#333);border-radius:6px;color:inherit;font-size:14px"></div></div>
+        <div class="stg-row"><div style="width:100%"><div class="stg-label">Root password</div><input id="sbPw" type="password" placeholder="used once for login, never stored" autocomplete="off" style="width:100%;padding:8px 10px;background:#0b0b14;border:1px solid var(--border,#333);border-radius:6px;color:inherit;font-size:14px"></div></div>
+        <div class="stg-row">
+          <div><div class="stg-label">Install + enable 2FA on this box</div><div class="stg-sublabel">installs the authenticator, seeds your existing code, switches on password+code login</div></div>
+          <button class="stg-btn-primary" id="sbRun">Secure box</button>
+        </div>
+        <div class="stg-row"><div style="width:100%"><pre id="sbResult" style="margin:0;background:#0b0b14;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:280px;overflow:auto;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(enter IP + password, then click Secure box)</pre></div></div>
       </div>
     </div>
 

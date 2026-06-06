@@ -616,4 +616,68 @@ module.exports = function(router, ctx) {
     child.unref();
     res.json({ ok: true, pid: child.pid });
   });
+
+  // Secure-a-box: owner enters a box's IP + root password; we SSH in (password
+  // auth), install + configure SSH 2FA seeded with the OWNER's EXISTING
+  // authenticator secret (so the same 6-digit code works on every box — no new
+  // QR), then reload sshd. The password is used once for the connection and
+  // NEVER stored. Lockout-safe: key logins are untouched, /root/2fa-revert.sh is
+  // written, and the user keeps their own session open to test.
+  router.post('/secure-box', async (req, res) => {
+    const why = deployGuard(req);
+    if (why === 'worker-mode') return res.error(404, 'Not available on workers');
+    if (why) return res.error(403, 'Owner only');
+    const b = req.body || {};
+    const ip = String(b.ip || '').trim();
+    const password = String(b.password || '');
+    const loginUser = (String(b.user || 'root').trim()) || 'root';
+    if (!ip || !password) return res.error(400, 'Box IP/host and root password are required');
+    if (!/^[a-zA-Z0-9.:_-]+$/.test(ip)) return res.error(400, 'Invalid IP/host');
+
+    // Reuse the owner's existing TOTP secret so one code works everywhere.
+    const u = readUser(req.user.studio || req.user.slug, req);
+    const secret = u && u.tfa && u.tfa.secret;
+    if (!secret) return res.error(400, 'Enable 2FA on your own account first (Settings → 2FA) so there is a code to reuse on the box.');
+
+    let scriptText;
+    try { scriptText = fs.readFileSync('/home/damon/platform/scripts/secure-server-2fa.sh', 'utf8'); }
+    catch (e) { return res.error(500, 'secure-server-2fa.sh missing on this box'); }
+
+    const { Client } = require('ssh2');
+    function run(cmd, stdin) {
+      return new Promise((resolve, reject) => {
+        const conn = new Client();
+        let out = '';
+        conn.on('ready', () => {
+          conn.exec(cmd, (err, stream) => {
+            if (err) { conn.end(); return reject(err); }
+            stream.on('data', d => { out += d.toString(); });
+            stream.stderr.on('data', d => { out += d.toString(); });
+            stream.on('close', (code) => { conn.end(); resolve({ code, out }); });
+            if (stdin) stream.end(stdin); else stream.end();
+          });
+        });
+        conn.on('error', reject);
+        conn.connect({ host: ip, port: 22, username: loginUser, password, readyTimeout: 20000 });
+      });
+    }
+
+    try {
+      // 1. stage 2FA (script does NOT reload) using the owner's existing secret
+      const stage = await run('GA_SECRET=' + JSON.stringify(secret) + ' bash -s', scriptText);
+      const ok = /passwordauthentication no/i.test(stage.out) && /kbdinteractiveauthentication yes/i.test(stage.out);
+      if (!ok) {
+        return res.json({ ok: false, stage: 'configure', message: 'Setup did not validate — not activated.', output: stage.out.slice(-3000) });
+      }
+      // 2. activate (reload). Existing sessions survive a reload; new password
+      //    logins now require the code. Key logins are unaffected.
+      const reload = await run('(systemctl reload ssh 2>&1 || systemctl reload sshd 2>&1); echo reload-rc=$?');
+      return res.json({ ok: true, output: (stage.out + '\n--- reload ---\n' + reload.out).slice(-3500) });
+    } catch (e) {
+      const m = (e && e.message) || String(e);
+      if (/authentication|All configured auth/i.test(m)) return res.error(401, 'SSH login failed — wrong root password?');
+      if (/ECONNREFUSED|ETIMEDOUT|EHOSTUNREACH|getaddrinfo|timed out/i.test(m)) return res.error(502, 'Could not reach the box at ' + ip + ' (port 22).');
+      return res.error(502, 'SSH error: ' + m);
+    }
+  });
 };
