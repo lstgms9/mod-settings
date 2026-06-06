@@ -20,13 +20,13 @@ const sb = routes.slice(routes.indexOf("router.post('/secure-box'"));
 /u && u\.tfa && u\.tfa\.secret/.test(sb) ? ok('reuses the owner\'s existing TOTP secret') : ng('reuse secret', '');
 /GA_SECRET=/.test(sb) ? ok('passes GA_SECRET to the box (no new QR)') : ng('GA_SECRET', '');
 /secure-server-2fa\.sh/.test(sb) ? ok('runs secure-server-2fa.sh on the box') : ng('runs script', '');
-/systemctl reload ssh/.test(sb) ? ok('activates via sshd reload') : ng('reload', '');
 !/password.*=.*store|writeFile.*password/i.test(sb) ? ok('password not written to disk') : ng('no password storage', '');
 /required/.test(sb) && /Invalid IP/.test(sb) ? ok('validates ip + password input') : ng('input validation', '');
 
 // the secure-server-2fa.sh tool exists + supports GA_SECRET reuse mode
 const tool = fs.readFileSync('/home/damon/platform/scripts/secure-server-2fa.sh', 'utf8');
 /if \[ -n "\$GA_SECRET" \]/.test(tool) ? ok('secure-server-2fa.sh has GA_SECRET reuse mode') : ng('tool reuse mode', '');
+/systemctl reload ssh/.test(tool) ? ok('script reloads sshd to activate in the same run (no half-state)') : ng('script reloads', '');
 
 // UI wiring
 const html = fs.readFileSync('/home/damon/platform/modules/mod-settings/public/index.html', 'utf8');

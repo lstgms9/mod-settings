@@ -663,16 +663,19 @@ module.exports = function(router, ctx) {
     }
 
     try {
-      // 1. stage 2FA (script does NOT reload) using the owner's existing secret
+      // Run the setup over one SSH connection. The script installs PAM, seeds
+      // the owner's secret, validates, AND reloads sshd to activate — all in this
+      // one run (reload = SIGHUP, doesn't drop this connection). One shot, no
+      // half-state. We connect via password here, which still works because the
+      // reload only takes effect for NEW logins after this returns.
       const stage = await run('GA_SECRET=' + JSON.stringify(secret) + ' bash -s', scriptText);
-      const ok = /passwordauthentication no/i.test(stage.out) && /kbdinteractiveauthentication yes/i.test(stage.out);
+      const ok = /passwordauthentication no/i.test(stage.out)
+        && /kbdinteractiveauthentication yes/i.test(stage.out)
+        && /2FA is LIVE|reloaded/i.test(stage.out);
       if (!ok) {
-        return res.json({ ok: false, stage: 'configure', message: 'Setup did not validate — not activated.', output: stage.out.slice(-3000) });
+        return res.json({ ok: false, message: 'Setup did not validate/activate — check the log.', output: stage.out.slice(-3500) });
       }
-      // 2. activate (reload). Existing sessions survive a reload; new password
-      //    logins now require the code. Key logins are unaffected.
-      const reload = await run('(systemctl reload ssh 2>&1 || systemctl reload sshd 2>&1); echo reload-rc=$?');
-      return res.json({ ok: true, output: (stage.out + '\n--- reload ---\n' + reload.out).slice(-3500) });
+      return res.json({ ok: true, output: stage.out.slice(-3500) });
     } catch (e) {
       const m = (e && e.message) || String(e);
       if (/authentication|All configured auth/i.test(m)) return res.error(401, 'SSH login failed — wrong root password?');
