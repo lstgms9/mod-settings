@@ -69,14 +69,14 @@ module.exports = function(router, ctx) {
     // undefined and the UI would show the HTML default "Free").
     if (user) {
       prefs.plan = user.plan || 'free';
-      prefs.displayName = user.username || user.studio;
+      prefs.displayName = user.displayName || user.studio;
       prefs.email = user.email;
     } else if (req.user.role === 'client') {
       try {
         const c = await storage.get('client', req.user.slug);
         if (c && c.data) {
           prefs.plan = c.data.tier || c.data.plan || 'free';
-          prefs.displayName = c.data.username || req.user.email;
+          prefs.displayName = c.data.displayName || c.data.username || c.data.handle || req.user.email;
           prefs.email = c.data.email || req.user.email;
         }
       } catch (_) {}

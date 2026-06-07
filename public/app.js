@@ -816,13 +816,13 @@
     // identity (display name + email) at the top of Account. prefs
     // route returns these for both user-level and client-level
     // accounts; falls back to session if prefs is missing them.
-    var idName = prefs.username;
+    var idName = prefs.displayName;
     var idEmail = prefs.email;
     if (!idName || !idEmail) {
       try {
         var ses = await platform.user.current();
         if (ses) {
-          idName = idName || ses.username || ses.email || ses.slug;
+          idName = idName || ses.displayName || ses.username || ses.email || ses.slug;
           idEmail = idEmail || ses.email;
         }
       } catch (_) {}
