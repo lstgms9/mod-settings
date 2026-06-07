@@ -827,10 +827,8 @@
         }
       } catch (_) {}
     }
-    // Populate Details box. Username + Display name are editable; email
-    // is read-only (changing it requires re-verification, future work).
-    var dn = document.getElementById('profileDisplayName');
-    if (dn && idName && !dn.value) dn.value = idName;
+    // Populate Details box. Username is editable; email is read-only
+    // (changing it requires re-verification, future work).
     var unEl = document.getElementById('accountUsername');
     if (unEl) {
       var unVal = prefs.username || (await (async function(){
@@ -1065,9 +1063,7 @@
     // timezone, bio, platforms when the user record / client.data has them).
     fetch('/api/auth/session').then(function(r){ return r.json(); }).then(function(s){
       if (!s || !s.loggedIn) return;
-      var dn = document.getElementById('profileDisplayName');
       var bio = document.getElementById('profileBio');
-      if (dn) dn.value = s.displayName || s.username || '';
       if (cSel && s.country) {
         cSel.value = s.country;
         if (flagEl) flagEl.textContent = flagEmoji(s.country) || '\uD83C\uDF0D';
@@ -1132,13 +1128,11 @@
     });
   }
   async function saveProfile() {
-    var dn = document.getElementById('profileDisplayName');
     var cSel = document.getElementById('profileCountry');
     var tSel = document.getElementById('profileTimezone');
     var bio = document.getElementById('profileBio');
     var btn = document.getElementById('profileSaveBtn');
     var payload = {
-      displayName: dn ? dn.value.trim() : null,
       country:     cSel ? cSel.value || null : null,
       timezone:    tSel ? tSel.value || null : null,
       bio:         bio ? bio.value.trim() : null,
