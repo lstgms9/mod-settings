@@ -943,7 +943,11 @@
         if (logo) html += '<img src="/_instance/files/' + esc(logo) + '" alt="' + esc(name) + '">';
         html += '<span class="stg-acct-studio-chip-name">' + esc(name) + '</span>';
         chip.innerHTML = html;
-        chip.href = '/explore/thingi';
+        // Open THIS studio's profile — point at the studio thing explicitly.
+        // Without an id it opened /explore/thingi on whatever thing was last
+        // selected (usually a game), not the studio.
+        chip.href = '/explore/thingi?_highlight=' + encodeURIComponent(st.id);
+        chip.onclick = function () { try { localStorage.setItem('platform-selected-thing', st.id); } catch (e) {} };
         chip.title = name;
         chip.style.display = 'inline-flex';
       } else if (chip) {
