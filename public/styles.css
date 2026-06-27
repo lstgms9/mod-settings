@@ -184,6 +184,8 @@
   border-radius: 6px; margin-right: 8px;
   font-family: 'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',sans-serif;
 }
+/* Real flag image inside the preview box (always a flag, never bare letters). */
+#settings-app .stg-flag-preview .stg-flag-img { height:20px; width:auto; border-radius:3px; box-shadow:0 0 0 1px rgba(0,0,0,.3); }
 .stg-ai-btn {
   width: 100%; padding: 7px; border-radius: 6px; font-size: 12px; font-weight: 600;
   font-family: inherit; cursor: pointer; border: 1px solid; transition: all 0.2s;

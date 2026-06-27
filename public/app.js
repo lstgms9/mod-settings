@@ -982,12 +982,13 @@
     ['Europe','Europe'],
     ['Asia','Asia'],
   ];
-  function flagEmoji(cc) {
+  // Country code → flag IMAGE (flagcdn SVG). Emoji flags render as bare letters
+  // on Linux/Chromium/Windows, so always use an image.
+  function flagImg(cc) {
     if (!cc) return '';
     var s = String(cc).trim().toUpperCase();
     if (!/^[A-Z]{2}$/.test(s)) return '';
-    return String.fromCodePoint(0x1F1E6 + s.charCodeAt(0) - 65) +
-           String.fromCodePoint(0x1F1E6 + s.charCodeAt(1) - 65);
+    return '<img class="stg-flag-img" src="https://flagcdn.com/' + s.toLowerCase() + '.svg" alt="' + s + '" loading="lazy">';
   }
   // Recognised platforms — keep in sync with mod-list's PLAT_GLYPH so
   // both the Settings picker and the Explore Social column show the
@@ -1058,7 +1059,7 @@
       cSel.innerHTML = '<option value="">— Select country —</option>' +
         COUNTRIES.map(function(c){ return '<option value="' + c[0] + '">' + c[1] + '</option>'; }).join('');
       cSel.addEventListener('change', function() {
-        if (flagEl) flagEl.textContent = flagEmoji(cSel.value) || '\uD83C\uDF0D';  // 🌍 fallback
+        if (flagEl) flagEl.innerHTML = flagImg(cSel.value) || '\uD83C\uDF0D';  // 🌍 fallback
       });
     }
     if (tSel) {
@@ -1074,7 +1075,7 @@
       if (dn) dn.value = s.displayName || s.username || '';
       if (cSel && s.country) {
         cSel.value = s.country;
-        if (flagEl) flagEl.textContent = flagEmoji(s.country) || '\uD83C\uDF0D';
+        if (flagEl) flagEl.innerHTML = flagImg(s.country) || '\uD83C\uDF0D';
       }
       if (tSel && s.timezone) tSel.value = s.timezone;
       if (bio) bio.value = s.bio || '';
