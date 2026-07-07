@@ -45,19 +45,23 @@
   // uses --pub-*; without these the shell stayed locked to its
   // hardcoded defaults and you got split rendering — dark header
   // floating over a light theme card (or vice versa).
-  var THEMES = {
+  // Prefer the shell's canonical maps (window.__THEME_LEVELS / __ACCENTS)
+  // so there's ONE source of truth; the literals below are only a fallback
+  // for contexts that don't render the shell first-paint script. Each theme
+  // carries --accent-darken (% the accent is mixed toward black for light bgs).
+  var THEMES = window.__THEME_LEVELS || {
     dark:        { '--bg':'#0b0b14','--bg2':'#12121f','--bg3':'#1a1a2e','--text':'#e4e4f0','--text-mid':'#a0aab0','--text-dim':'#5a6a70','--border':'#252540','--border2':'#353555',
-                   '--pub-bg':'#0b0b14','--pub-bg2':'#181828','--pub-text':'#e4e4f0','--pub-text-mid':'#a8a8c0','--pub-text-dim':'#7a7a9a','--pub-border':'#252540' },
+                   '--pub-bg':'#0b0b14','--pub-bg2':'#181828','--pub-text':'#e4e4f0','--pub-text-mid':'#a8a8c0','--pub-text-dim':'#7a7a9a','--pub-border':'#252540','--accent-darken':'0%' },
     grey:        { '--bg':'#1a1a24','--bg2':'#22222f','--bg3':'#2a2a3e','--text':'#e4e4f0','--text-mid':'#a0aab0','--text-dim':'#6a7a80','--border':'#353550','--border2':'#454565',
-                   '--pub-bg':'#1a1a24','--pub-bg2':'#22222f','--pub-text':'#e4e4f0','--pub-text-mid':'#a8b0c0','--pub-text-dim':'#7a849a','--pub-border':'#353550' },
+                   '--pub-bg':'#1a1a24','--pub-bg2':'#22222f','--pub-text':'#e4e4f0','--pub-text-mid':'#a8b0c0','--pub-text-dim':'#7a849a','--pub-border':'#353550','--accent-darken':'0%' },
     'light-grey':{ '--bg':'#2e2e3e','--bg2':'#363648','--bg3':'#404058','--text':'#eeeef4','--text-mid':'#b0bac0','--text-dim':'#808a90','--border':'#505068','--border2':'#606078',
-                   '--pub-bg':'#2e2e3e','--pub-bg2':'#363648','--pub-text':'#eeeef4','--pub-text-mid':'#b8c0d0','--pub-text-dim':'#909aa8','--pub-border':'#505068' },
+                   '--pub-bg':'#2e2e3e','--pub-bg2':'#363648','--pub-text':'#eeeef4','--pub-text-mid':'#b8c0d0','--pub-text-dim':'#909aa8','--pub-border':'#505068','--accent-darken':'8%' },
     light:       { '--bg':'#e8e8f0','--bg2':'#dcdce8','--bg3':'#d0d0e0','--text':'#1a1a2e','--text-mid':'#4a4a60','--text-dim':'#7a7a90','--border':'#c0c0d4','--border2':'#b0b0c8',
-                   '--pub-bg':'#f4f4f8','--pub-bg2':'#e8e8f0','--pub-text':'#1a1a2e','--pub-text-mid':'#555570','--pub-text-dim':'#8e8ea0','--pub-border':'#c0c0d4' },
+                   '--pub-bg':'#f4f4f8','--pub-bg2':'#e8e8f0','--pub-text':'#1a1a2e','--pub-text-mid':'#555570','--pub-text-dim':'#8e8ea0','--pub-border':'#c0c0d4','--accent-darken':'32%' },
     white:       { '--bg':'#ffffff','--bg2':'#f4f4f8','--bg3':'#eaeaf0','--text':'#111118','--text-mid':'#444450','--text-dim':'#888898','--border':'#d8d8e4','--border2':'#c8c8d8',
-                   '--pub-bg':'#ffffff','--pub-bg2':'#f8f9fa','--pub-text':'#111118','--pub-text-mid':'#444450','--pub-text-dim':'#888898','--pub-border':'#e8e8f0' },
+                   '--pub-bg':'#ffffff','--pub-bg2':'#f8f9fa','--pub-text':'#111118','--pub-text-mid':'#444450','--pub-text-dim':'#888898','--pub-border':'#e8e8f0','--accent-darken':'46%' },
   };
-  var ACCENTS = {
+  var ACCENTS = window.__ACCENTS || {
     cyan: '#00e6d2', pink: '#ff3997', green: '#39ff7f', yellow: '#ffd700', orange: '#ff6b35'
   };
   var FONT_MAP = {};
@@ -69,9 +73,11 @@
     // theme
     var t = THEMES[prefs.theme];
     if (t) { for (var k in t) r.setProperty(k, t[k]); }
-    // accent
+    // accent — set only the BASE; CSS derives --accent (base mixed toward
+    // black by the theme's --accent-darken) and --pub-brand/--primary track
+    // it. The theme loop above already set --accent-darken for this level.
     var a = ACCENTS[prefs.accent];
-    if (a) { r.setProperty('--primary', a); r.setProperty('--accent', a); }
+    if (a) r.setProperty('--accent-base', a);
     // heading font
     var font = FONT_MAP[prefs.headingFont];
     if (font) r.setProperty('--font-head', font);
