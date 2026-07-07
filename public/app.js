@@ -2280,9 +2280,11 @@
     var saved = JSON.parse(localStorage.getItem('okdun-user-prefs'));
     if (saved) {
       var r = document.documentElement.style;
-      var t = saved.theme && { dark:{},grey:{},['light-grey']:{},light:{},white:{} }[saved.theme] ? null : null;
-      // full apply happens in init, this is just accent/font for instant feel
-      if (saved.accent && ACCENTS[saved.accent]) { r.setProperty('--primary', ACCENTS[saved.accent]); r.setProperty('--accent', ACCENTS[saved.accent]); }
+      // Feed the accent ENGINE (base + per-theme darken); CSS derives
+      // --accent/--pub-brand. Never set --accent/--primary raw here — that
+      // would override the color-mix and un-darken the accent on light themes.
+      if (saved.accent && ACCENTS[saved.accent]) r.setProperty('--accent-base', ACCENTS[saved.accent]);
+      if (saved.theme && THEMES[saved.theme] && THEMES[saved.theme]['--accent-darken']) r.setProperty('--accent-darken', THEMES[saved.theme]['--accent-darken']);
     }
   } catch(e) {}
 })();
