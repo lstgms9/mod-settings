@@ -67,6 +67,7 @@
   var FONT_MAP = {};
   FONTS.forEach(function(f) { FONT_MAP[f.id] = f.family; });
   var SIZES = { small: '14px', medium: '16px', large: '19px' };
+  var WEIGHTS = { small: '400', medium: '500', large: '600' };
 
   function applyVisual() {
     var r = document.documentElement.style;
@@ -87,10 +88,15 @@
     // scales; also expose --ui-font-size for mods that opt in.
     var sz = SIZES[prefs.fontSize];
     if (sz) {
-      document.documentElement.style.setProperty('--ui-font-size', sz);
+      // Step size AND weight together so the change is clearly felt without
+      // reflowing px-based layouts (14/16/19 · 400/500/600).
+      var wt = WEIGHTS[prefs.fontSize] || '400';
+      var rootS = document.documentElement.style;
+      rootS.setProperty('--ui-font-size', sz);
+      rootS.setProperty('--ui-font-weight', wt);
       document.body.style.fontSize = sz;
       var mc = document.querySelector('.pub-content') || document.getElementById('pub-content') || document.getElementById('module-content');
-      if (mc) mc.style.fontSize = sz;
+      if (mc) { mc.style.fontSize = sz; mc.style.fontWeight = wt; }
     }
     // persist to localStorage for shell to pick up on reload
     try { localStorage.setItem('okdun-user-prefs', JSON.stringify({ theme: prefs.theme, accent: prefs.accent, headingFont: prefs.headingFont, fontSize: prefs.fontSize })); } catch(e) {}
