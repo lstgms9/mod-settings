@@ -66,7 +66,7 @@
   };
   var FONT_MAP = {};
   FONTS.forEach(function(f) { FONT_MAP[f.id] = f.family; });
-  var SIZES = { small: '14px', medium: '15px', large: '17px' };
+  var SIZES = { small: '14px', medium: '16px', large: '19px' };
 
   function applyVisual() {
     var r = document.documentElement.style;
@@ -81,11 +81,15 @@
     // heading font
     var font = FONT_MAP[prefs.headingFont];
     if (font) r.setProperty('--font-head', font);
-    // font size — apply to body and module content so it cascades
+    // font size — apply to the REAL content container. okdunio's shell uses
+    // .pub-content (there is no #module-content — that was the "saved but
+    // nothing changes" bug). Set on the container + body so inheriting text
+    // scales; also expose --ui-font-size for mods that opt in.
     var sz = SIZES[prefs.fontSize];
     if (sz) {
+      document.documentElement.style.setProperty('--ui-font-size', sz);
       document.body.style.fontSize = sz;
-      var mc = document.getElementById('module-content');
+      var mc = document.querySelector('.pub-content') || document.getElementById('pub-content') || document.getElementById('module-content');
       if (mc) mc.style.fontSize = sz;
     }
     // persist to localStorage for shell to pick up on reload
