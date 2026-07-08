@@ -28,7 +28,9 @@
 }
 .stg-nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
 .stg-nav-item.active { color: var(--primary); border-left-color: var(--primary); background: rgba(255,255,255,0.04); }
-.stg-nav-icon { font-size: 15px; width: 18px; text-align: center; }
+.stg-nav-icon { font-size: 15px; width: 18px; text-align: center; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+/* R3-2 — nav icons are inline SVGs (shell icon style), no longer emoji. */
+.stg-nav-svg { width: 16px; height: 16px; display: block; }
 
 /* ── Main ────────────────────────────────────── */
 .stg-main { flex: 1; padding: 28px 36px; overflow-y: auto; }
