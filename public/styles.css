@@ -433,13 +433,29 @@
     border-bottom: 1px solid var(--border); padding: 16px 0 8px;
     display: flex; flex-wrap: wrap; gap: 0;
   }
-  .stg-sidebar-title { width: 100%; padding: 0 12px; margin-bottom: 10px; }
-  .stg-nav-item { padding: 7px 12px; border-left: none; border-bottom: 2px solid transparent; font-size: 12px; gap: 5px; }
+  .stg-sidebar-title { width: 100%; padding: 0 12px; margin-bottom: 10px; font-size: 14px; }
+  .stg-nav-item { padding: 8px 12px; border-left: none; border-bottom: 2px solid transparent; font-size: var(--m-text, 16px); gap: 6px; }
   .stg-nav-item.active { border-left-color: transparent; border-bottom-color: var(--primary); }
+  .stg-nav-icon { font-size: var(--m-text, 16px); }
   .stg-main { padding: 20px 14px; }
   .stg-ai-grid { grid-template-columns: 1fr; }
   .stg-font-grid { grid-template-columns: 1fr 1fr; }
   .stg-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+  /* R2-1a — lift settings text to the phone 16/20 baseline (was 11-14px).
+     --m-text/--m-title come from the shell's html.gmob; fall back for
+     non-gmob narrow viewports. */
+  /* #settings-app prefix + child combinator so this beats the base
+     `.stg-acct-pair > label { font-size:11px }` (equal specificity, later
+     in source) — otherwise the field labels stayed 11px. */
+  #settings-app .stg-acct-pair > label,
+  .stg-label,
+  .stg-toggle-label,
+  .stg-btn, .stg-ai-btn,
+  .stg-ai-name,
+  .stg-connect-badge,
+  .stg-section-desc { font-size: var(--m-text, 16px); }
+  .stg-section-header { font-size: var(--m-title, 20px); }
+  .stg-sublabel, .stg-ai-provider, .stg-group-label { font-size: 13px; }
 }
 
 /* ═══ Account section — merged Account+Profile redesign ═══
@@ -487,6 +503,10 @@
 .stg-tier-badge[data-tier="studio"]     { --tier-color: #ffe03d; --tier-fg: #0b0b14; }
 .stg-tier-badge[data-tier="studio_pro"] { --tier-color: #ff3997; --tier-fg: #ffffff; }
 .stg-tier-badge[data-tier="free"]       { --tier-color: #5a6a70; --tier-fg: #ffffff; }
+/* R2-1c — until renderAccount() resolves the tier, the badge holds a
+   placeholder ("—", data-tier="") that falls back to the teal --primary,
+   reading as an unlabelled glowing pill. Hide it until it has a real tier. */
+.stg-tier-badge[data-tier=""] { display: none; }
 
 /* Two-box duet row — Avatar | Details. Same height enforced by grid. */
 .stg-acct-duet {
