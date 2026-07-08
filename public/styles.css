@@ -488,6 +488,10 @@
   width: 24px; height: 24px; object-fit: cover;
   border-radius: 4px; display: block;
 }
+.stg-acct-studio-chip img.stg-acct-studio-chip-logo {
+  width: auto; max-width: 130px; object-fit: contain;
+  border-radius: 0;
+}
 .stg-acct-studio-chip-name { line-height: 1; }
 .stg-tier-badge {
   font-family: var(--font-head); font-size: 14px; letter-spacing: 0.12em;

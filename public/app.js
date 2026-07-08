@@ -940,9 +940,9 @@
         badge.textContent = (TIER_NAMES[planVal] || planVal).toUpperCase();
       }
     }
-    // Studio identity chip — name or logo. Renders to the LEFT of the
-    // tier badge for studio-tier viewers. Logo wins when uploaded;
-    // otherwise the studio name (or slug if no name).
+    // Studio identity chip — icon square + logo wordmark. Renders to the
+    // LEFT of the tier badge for studio-tier viewers. Square = iconFileId;
+    // wordmark = logoFileId when uploaded, else the studio name as text.
     try {
       var chip = document.getElementById('accountStudioChip');
       var sesObj = await platform.user.current();
@@ -955,9 +955,14 @@
         var name = (st && (st.name || st.slug)) || sesObj.studioSlug;
         var logo = st && st.meta && st.meta.logoFileId;
         if (!logo) logo = st && st.studioLogoFileId;
+        var icon = st && st.meta && st.meta.iconFileId;
         var html = '';
-        if (logo) html += '<img src="/_instance/files/' + esc(logo) + '" alt="' + esc(name) + '">';
-        html += '<span class="stg-acct-studio-chip-name">' + esc(name) + '</span>';
+        if (icon) html += '<img src="/_instance/files/' + esc(icon) + '" alt="' + esc(name) + '">';
+        if (logo) {
+          html += '<img class="stg-acct-studio-chip-logo" src="/_instance/files/' + esc(logo) + '" alt="' + esc(name) + '">';
+        } else {
+          html += '<span class="stg-acct-studio-chip-name">' + esc(name) + '</span>';
+        }
         chip.innerHTML = html;
         // Open THIS studio's profile — point at the studio thing explicitly.
         // Without an id it opened /explore/thingi on whatever thing was last
