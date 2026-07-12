@@ -617,6 +617,170 @@ module.exports = function(router, ctx) {
     res.json({ ok: true, pid: child.pid });
   });
 
+  // ── Release distribution + check-ins (pull-based fleet deploy) ──
+  // Master builds pinned release artifacts (scripts/release-build.sh);
+  // boxes poll the manifest here with a per-box token, download, apply
+  // in their quiet window, and POST heartbeat check-ins. Owner panel
+  // uses the same endpoints via session auth. WORKER_MODE boxes 404 —
+  // a box never serves releases.
+  const REL_DIR = '/home/damon/platform/.releases';
+  const BOXES_FILE = '/home/damon/platform/.runtime/release-boxes.json';
+
+  function releaseTokens() {
+    // RELEASE_TOKENS='w1:<token>,fakebox:<token>' in master ~/.env
+    const out = {};
+    for (const pair of String(process.env.RELEASE_TOKENS || '').split(',')) {
+      const i = pair.indexOf(':');
+      if (i > 0) out[pair.slice(0, i).trim()] = pair.slice(i + 1).trim();
+    }
+    return out;
+  }
+  function boxFromToken(req) {
+    const tok = String((req.headers && req.headers['x-release-token']) || (req.query && req.query.token) || '');
+    if (!tok) return null;
+    for (const [name, t] of Object.entries(releaseTokens())) {
+      try {
+        const a = Buffer.from(tok), b = Buffer.from(t);
+        if (a.length === b.length && crypto.timingSafeEqual(a, b)) return name;
+      } catch {}
+    }
+    return null;
+  }
+  // Release admins: explicit allowlist (RELEASE_ADMIN_EMAILS in master
+  // ~/.env). The old deployGuard's flat-file role check breaks on
+  // DB-backed tenants (user JSONs there are stale), and "any studio
+  // owner" was never the right bar for cutting/promoting fleet releases.
+  function releaseAdmin(req) {
+    if (!req.user || !req.user.email) return false;
+    const list = String(process.env.RELEASE_ADMIN_EMAILS || '')
+      .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    return list.includes(String(req.user.email).toLowerCase());
+  }
+  // Box token OR allowlisted admin session; workers 404 like the deploy panel.
+  function releaseGuard(req) {
+    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return 'worker-mode';
+    if (boxFromToken(req)) return null;
+    if (releaseAdmin(req)) return null;
+    return 'admin-only';
+  }
+  function readManifest() {
+    try { return JSON.parse(fs.readFileSync(path.join(REL_DIR, 'manifest.json'), 'utf8')); }
+    catch { return null; }
+  }
+  function writeManifest(m) {
+    const p = path.join(REL_DIR, 'manifest.json');
+    fs.writeFileSync(p + '.tmp', JSON.stringify(m, null, 2));
+    fs.renameSync(p + '.tmp', p);
+  }
+  function readBoxes() {
+    try { return JSON.parse(fs.readFileSync(BOXES_FILE, 'utf8')); } catch { return { boxes: {} }; }
+  }
+
+  // GET /release/manifest — what should I be running?
+  router.get('/release/manifest', async (req, res) => {
+    const why = releaseGuard(req);
+    if (why === 'worker-mode') return res.error(404, 'Not available on workers');
+    if (why) return res.error(403, 'Release admin or box token required');
+    res.json(readManifest() || { version: 0, channels: { canary: 0, stable: 0 } });
+  });
+
+  // GET /release/download/:version — stream the artifact
+  router.get('/release/download/:version', async (req, res) => {
+    const why = releaseGuard(req);
+    if (why === 'worker-mode') return res.error(404, 'Not available on workers');
+    if (why) return res.error(403, 'Release admin or box token required');
+    const v = parseInt(req.params.version, 10);
+    if (!v || v < 1) return res.error(400, 'Bad version');
+    const file = path.join(REL_DIR, 'release-' + v + '.tar.gz');
+    let st;
+    try { st = fs.statSync(file); } catch { return res.error(404, 'No such release'); }
+    const rawRes = res._res || res;
+    rawRes.writeHead(200, {
+      'Content-Type': 'application/gzip',
+      'Content-Length': st.size,
+      'Content-Disposition': 'attachment; filename="release-' + v + '.tar.gz"',
+    });
+    fs.createReadStream(file).pipe(rawRes);
+  });
+
+  // POST /release/checkin — box heartbeat (box token ONLY; stamps identity
+  // from the token so a box can't impersonate another).
+  router.post('/release/checkin', async (req, res) => {
+    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
+    const box = boxFromToken(req);
+    if (!box) return res.error(403, 'Box token required');
+    const b = req.body || {};
+    const all = readBoxes();
+    all.boxes = all.boxes || {};
+    all.boxes[box] = {
+      version: parseInt(b.version, 10) || 0,
+      legacySha: String(b.legacySha || '').slice(0, 16),
+      channel: String(b.channel || 'stable').slice(0, 16),
+      health: String(b.health || 'unknown').slice(0, 32),
+      uptime: parseInt(b.uptime, 10) || 0,
+      rolledBack: !!b.rolledBack,
+      holding: !!b.holding,
+      lastSeen: new Date().toISOString(),
+    };
+    all.updated = new Date().toISOString();
+    fs.mkdirSync(path.dirname(BOXES_FILE), { recursive: true });
+    const tmp = BOXES_FILE + '.tmp-' + process.pid;
+    fs.writeFileSync(tmp, JSON.stringify(all, null, 2));
+    fs.renameSync(tmp, BOXES_FILE);
+    res.json({ ok: true, box });
+  });
+
+  // GET /release/status — owner panel feed: manifest + check-ins + artifacts
+  router.get('/release/status', async (req, res) => {
+    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
+    if (!releaseAdmin(req)) return res.error(403, 'Release admin only');
+    const manifest = readManifest();
+    const boxes = readBoxes().boxes || {};
+    let artifacts = [];
+    try {
+      artifacts = fs.readdirSync(REL_DIR)
+        .map(f => f.match(/^release-(\d+)\.tar\.gz$/))
+        .filter(Boolean)
+        .map(m => {
+          const st = fs.statSync(path.join(REL_DIR, m[0]));
+          return { version: parseInt(m[1], 10), size: st.size, created: st.mtime.toISOString() };
+        })
+        .sort((a, b) => b.version - a.version);
+    } catch {}
+    let buildLog = '';
+    try {
+      const lines = fs.readFileSync('/home/damon/platform/.runtime/release-build.log', 'utf8').split('\n').filter(Boolean);
+      buildLog = lines.slice(-20).join('\n');
+    } catch {}
+    res.json({ manifest, boxes, artifacts, buildLog });
+  });
+
+  // POST /release/build — cut a new release (detached; watch via /release/status)
+  router.post('/release/build', async (req, res) => {
+    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
+    if (!releaseAdmin(req)) return res.error(403, 'Release admin only');
+    const { spawn } = require('child_process');
+    const child = spawn('/home/damon/platform/scripts/release-build.sh', [], { detached: true, stdio: 'ignore' });
+    child.unref();
+    res.json({ ok: true, pid: child.pid });
+  });
+
+  // POST /release/promote — point the stable channel at a built version
+  router.post('/release/promote', async (req, res) => {
+    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
+    if (!releaseAdmin(req)) return res.error(403, 'Release admin only');
+    const v = parseInt((req.body || {}).version, 10);
+    if (!v || v < 1) return res.error(400, 'Bad version');
+    const m = readManifest();
+    if (!m) return res.error(404, 'No manifest — build a release first');
+    if (!fs.existsSync(path.join(REL_DIR, 'release-' + v + '.tar.gz'))) return res.error(404, 'No artifact for v' + v);
+    m.channels = m.channels || {};
+    m.channels.stable = v;
+    m.urgent = !!(req.body || {}).urgent;
+    writeManifest(m);
+    res.json({ ok: true, stable: v, urgent: m.urgent });
+  });
+
   // Secure-a-box: owner enters a box's IP + root password; we SSH in (password
   // auth), install + configure SSH 2FA seeded with the OWNER's EXISTING
   // authenticator secret (so the same 6-digit code works on every box — no new

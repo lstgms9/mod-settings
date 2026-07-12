@@ -645,28 +645,49 @@
       </div>
     </div>
 
-    <!-- DEPLOY — tenant-owner only, master-only. app.js feature-detects and reveals. -->
+    <!-- DEPLOY — tenant-owner only, master-only. app.js feature-detects and reveals.
+         Release-based: cut a pinned artifact, canary soaks it, Promote points the
+         stable channel at it; boxes pull on their own schedule and check in here. -->
     <div class="stg-section" id="sec-deploy">
       <div class="stg-section-header">Deploy</div>
-      <div class="stg-section-desc">Ship the code you've tested on this dev box to the production worker(s).</div>
+      <div class="stg-section-desc">Cut a pinned release, watch the canary soak it, then promote to stable. Boxes pull it themselves in their quiet window and check in below.</div>
 
       <div class="stg-group">
-        <div class="stg-group-label">WORKERS</div>
-        <div id="deployState" style="margin:0 0 12px">loading…</div>
+        <div class="stg-group-label">RELEASE</div>
+        <div id="relManifest" style="margin:0 0 12px">loading…</div>
         <div class="stg-row">
           <div>
-            <div class="stg-label">Roll the deploy</div>
-            <div class="stg-sublabel">rsync code, restart each worker, health-check (~25s per worker)</div>
+            <div class="stg-label">Cut a release</div>
+            <div class="stg-sublabel">bundle current dev code (okdunio + shell-core + mods + deps) into a pinned artifact — canary applies it automatically</div>
           </div>
           <div style="display:flex;gap:8px">
-            <button class="stg-seg-btn" id="deployRefresh">Refresh</button>
-            <button class="stg-btn-primary" id="deployRun">Deploy to all workers</button>
+            <button class="stg-seg-btn" id="relRefresh">Refresh</button>
+            <button class="stg-btn-primary" id="relCut">Cut release</button>
           </div>
         </div>
         <div class="stg-row">
+          <div>
+            <div class="stg-label">Promote to stable</div>
+            <div class="stg-sublabel" id="relPromoteHint">enabled once the canary is healthy on the latest release</div>
+          </div>
+          <div>
+            <button class="stg-btn-primary" id="relPromote" disabled>Promote</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stg-group">
+        <div class="stg-group-label">BOXES</div>
+        <div id="relBoxes" style="margin:0 0 4px">no check-ins yet</div>
+      </div>
+
+      <div class="stg-group">
+        <div class="stg-group-label">RELEASES ON DISK</div>
+        <div id="relHistory" style="margin:0 0 4px">—</div>
+        <div class="stg-row">
           <div style="width:100%">
-            <div class="stg-group-label" style="margin:14px 0 6px">LOG</div>
-            <pre id="deployLog" style="margin:0;background:#0b0b14;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:280px;overflow:auto;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(empty)</pre>
+            <div class="stg-group-label" style="margin:14px 0 6px">BUILD LOG</div>
+            <pre id="relLog" style="margin:0;background:#0b0b14;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:280px;overflow:auto;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(empty)</pre>
           </div>
         </div>
       </div>

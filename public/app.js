@@ -2167,21 +2167,28 @@
     initSecureBox();
   };
 
-  // ── Deploy panel (owner-only, master-only) ──────────────────
-  // The server-side guard in /api/settings/deploy/status returns 404
+  // ── Deploy panel (owner-only, master-only) — release-based ──
+  // The server-side guard in /api/settings/release/status returns 404
   // on workers (WORKER_MODE=1) and 403 for non-owners. We feature-
   // detect: a 200 response reveals the nav item + section and wires
-  // the buttons. Polls the log every 2s while a deploy is running.
+  // the buttons. Cut → canary applies automatically → Promote points
+  // stable at it; boxes pull on their own schedule and check in.
   async function initDeployPanel() {
     var nav = document.getElementById('stgDeployNav');
-    var stateEl = document.getElementById('deployState');
-    var logEl = document.getElementById('deployLog');
-    var refreshBtn = document.getElementById('deployRefresh');
-    var runBtn = document.getElementById('deployRun');
-    if (!nav || !stateEl || !runBtn) return;
+    var manEl = document.getElementById('relManifest');
+    var boxesEl = document.getElementById('relBoxes');
+    var histEl = document.getElementById('relHistory');
+    var logEl = document.getElementById('relLog');
+    var refreshBtn = document.getElementById('relRefresh');
+    var cutBtn = document.getElementById('relCut');
+    var promoteBtn = document.getElementById('relPromote');
+    var promoteHint = document.getElementById('relPromoteHint');
+    if (!nav || !manEl || !cutBtn) return;
     async function loadStatus() {
       try {
-        var r = await fetch('/api/settings/deploy/status', { credentials: 'same-origin' });
+        // cache:'no-store' — Chromium heuristically caches this GET otherwise,
+        // freezing the panel on the first response while a build/apply runs.
+        var r = await fetch('/api/settings/release/status', { credentials: 'same-origin', cache: 'no-store' });
         if (!r.ok) return null;
         return await r.json();
       } catch (e) { return null; }
@@ -2192,32 +2199,81 @@
     // Deploy nav is revealed asynchronously — re-apply a saved Deploy
     // section now that it's visible (unless the user already navigated).
     restoreSection();
+    function fmtSize(n) { return n > 1e9 ? (n / 1e9).toFixed(1) + 'G' : Math.round(n / 1e6) + 'M'; }
+    function fmtAgo(iso) {
+      var s = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+      if (s < 90) return s + 's ago';
+      if (s < 5400) return Math.round(s / 60) + 'm ago';
+      return Math.round(s / 3600) + 'h ago';
+    }
+    var td = 'padding:6px 10px;border-top:1px solid var(--border)';
+    var th = 'text-align:left;padding:6px 10px;color:var(--text-mid);font-size:10px;letter-spacing:.08em;text-transform:uppercase';
     function render(s) {
-      var rows = '<table style="width:100%;border-collapse:collapse;font-size:12px;font-family:ui-monospace,Menlo,monospace">' +
-        '<thead><tr>' +
-        '<th style="text-align:left;padding:6px 10px;color:var(--text-mid);font-size:10px;letter-spacing:.08em;text-transform:uppercase">Worker</th>' +
-        '<th style="text-align:left;padding:6px 10px;color:var(--text-mid);font-size:10px;letter-spacing:.08em;text-transform:uppercase">Host</th>' +
-        '<th style="text-align:left;padding:6px 10px;color:var(--text-mid);font-size:10px;letter-spacing:.08em;text-transform:uppercase">okdunio</th>' +
-        '<th style="text-align:left;padding:6px 10px;color:var(--text-mid);font-size:10px;letter-spacing:.08em;text-transform:uppercase">vs master</th>' +
-        '<th style="text-align:left;padding:6px 10px;color:var(--text-mid);font-size:10px;letter-spacing:.08em;text-transform:uppercase">URL</th>' +
-        '</tr></thead><tbody>';
-      (s.workers || []).forEach(function(w) {
-        var sync = (w.sha === s.masterSha);
-        var lab  = sync ? 'in sync' : ('drift from ' + s.masterSha);
-        var col  = sync ? '#39ff7f' : '#ff8c00';
-        rows += '<tr>' +
-          '<td style="padding:6px 10px;border-top:1px solid var(--border)">' + esc(w.name) + '</td>' +
-          '<td style="padding:6px 10px;border-top:1px solid var(--border)">' + esc(w.host) + '</td>' +
-          '<td style="padding:6px 10px;border-top:1px solid var(--border)">' + esc(w.sha) + '</td>' +
-          '<td style="padding:6px 10px;border-top:1px solid var(--border);color:' + col + '">' + esc(lab) + '</td>' +
-          '<td style="padding:6px 10px;border-top:1px solid var(--border)"><a href="' + esc(w.url) + '" target="_blank" style="color:var(--primary)">' + esc(w.url) + '</a></td>' +
-          '</tr>';
-      });
-      rows += '</tbody></table>' +
-        '<div style="margin-top:8px;font-size:11px;color:var(--text-mid)">Master okdunio: <b style="color:var(--text)">' + esc(s.masterSha) +
-        '</b> · platform: <b style="color:var(--text)">' + esc(s.platformSha) + '</b></div>';
-      stateEl.innerHTML = rows;
-      logEl.textContent = s.log || '(empty)';
+      var m = s.manifest;
+      if (!m || !m.version) {
+        manEl.innerHTML = '<span style="color:var(--text-mid)">No releases built yet.</span>';
+      } else {
+        manEl.innerHTML =
+          '<div style="font-size:13px">Latest build: <b>v' + m.version + '</b>' +
+          ' · ' + fmtSize(m.size) + ' · okdunio <b>' + esc(m.sha.okdunio) + '</b>' +
+          ' · shell-core <b>' + esc(m.sha.shellCore) + '</b>' +
+          (m.dirtyMods && m.dirtyMods.length ? ' · <span style="color:#ff8c00">dirty: ' + esc(m.dirtyMods.join(' ')) + '</span>' : '') +
+          '</div>' +
+          '<div style="margin-top:4px;font-size:12px;color:var(--text-mid)">canary → <b style="color:var(--text)">v' + (m.channels.canary || 0) + '</b>' +
+          ' · stable → <b style="color:var(--text)">v' + (m.channels.stable || 0) + '</b>' +
+          (m.urgent ? ' · <span style="color:#ff8c00">URGENT (boxes skip quiet hours)</span>' : '') + '</div>';
+      }
+      var names = Object.keys(s.boxes || {});
+      if (!names.length) {
+        boxesEl.innerHTML = '<span style="color:var(--text-mid)">No box check-ins yet.</span>';
+      } else {
+        var rows = '<table style="width:100%;border-collapse:collapse;font-size:12px;font-family:ui-monospace,Menlo,monospace"><thead><tr>' +
+          '<th style="' + th + '">Box</th><th style="' + th + '">Channel</th><th style="' + th + '">Version</th>' +
+          '<th style="' + th + '">Health</th><th style="' + th + '">Last seen</th><th style="' + th + '">Flags</th></tr></thead><tbody>';
+        names.forEach(function(n) {
+          var b = s.boxes[n];
+          var stale = (Date.now() - new Date(b.lastSeen).getTime()) > 15 * 60 * 1000;
+          var ver = b.version ? 'v' + b.version : (b.legacySha ? 'legacy ' + esc(b.legacySha) : 'none');
+          var flags = [];
+          if (b.rolledBack) flags.push('<span style="color:#ff5566">⚠ rolled back</span>');
+          if (b.holding) flags.push('<span style="color:#ff8c00">hold</span>');
+          var healthCol = b.health === '200' ? '#39ff7f' : '#ff8c00';
+          rows += '<tr>' +
+            '<td style="' + td + '">' + esc(n) + '</td>' +
+            '<td style="' + td + '">' + esc(b.channel) + '</td>' +
+            '<td style="' + td + '">' + ver + '</td>' +
+            '<td style="' + td + ';color:' + healthCol + '">' + esc(b.health) + '</td>' +
+            '<td style="' + td + (stale ? ';color:#ff5566' : '') + '">' + fmtAgo(b.lastSeen) + (stale ? ' — STALE' : '') + '</td>' +
+            '<td style="' + td + '">' + (flags.join(' ') || '—') + '</td>' +
+            '</tr>';
+        });
+        boxesEl.innerHTML = rows + '</tbody></table>';
+      }
+      var m2 = s.manifest || { channels: {} };
+      histEl.innerHTML = (s.artifacts || []).map(function(a) {
+        var tags = [];
+        if (a.version === (m2.channels || {}).canary) tags.push('canary');
+        if (a.version === (m2.channels || {}).stable) tags.push('stable');
+        return '<span style="display:inline-block;margin:0 10px 6px 0;font-size:12px;font-family:ui-monospace,Menlo,monospace">v' + a.version +
+          ' · ' + fmtSize(a.size) + (tags.length ? ' <b style="color:var(--primary)">[' + tags.join(', ') + ']</b>' : '') + '</span>';
+      }).join('') || '—';
+      logEl.textContent = s.buildLog || '(empty)';
+      // Promote: enabled when a canary box is healthy on the latest build
+      // and stable isn't already there.
+      var canPromote = false, why = 'no canary check-in yet';
+      if (m2.version) {
+        var canaryOk = names.some(function(n) {
+          var b = s.boxes[n];
+          return b.channel === 'canary' && b.version === m2.channels.canary && b.health === '200' && !b.rolledBack;
+        });
+        if (m2.channels.stable === m2.channels.canary) { why = 'stable already on v' + m2.channels.stable; }
+        else if (canaryOk) { canPromote = true; why = 'canary healthy on v' + m2.channels.canary + ' — boxes apply in their quiet window'; }
+        else { why = 'waiting for a healthy canary check-in on v' + m2.channels.canary; }
+      }
+      promoteBtn.disabled = !canPromote;
+      promoteBtn.textContent = canPromote ? ('Promote v' + m2.channels.canary) : 'Promote';
+      promoteHint.textContent = why;
+      return s;
     }
     render(first);
     refreshBtn.addEventListener('click', async function() {
@@ -2225,20 +2281,43 @@
       var s = await loadStatus(); if (s) render(s);
       refreshBtn.disabled = false;
     });
-    runBtn.addEventListener('click', async function() {
-      var msg = 'Deploy current dev code to ' + first.workers.length + ' worker(s)?';
+    cutBtn.addEventListener('click', async function() {
+      var ok = platform.ui ? await platform.ui.confirm('Cut a new release from current dev code? The canary applies it automatically.') : window.confirm('Cut a new release?');
+      if (!ok) return;
+      cutBtn.disabled = true; cutBtn.textContent = 'Building…';
+      // Done = manifest version increments (build completed) or a NEW
+      // "BUILD FAILED" line appears — old log lines in the tail must not
+      // end the watch early.
+      var pre = await loadStatus();
+      var preV = (pre && pre.manifest && pre.manifest.version) || 0;
+      var countFails = function(s2) { return ((s2 && s2.buildLog) || '').split('\n').filter(function(l) { return l.indexOf('BUILD FAILED') >= 0; }).length; };
+      var preFails = countFails(pre);
+      try { await fetch('/api/settings/release/build', { method: 'POST', credentials: 'same-origin' }); } catch (_) {}
+      for (var i = 0; i < 120; i++) {
+        await new Promise(function(r) { setTimeout(r, 2000); });
+        var s = await loadStatus(); if (!s) continue;
+        render(s);
+        if (s.manifest && (s.manifest.version || 0) > preV) break;
+        if (countFails(s) > preFails) break;
+      }
+      cutBtn.disabled = false; cutBtn.textContent = 'Cut release';
+    });
+    promoteBtn.addEventListener('click', async function() {
+      var s = await loadStatus(); if (!s || !s.manifest) return;
+      var v = s.manifest.channels.canary;
+      var msg = 'Point the STABLE channel at v' + v + '? Every stable box (incl. production) applies it in its next quiet window.';
       var ok = platform.ui ? await platform.ui.confirm(msg) : window.confirm(msg);
       if (!ok) return;
-      runBtn.disabled = true; runBtn.textContent = 'Deploying…';
-      try { await fetch('/api/settings/deploy/run', { method: 'POST', credentials: 'same-origin' }); } catch (_) {}
-      var done = false;
-      while (!done) {
-        await new Promise(function(r){ setTimeout(r, 2000); });
-        var s = await loadStatus(); if (s) render(s);
-        var tail = (logEl.textContent || '').split('\n').slice(-6).join('\n');
-        if (/deploy complete|deploy halted/.test(tail)) done = true;
-      }
-      runBtn.disabled = false; runBtn.textContent = 'Deploy to all workers';
+      promoteBtn.disabled = true;
+      try {
+        var r = await fetch('/api/settings/release/promote', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ version: v }),
+        });
+        if (!r.ok && platform.ui) platform.ui.toast && platform.ui.toast('Promote failed');
+      } catch (_) {}
+      var s2 = await loadStatus(); if (s2) render(s2);
     });
   }
 
