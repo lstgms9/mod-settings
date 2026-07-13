@@ -543,14 +543,17 @@ module.exports = function(router, ctx) {
   // shouldn't be deploying anywhere.
   function deployGuard(req) {
     if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return 'worker-mode';
-    if (!req.user) return 'owner-only';
-    // Owner sessions don't carry `role` in the cookie (it's only set
-    // for client sessions); look up the role from the on-disk user
-    // record. Owner files have role:'owner' OR no role field (legacy).
-    var u = readUser(req.user.studio || req.user.slug, req);
-    var role = (u && u.role) || (u ? 'owner' : null);
-    if (role !== 'owner') return 'owner-only';
-    return null;
+    // Owner = explicit allowlist (DEPLOY_ADMIN_EMAILS in master ~/.env).
+    // The old flat-file role check was wrong twice: user JSONs are
+    // stale/absent on DB-backed tenants (403 for everyone, including the
+    // real owner), and every flat-file studio signup carries role:'owner'
+    // (any studio could fire a deploy). Deliberately NOT reusing
+    // RELEASE_ADMIN_EMAILS — that list includes the dev Playwright
+    // account, which must never reach rsync deploys or SSH box setup.
+    var list = String(process.env.DEPLOY_ADMIN_EMAILS || '')
+      .split(',').map(function(s) { return s.trim().toLowerCase(); }).filter(Boolean);
+    if (req.user && req.user.email && list.indexOf(String(req.user.email).toLowerCase()) >= 0) return null;
+    return 'owner-only';
   }
   router.get('/deploy/status', async (req, res) => {
     const why = deployGuard(req);
