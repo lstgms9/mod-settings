@@ -537,10 +537,8 @@ module.exports = function(router, ctx) {
   });
 
   // ── Deploy gamoid (owner-only, master-only) ─────────────────────
-  // Owner of a gamoid tenant gets a small admin panel here for
-  // shipping code from master (dev.gamoid.io) to production workers
-  // (gamoid.io). Disabled on worker boxes (WORKER_MODE=1) — they
-  // shouldn't be deploying anywhere.
+  // Gate for box-admin surfaces (Secure-box panel, and the /deploy/status
+  // probe it feature-detects on). Disabled on worker boxes (WORKER_MODE=1).
   function deployGuard(req) {
     if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return 'worker-mode';
     // Owner = explicit allowlist (DEPLOY_ADMIN_EMAILS in master ~/.env).
@@ -555,69 +553,17 @@ module.exports = function(router, ctx) {
     if (req.user && req.user.email && list.indexOf(String(req.user.email).toLowerCase()) >= 0) return null;
     return 'owner-only';
   }
+  // The old SSH status scan and panel-triggered rsync push are retired —
+  // fleet deploys are pull-based via /release/* now, and boxes' okdunio is
+  // a symlink into releases/current (an rsync through it would corrupt the
+  // pinned release). deploy-gamoid.sh stays on disk as CLI break-glass.
+  // This endpoint remains ONLY as the guard probe the Secure-box panel
+  // feature-detects on (200 = allowlisted owner, reveal the tab).
   router.get('/deploy/status', async (req, res) => {
     const why = deployGuard(req);
     if (why === 'worker-mode') return res.error(404, 'Not available on workers');
     if (why) return res.error(403, 'Owner only');
-    const { execSync, spawnSync } = require('child_process');
-    let masterSha = 'unknown', platformSha = 'unknown';
-    try { masterSha   = execSync('git -C /home/damon/okdunio rev-parse --short HEAD').toString().trim(); } catch {}
-    try { platformSha = execSync('git -C /home/damon/platform rev-parse --short HEAD').toString().trim(); } catch {}
-    let workers = [];
-    try {
-      const cfg = JSON.parse(fs.readFileSync('/home/damon/platform/scripts/gamoid-workers.json','utf8'));
-      for (const w of (cfg.workers || [])) {
-        let sha = 'unreachable';
-        try {
-          const r = spawnSync('ssh', ['-o','ConnectTimeout=5','-o','StrictHostKeyChecking=no',`${w.ssh_user}@${w.host}`,'sudo -u damon git -C /home/damon/okdunio rev-parse --short HEAD'], { timeout: 10000 });
-          if (r.status === 0) sha = r.stdout.toString().trim() || 'none';
-        } catch {}
-        workers.push({ name: w.name, host: w.host, url: w.url, sha });
-      }
-    } catch (e) {}
-    let log = '';
-    try {
-      // The raw deploy log is a cryptic line-per-step stream in append order, so
-      // the newest run is buried at the bottom. Collapse each run into ONE
-      // readable line — icon · when · outcome · what shipped — newest first.
-      const lines = fs.readFileSync('/home/damon/platform/.runtime/deploy-gamoid.log','utf8').split('\n').filter(Boolean);
-      const runs = [];
-      for (const l of lines) {
-        if (/── (deploy started|status)/.test(l) || runs.length === 0) runs.push([]);
-        runs[runs.length - 1].push(l);
-      }
-      const tsOf = l => (l.match(/^\[([^\]]+)\]/) || [, ''])[1];
-      const summarize = (run) => {
-        const head = run.find(l => /── (deploy started|status)/.test(l)) || run[0] || '';
-        const when = tsOf(head);
-        const plat = (head.match(/platform=([0-9a-f]+)/) || [, '?'])[1];
-        if (head.includes('── status')) return 'ℹ️  ' + when + '   status check   ·   platform ' + plat;
-        const ok = run.find(l => l.includes('OK —'));
-        const failed = run.find(l => /FAIL|halt|rsync error|\bERROR\b/i.test(l));
-        const done = run.some(l => l.includes('deploy complete'));
-        if (ok) {
-          const m = ok.match(/okdunio:\s*([0-9a-f]+)\s*→\s*([0-9a-f]+).*health:\s*(\d+)/);
-          const from = m ? m[1] : '?', to = m ? m[2] : '?', health = m ? m[3] : '?';
-          const okd = (from === to) ? ('okdunio ' + to + ' (no change)') : ('okdunio ' + from + '→' + to);
-          return (health === '200' ? '✅' : '⚠️') + '  ' + when + '   deployed   ·   platform ' + plat + '   ·   ' + okd + '   ·   w1 health ' + health;
-        }
-        if (failed) return '❌  ' + when + '   FAILED   ·   platform ' + plat;
-        if (done)   return '✅  ' + when + '   complete   ·   platform ' + plat;
-        return '⏳  ' + when + '   in progress…   ·   platform ' + plat;
-      };
-      log = runs.reverse().slice(0, 12).map(summarize).join('\n');
-    } catch {}
-    res.json({ masterSha, platformSha, workers, log });
-  });
-  router.post('/deploy/run', async (req, res) => {
-    const why = deployGuard(req);
-    if (why === 'worker-mode') return res.error(404, 'Not available on workers');
-    if (why) return res.error(403, 'Owner only');
-    const { spawn } = require('child_process');
-    // Detached so a long deploy doesn't block the runtime.
-    const child = spawn('/home/damon/platform/scripts/deploy-gamoid.sh', [], { detached: true, stdio: 'ignore' });
-    child.unref();
-    res.json({ ok: true, pid: child.pid });
+    res.json({ ok: true });
   });
 
   // ── Release distribution + check-ins (pull-based fleet deploy) ──

@@ -1,11 +1,14 @@
 // deploy-guard-allowlist-test.js — deployGuard is now DEPLOY_ADMIN_EMAILS
 // (owners only), replacing the flat-file role check that was dead on
-// DB-backed tenants and passed any flat-file studio owner.
+// DB-backed tenants and passed any flat-file studio owner. The old
+// panel rsync push (POST /deploy/run) is RETIRED — 404 for everyone,
+// deploys are pull-based via /release/*.
 //
 // Asserts, with REAL accounts (nothing forged):
-//   API: gametest (release admin but NOT deploy admin) → 403 on /deploy/*
-//        master@gamoid.test (plain studio)             → 403 on /deploy/*
+//   API: gametest (release admin but NOT deploy admin) → 403 on /deploy/status
+//        master@gamoid.test (plain studio)             → 403 on /deploy/status
 //        lstgms9 (allowlisted, :3005 master)           → 200 on /deploy/status
+//        POST /deploy/run → 404 even for the allowlisted owner
 //   Browser (:3010, gametest): Deploy tab visible (release panel),
 //        Secure-a-box tab stays hidden (deploy-guard gated)
 //   Browser (:3005, lstgms9): Secure-a-box tab reveals
@@ -46,8 +49,12 @@ function get(port, host, path, token, method = 'GET') {
   const gt = await login(3010, 'dev.gamoid.io', 'gametest@gamoid.test', 'gtest1234');
   const s1 = await get(3010, 'dev.gamoid.io', '/api/settings/deploy/status', gt);
   s1 === 403 ? ok('gametest (release admin) still 403 on /deploy/status') : fail('gametest deploy 403', s1);
+  // /deploy/run is deleted. The tenant shell answers ANY unmatched API path
+  // the same way for an authed user (SPA fallback), so assert parity with a
+  // definitely-nonexistent route rather than a hardcoded status.
   const s2 = await get(3010, 'dev.gamoid.io', '/api/settings/deploy/run', gt, 'POST');
-  s2 === 403 ? ok('gametest 403 on POST /deploy/run') : fail('gametest run 403', s2);
+  const sGone = await get(3010, 'dev.gamoid.io', '/api/settings/definitely-not-a-route', gt, 'POST');
+  s2 === sGone ? ok('POST /deploy/run retired — behaves as nonexistent (' + s2 + ')') : fail('run retired', s2 + ' vs nonexistent ' + sGone);
   const s3 = await get(3010, 'dev.gamoid.io', '/api/settings/secure-box', gt, 'POST');
   s3 === 403 ? ok('gametest 403 on POST /secure-box') : fail('gametest secure-box 403', s3);
 
@@ -59,6 +66,8 @@ function get(port, host, path, token, method = 'GET') {
   const so = await login(3005, 'okdun.io', 'lstgms9@gmail.com', 'l1234');
   const s5 = await get(3005, 'okdun.io', '/api/settings/deploy/status', so);
   s5 === 200 ? ok('allowlisted owner 200 on /deploy/status (:3005)') : fail('owner 200', s5);
+  const s6 = await get(3005, 'okdun.io', '/api/settings/deploy/run', so, 'POST');
+  s6 === 404 ? ok('POST /deploy/run retired — 404 even for allowlisted owner') : fail('run retired for owner', s6);
 
   // ── Browser: gametest on :3010 — Deploy tab yes, Secure-a-box no ─
   const browser = await chromium.launch();
