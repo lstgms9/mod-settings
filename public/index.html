@@ -52,10 +52,13 @@
         <div class="stg-row">
           <div><div class="stg-label">Accent color</div><div class="stg-sublabel">Primary highlight color</div></div>
           <div class="stg-seg stg-seg-equal" data-key="accent">
-            <button class="stg-seg-btn active" data-val="cyan" style="color:var(--primary)">&#9679; Cyan</button>
-            <button class="stg-seg-btn" data-val="pink" style="color:var(--red)">&#9679; Pink</button>
+            <!-- each chip shows ITS OWN color, hardcoded to the ACCENTS map —
+                 theme vars here (--primary/--red/--yellow) track the CURRENT
+                 accent/theme, so "Cyan" rendered orange when accent=orange -->
+            <button class="stg-seg-btn active" data-val="cyan" style="color:#00e6d2">&#9679; Cyan</button>
+            <button class="stg-seg-btn" data-val="pink" style="color:#ff3997">&#9679; Pink</button>
             <button class="stg-seg-btn" data-val="green" style="color:#39ff7f">&#9679; Green</button>
-            <button class="stg-seg-btn" data-val="yellow" style="color:var(--yellow)">&#9679; Gold</button>
+            <button class="stg-seg-btn" data-val="yellow" style="color:#ffd700">&#9679; Gold</button>
             <button class="stg-seg-btn" data-val="orange" style="color:#ff6b35">&#9679; Orange</button>
           </div>
         </div>
