@@ -2165,7 +2165,120 @@
     restoreSection();
     initDeployPanel();
     initSecureBox();
+    initPublishPanel();
+    initBackupsPanel();
   };
+
+  // ── Publish panel (flagged dev studios only) — feature-detected via
+  // /api/game/publish-prod/status (404 workers/unconfigured, 403 unflagged).
+  async function initPublishPanel() {
+    var nav = document.getElementById('stgPublishNav');
+    var listEl = document.getElementById('pubGamesList');
+    if (!nav || !listEl) return;
+    async function loadStatus() {
+      try {
+        var r = await fetch('/api/game/publish-prod/status', { credentials: 'same-origin', cache: 'no-store' });
+        if (!r.ok) return null;
+        return await r.json();
+      } catch (e) { return null; }
+    }
+    var st = await loadStatus();
+    if (!st || !st.eligible) return;   // hidden for everyone but flagged studios
+    nav.style.display = '';
+    restoreSection();
+    function render(games) {
+      if (!games.length) { listEl.innerHTML = '<span style="color:var(--text-mid)">No games yet — build one first.</span>'; return; }
+      listEl.innerHTML = games.map(function(g) {
+        var pub = g.publishedProd;
+        return '<div class="stg-row">' +
+          '<div><div class="stg-label">' + esc(g.name || g.slug) + '</div>' +
+          '<div class="stg-sublabel">' + (pub
+            ? 'Published ' + esc(String(pub.at).slice(0, 16).replace('T', ' ')) + (pub.sha ? ' @ ' + esc(pub.sha) : '')
+            : 'Not on production yet') + '</div></div>' +
+          '<button class="stg-ai-btn stg-ai-connect pub-go" data-id="' + esc(g.id) + '" style="width:auto;padding:8px 20px;">' +
+          (pub ? 'Re-publish' : 'Publish') + '</button></div>';
+      }).join('');
+    }
+    render(st.games);
+    listEl.addEventListener('click', async function(e) {
+      var btn = e.target.closest('.pub-go');
+      if (!btn) return;
+      if (!confirm('Publish this game’s listing to the production catalog?')) return;
+      btn.disabled = true; btn.textContent = 'Publishing…';
+      try {
+        var r = await fetch('/api/game/publish-prod', { method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gameId: btn.dataset.id }) });
+        var j = await r.json();
+        if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+        var st2 = await loadStatus();
+        if (st2) render(st2.games);
+      } catch (err) {
+        btn.disabled = false; btn.textContent = 'Publish';
+        alert('Publish failed: ' + err.message);
+      }
+    });
+  }
+
+  // ── Backups panel — feature-detected via /api/files/backup (tenant
+  // verticals with the nightly studio archive system).
+  async function initBackupsPanel() {
+    var nav = document.getElementById('stgBackupsNav');
+    if (!nav) return;
+    var list;
+    try {
+      var r = await fetch('/api/files/backup', { credentials: 'same-origin', cache: 'no-store' });
+      if (!r.ok) return;
+      list = await r.json();
+    } catch (e) { return; }
+    nav.style.display = '';
+    restoreSection();
+    var nameEl = document.getElementById('bkLatestName');
+    var infoEl = document.getElementById('bkLatestInfo');
+    var dlBtn = document.getElementById('bkDownloadBtn');
+    var autoBtn = document.getElementById('bkModeAuto');
+    var manBtn = document.getElementById('bkModeManual');
+    var tokBtn = document.getElementById('bkTokenBtn');
+    var scrBtn = document.getElementById('bkScriptBtn');
+    var scrOut = document.getElementById('bkScriptOut');
+    var arc = (list.archives || [])[0];
+    if (arc) {
+      nameEl.textContent = arc.name;
+      infoEl.textContent = (arc.size / 1048576).toFixed(1) + ' MB · archived ' + String(arc.mtime).slice(0, 16).replace('T', ' ');
+      dlBtn.disabled = false;
+      dlBtn.onclick = function() { location.href = '/api/files/backup/latest'; };
+    }
+    function paintMode(mode) {
+      autoBtn.classList.toggle('stg-ai-connect', mode === 'auto');
+      manBtn.classList.toggle('stg-ai-connect', mode === 'manual');
+    }
+    async function loadSettings() {
+      try {
+        var r = await fetch('/api/files/backup/settings', { credentials: 'same-origin', cache: 'no-store' });
+        var j = await r.json();
+        paintMode(j.mode);
+        scrBtn.disabled = !j.hasToken;
+      } catch (e) {}
+    }
+    async function setMode(mode) {
+      await fetch('/api/files/backup/settings', { method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: mode }) });
+      paintMode(mode);
+    }
+    autoBtn.onclick = function() { setMode('auto'); };
+    manBtn.onclick = function() { setMode('manual'); };
+    tokBtn.onclick = async function() {
+      if (!confirm('Generate a new backup token? Any existing pull script stops working.')) return;
+      await fetch('/api/files/backup/token', { method: 'POST', credentials: 'same-origin' });
+      scrBtn.disabled = false;
+      scrOut.style.display = 'none';
+    };
+    scrBtn.onclick = async function() {
+      var r = await fetch('/api/files/backup/script', { credentials: 'same-origin', cache: 'no-store' });
+      scrOut.textContent = await r.text();
+      scrOut.style.display = '';
+    };
+    loadSettings();
+  }
 
   // ── Deploy panel (owner-only, master-only) — release-based ──
   // The server-side guard in /api/settings/release/status returns 404

@@ -21,6 +21,12 @@
          (WORKER_MODE unset). app.js feature-detects via /api/settings/deploy/status. -->
     <div class="stg-nav-item" data-section="deploy" id="stgDeployNav" style="display:none"><span class="stg-nav-icon"><svg class="stg-nav-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.7c2.1 1.2 3.3 3.6 3.3 6.1 0 1.3-.3 2.2-1 3H5.7c-.6-.8-1-1.7-1-3 0-2.5 1.2-4.9 3.3-6.1z"/><circle cx="8" cy="6.3" r="1.2"/><path d="M5.6 10.8l-1.5 2.6 2.3-.9M10.4 10.8l1.5 2.6-2.3-.9"/></svg></span> Deploy</div>
     <div class="stg-nav-item" data-section="securebox" id="stgSecureBoxNav" style="display:none"><span class="stg-nav-icon"><svg class="stg-nav-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.4" rx="1.3"/><path d="M5.3 7V5.3a2.7 2.7 0 0 1 5.4 0V7"/></svg></span> Secure a box</div>
+    <!-- Publish nav — only revealed for flagged dev studios on the dev vertical
+         (app.js feature-detects via /api/game/publish-prod/status). -->
+    <div class="stg-nav-item" data-section="publish" id="stgPublishNav" style="display:none"><span class="stg-nav-icon"><svg class="stg-nav-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10V2.5M5.2 5.2L8 2.5l2.8 2.7"/><path d="M2.8 9.5v3a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1v-3"/></svg></span> Publish</div>
+    <!-- Backups nav — revealed where the studio backup system is live
+         (app.js feature-detects via /api/files/backup). -->
+    <div class="stg-nav-item" data-section="backups" id="stgBackupsNav" style="display:none"><span class="stg-nav-icon"><svg class="stg-nav-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="8" cy="4" rx="5.2" ry="2.2"/><path d="M2.8 4v8c0 1.2 2.3 2.2 5.2 2.2s5.2-1 5.2-2.2V4"/><path d="M2.8 8c0 1.2 2.3 2.2 5.2 2.2s5.2-1 5.2-2.2"/></svg></span> Backups</div>
     <!-- Hidden-for-now nav entries:
     <div class="stg-nav-item" data-section="autopilot"><span class="stg-nav-icon"><svg class="stg-nav-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.7c2.1 1.2 3.3 3.6 3.3 6.1 0 1.3-.3 2.2-1 3H5.7c-.6-.8-1-1.7-1-3 0-2.5 1.2-4.9 3.3-6.1z"/><circle cx="8" cy="6.3" r="1.2"/><path d="M5.6 10.8l-1.5 2.6 2.3-.9M10.4 10.8l1.5 2.6-2.3-.9"/></svg></span> AI Autopilot</div>
     <div class="stg-nav-item" data-section="revenue"><span class="stg-nav-icon"><svg class="stg-nav-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.5v7M9.7 6c-.4-.6-1-.9-1.7-.9-1 0-1.8.6-1.8 1.4 0 2 3.5 1 3.5 3 0 .8-.8 1.4-1.7 1.4-.8 0-1.4-.3-1.8-.9"/></svg></span> Revenue</div>
@@ -651,6 +657,45 @@
     <!-- DEPLOY — tenant-owner only, master-only. app.js feature-detects and reveals.
          Release-based: cut a pinned artifact, canary soaks it, Promote points the
          stable channel at it; boxes pull on their own schedule and check in here. -->
+    <div class="stg-section" id="sec-publish">
+      <div class="stg-section-header">Publish to production</div>
+      <div class="stg-section-desc">Copy a game's listing (record + images) from this dev vertical into the production catalog. Game files stay on this box.</div>
+      <div class="stg-group">
+        <div class="stg-group-label">YOUR GAMES</div>
+        <div id="pubGamesList"><span style="color:var(--text-mid)">Loading…</span></div>
+      </div>
+    </div>
+
+    <div class="stg-section" id="sec-backups">
+      <div class="stg-section-header">Backups</div>
+      <div class="stg-section-desc">Your workspace (game repos, builds, media) is archived nightly on the server when it changed that day. Pull a copy to your own machine here.</div>
+      <div class="stg-group">
+        <div class="stg-group-label">LATEST ARCHIVE</div>
+        <div class="stg-row">
+          <div><div class="stg-label" id="bkLatestName">No archive yet</div><div class="stg-sublabel" id="bkLatestInfo">Backups run nightly after your first change</div></div>
+          <button class="stg-ai-btn stg-ai-connect" id="bkDownloadBtn" style="width:auto;padding:8px 20px;" disabled>Download</button>
+        </div>
+      </div>
+      <div class="stg-group">
+        <div class="stg-group-label">AUTOMATIC PULL</div>
+        <div class="stg-row">
+          <div><div class="stg-label">Mode</div><div class="stg-sublabel">Auto = a script on your machine fetches new archives nightly. Manual = you download here yourself.</div></div>
+          <div style="display:flex;gap:8px;">
+            <button class="stg-ai-btn" id="bkModeAuto" style="width:auto;padding:8px 16px;">Auto</button>
+            <button class="stg-ai-btn" id="bkModeManual" style="width:auto;padding:8px 16px;">Manual</button>
+          </div>
+        </div>
+        <div class="stg-row" id="bkScriptRow">
+          <div><div class="stg-label">Pull script</div><div class="stg-sublabel">Personal script with your backup token — drop it in cron / Task Scheduler. Regenerating the token invalidates the old script.</div></div>
+          <div style="display:flex;gap:8px;">
+            <button class="stg-ai-btn stg-ai-connect" id="bkTokenBtn" style="width:auto;padding:8px 16px;">New token</button>
+            <button class="stg-ai-btn stg-ai-connect" id="bkScriptBtn" style="width:auto;padding:8px 16px;" disabled>Show script</button>
+          </div>
+        </div>
+        <pre id="bkScriptOut" style="display:none;white-space:pre-wrap;word-break:break-all;background:var(--bg2,#111);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;margin:10px 0 0;"></pre>
+      </div>
+    </div>
+
     <div class="stg-section" id="sec-deploy">
       <div class="stg-section-header">Deploy</div>
       <div class="stg-section-desc">Cut a pinned release, watch the canary soak it, then promote to stable. Boxes pull it themselves in their quiet window and check in below.</div>
