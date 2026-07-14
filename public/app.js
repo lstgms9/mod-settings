@@ -2182,40 +2182,52 @@
         return await r.json();
       } catch (e) { return null; }
     }
+    var pushedEl = document.getElementById('pubPushedList');
     var st = await loadStatus();
     if (!st || !st.eligible) return;   // hidden for everyone but flagged studios
     nav.style.display = '';
     restoreSection();
-    function render(games) {
-      if (!games.length) { listEl.innerHTML = '<span style="color:var(--text-mid)">No games yet — build one first.</span>'; return; }
-      listEl.innerHTML = games.map(function(g) {
-        var pub = g.publishedProd;
+    function render(s) {
+      if (!s.games.length) listEl.innerHTML = '<span style="color:var(--text-mid)">No games here — build one, or pull one back from production.</span>';
+      else listEl.innerHTML = s.games.map(function(g) {
         return '<div class="stg-row">' +
           '<div><div class="stg-label">' + esc(g.name || g.slug) + '</div>' +
-          '<div class="stg-sublabel">' + (pub
-            ? 'Published ' + esc(String(pub.at).slice(0, 16).replace('T', ' ')) + (pub.sha ? ' @ ' + esc(pub.sha) : '')
-            : 'Not on production yet') + '</div></div>' +
-          '<button class="stg-ai-btn stg-ai-connect pub-go" data-id="' + esc(g.id) + '" style="width:auto;padding:8px 20px;">' +
-          (pub ? 'Re-publish' : 'Publish') + '</button></div>';
+          '<div class="stg-sublabel">' + (g.pushable
+            ? 'State: ' + esc(g.state) + ' — ready to push'
+            : 'State: ' + esc(g.state) + ' — reach beta or live to push') + '</div></div>' +
+          '<button class="stg-ai-btn stg-ai-connect pub-go" data-id="' + esc(g.id) + '" style="width:auto;padding:8px 20px;"' +
+          (g.pushable ? '' : ' disabled') + '>Push to production</button></div>';
+      }).join('');
+      if (!s.pushed.length) pushedEl.innerHTML = '<span style="color:var(--text-mid)">Nothing pushed from here yet.</span>';
+      else pushedEl.innerHTML = s.pushed.map(function(g) {
+        return '<div class="stg-row">' +
+          '<div><div class="stg-label">' + esc(g.name || g.slug) + '</div>' +
+          '<div class="stg-sublabel">Pushed ' + esc(String(g.pushedAt || '').slice(0, 16).replace('T', ' ')) + (g.sha ? ' @ ' + esc(g.sha) : '') + '</div></div>' +
+          '<button class="stg-ai-btn pub-back" data-id="' + esc(g.id) + '" style="width:auto;padding:8px 20px;">Pull back</button></div>';
       }).join('');
     }
-    render(st.games);
-    listEl.addEventListener('click', async function(e) {
-      var btn = e.target.closest('.pub-go');
-      if (!btn) return;
-      if (!confirm('Publish this game’s listing to the production catalog?')) return;
-      btn.disabled = true; btn.textContent = 'Publishing…';
+    render(st);
+    async function act(btn, url, confirmMsg, busy) {
+      if (!confirm(confirmMsg)) return;
+      btn.disabled = true; btn.textContent = busy;
       try {
-        var r = await fetch('/api/game/publish-prod', { method: 'POST', credentials: 'same-origin',
+        var r = await fetch(url, { method: 'POST', credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gameId: btn.dataset.id }) });
         var j = await r.json();
         if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
         var st2 = await loadStatus();
-        if (st2) render(st2.games);
+        if (st2) render(st2);
       } catch (err) {
-        btn.disabled = false; btn.textContent = 'Publish';
-        alert('Publish failed: ' + err.message);
+        var st3 = await loadStatus();
+        if (st3) render(st3);
+        alert('Failed: ' + err.message);
       }
+    }
+    document.getElementById('sec-publish').addEventListener('click', function(e) {
+      var go = e.target.closest('.pub-go');
+      if (go) return act(go, '/api/game/publish-prod', 'Push this game to the production catalog? It leaves this dev catalog (you can pull it back).', 'Pushing…');
+      var back = e.target.closest('.pub-back');
+      if (back) return act(back, '/api/game/publish-prod/pullback', 'Pull this game back from production? It disappears from the production catalog.', 'Pulling…');
     });
   }
 

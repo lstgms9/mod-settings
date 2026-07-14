@@ -658,11 +658,15 @@
          Release-based: cut a pinned artifact, canary soaks it, Promote points the
          stable channel at it; boxes pull on their own schedule and check in here. -->
     <div class="stg-section" id="sec-publish">
-      <div class="stg-section-header">Publish to production</div>
-      <div class="stg-section-desc">Copy a game's listing (record + images) from this dev vertical into the production catalog. Game files stay on this box.</div>
+      <div class="stg-section-header">Push to production</div>
+      <div class="stg-section-desc">A game lives in ONE catalog at a time. Push moves it from this dev vertical to the production catalog (beta/live games only); pull it back here for another round of work. The workshop never moves.</div>
       <div class="stg-group">
-        <div class="stg-group-label">YOUR GAMES</div>
+        <div class="stg-group-label">HERE (DEV)</div>
         <div id="pubGamesList"><span style="color:var(--text-mid)">Loading…</span></div>
+      </div>
+      <div class="stg-group">
+        <div class="stg-group-label">ON PRODUCTION</div>
+        <div id="pubPushedList"><span style="color:var(--text-mid)">Loading…</span></div>
       </div>
     </div>
 
