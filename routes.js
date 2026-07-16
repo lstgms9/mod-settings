@@ -496,16 +496,51 @@ module.exports = function(router, ctx) {
     res.json({ ok: true });
   });
 
+  // assignedTo must hold tokens the member's SESSION presents — mod-chat's
+  // viewerMatches checks session identity (userId/slug/username/studio),
+  // never team_member record ids. Two session universes exist:
+  //   - platform-shell logins present userId = the team_member record id
+  //   - prod okdunio (gecko) logins present slug = the client/account id,
+  //     which mod-chat's invite-accept stamps on team_member as `user_id`
+  // So a member's assignment tokens are BOTH ids. Writing only the record
+  // id made assignments invisible on prod (no session ever carries it).
+  function memberTokens(tmId, tmData) {
+    const t = [tmId];
+    const acct = tmData && tmData.user_id;
+    if (acct && acct !== tmId) t.push(acct);
+    return t;
+  }
+
   // GET /team/emails — list all domain email addresses (for assignment UI)
   router.get('/team/emails', async (req, res) => {
     if (!requireAdmin(req, res)) return;
+    // Back-compat heal: old assignments stored ONLY the team_member record
+    // id. Where the member carries an account id (user_id), mirror it into
+    // assignedTo so existing assignments become visible to prod sessions.
+    // Idempotent; runs on the admin's Team-panel load.
+    const members = await storage.list('team_member', { studio: req.user.studio });
+    const acctByTmId = {};
+    for (const m of members) {
+      if (m.user_id && m.user_id !== m.id) acctByTmId[m.id] = m.user_id;
+    }
     const all = await storage.list('email_address');
-    const emails = all.map(a => ({
-      id: a.id,
-      address: a.address || (a.data && a.data.address) || '',
-      domain: a.domain || (a.data && a.data.domain) || '',
-      assignedTo: a.assignedTo || (a.data && a.data.assignedTo) || [],
-    }));
+    const emails = [];
+    for (const a of all) {
+      let assigned = a.assignedTo || (a.data && a.data.assignedTo) || [];
+      const missing = assigned
+        .filter(t => acctByTmId[t] && !assigned.includes(acctByTmId[t]))
+        .map(t => acctByTmId[t]);
+      if (missing.length) {
+        assigned = assigned.concat(missing);
+        try { await storage.update('email_address', a.id, { assignedTo: assigned }); } catch {}
+      }
+      emails.push({
+        id: a.id,
+        address: a.address || (a.data && a.data.address) || '',
+        domain: a.domain || (a.data && a.data.domain) || '',
+        assignedTo: assigned,
+      });
+    }
     res.json(emails);
   });
 
@@ -516,21 +551,18 @@ module.exports = function(router, ctx) {
     if (!Array.isArray(emailIds)) return res.error(400, 'emailIds array required');
     const tm = await storage.get('team_member', req.params.userId);
     if (!tm || tm.data.studio !== req.user.studio) return res.error(404, 'Member not found');
+    const tokens = memberTokens(tm.id, tm.data);
 
-    // Get all email_address records
     const all = await storage.list('email_address');
     for (const addr of all) {
       const full = await storage.get('email_address', addr.id);
       if (!full) continue;
-      let assigned = full.data.assignedTo || [];
-      const shouldAssign = emailIds.includes(addr.id);
-      const isAssigned = assigned.includes(req.params.userId);
-      if (shouldAssign && !isAssigned) {
-        assigned = assigned.concat(req.params.userId);
-        await storage.update('email_address', addr.id, { assignedTo: assigned });
-      } else if (!shouldAssign && isAssigned) {
-        assigned = assigned.filter(id => id !== req.params.userId);
-        await storage.update('email_address', addr.id, { assignedTo: assigned });
+      const assigned = full.data.assignedTo || [];
+      const next = emailIds.includes(addr.id)
+        ? assigned.concat(tokens.filter(t => !assigned.includes(t)))
+        : assigned.filter(t => !tokens.includes(t));
+      if (next.length !== assigned.length) {
+        await storage.update('email_address', addr.id, { assignedTo: next });
       }
     }
     res.json({ ok: true });
