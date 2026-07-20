@@ -110,6 +110,29 @@ const card = () => document.querySelector('#aiSubGrid .stg-ai-card[data-sub="cla
       return el ? { hasConnect: !!el.querySelector('[data-subact="connect"]') } : null;
     });
     ok(after && after.hasConnect, 'Cancel restores the Connect state');
+
+    // ChatGPT connect start — LIVE codex spawn on the server (would have
+    // caught the bare-`codex` PATH failure Damon hit): device url + the
+    // one-time code (its dedicated div — textContent concatenates lines)
+    // must appear, then cancel.
+    await page.click('#aiSubGrid .stg-ai-card[data-sub="gpt"] [data-subact="connect"]');
+    let gpt = null;
+    for (let i = 0; i < 25 && !(gpt && gpt.code); i++) {
+      await page.waitForTimeout(1000);
+      gpt = await page.evaluate(() => {
+        const el = document.querySelector('#aiSubGrid .stg-ai-card[data-sub="gpt"]');
+        const a = el && el.querySelector('a[href*="device"], a[href*="openai"]');
+        const codeDiv = el && el.querySelector('div[style*="letter-spacing"]');
+        const err = el && /sign-in did not complete|command not found|Try again/i.test(el.textContent);
+        return { url: a ? a.href : null, code: codeDiv ? codeDiv.textContent.trim() : null, err: err };
+      });
+      if (gpt && gpt.err) break;
+    }
+    ok(gpt && gpt.url && /^[A-Z0-9]{3,10}-[A-Z0-9]{3,10}$/.test(gpt.code || '') && !gpt.err,
+      'ChatGPT connect: live device url + one-time code relayed (' + JSON.stringify(gpt) + ')');
+    await page.screenshot({ path: SHOTS + '/2b-gpt-device-code.png' });
+    await page.click('#aiSubGrid .stg-ai-card[data-sub="gpt"] [data-subact="cancel"]');
+    await page.waitForTimeout(800);
     const acct = await req('GET', '/api/settings/ai-accounts', null, t);
     ok(acct && acct.connections && acct.connections.length === 0, 'no connection stored after the aborted flow');
     await page.screenshot({ path: SHOTS + '/4-cancelled.png' });

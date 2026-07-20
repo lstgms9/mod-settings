@@ -328,8 +328,8 @@
       try {
         var s = await API.get('/ai-accounts/connect/' + f.sid);
         if (!s || !s.status) throw new Error('gone');   // res.error → {error} only
-        var changed = s.status !== f.status || s.url !== f.url || s.error !== f.error;
-        f.status = s.status; f.url = s.url; f.error = s.error;
+        var changed = s.status !== f.status || s.url !== f.url || s.error !== f.error || s.userCode !== f.userCode;
+        f.status = s.status; f.url = s.url; f.error = s.error; f.userCode = s.userCode;
         if (s.status === 'connected') {
           clearInterval(f.timer); aiSub.flow = null;
           toast('Claude connected — builds now run on your account');
