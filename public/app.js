@@ -313,7 +313,15 @@
   // server-side device-code login; we show the sign-in URL, the user approves
   // it in any logged-in browser and pastes the code back; the server stores
   // the credential encrypted. Game-build pickers fill from these connections.
-  var SUB_PROVIDERS = [{ id: 'claude', name: 'Claude', provider: 'Anthropic — powers game builds', icon: 'C', color: '#d97757' }];
+  // mode: 'paste' = OAuth url out, code pasted back here (claude).
+  //       'device' = url + one-time code out, user enters it ON the provider
+  //                  site and the CLI completes by itself (gpt/codex).
+  //       'key'    = paste an API key, validated with a live ping (grok/xAI).
+  var SUB_PROVIDERS = [
+    { id: 'claude', name: 'Claude', provider: 'Anthropic — your Claude subscription', icon: 'C', color: '#d97757', mode: 'paste' },
+    { id: 'gpt', name: 'ChatGPT', provider: 'OpenAI — your ChatGPT subscription (Codex)', icon: 'G', color: '#10a37f', mode: 'device' },
+    { id: 'grok', name: 'Grok', provider: 'xAI — your API key (console.x.ai)', icon: 'X', color: '#8b5cf6', mode: 'key' },
+  ];
   var aiSub = { conns: [], canManage: false, ready: true, flow: null };
 
   function aiSubConn(id) {
@@ -340,9 +348,15 @@
         if (f.status === 'error') {
           html += '<div class="stg-sublabel" style="color:var(--red,#ff3997);">' + esc(f.error || 'Sign-in failed') + '</div>' +
             '<button class="stg-ai-btn stg-ai-connect" data-subact="connect" data-sub="' + p.id + '">Try again</button>';
-        } else if (!f.url) {
+        } else if (!f.url || (p.mode === 'device' && !f.userCode)) {
           html += '<div class="stg-sublabel">Starting sign-in…</div>' +
             '<button class="stg-ai-btn" data-subact="cancel" data-sub="' + p.id + '">Cancel</button>';
+        } else if (p.mode === 'device') {
+          // One-time code entered ON the provider's site — nothing pasted back.
+          html += '<div class="stg-sublabel" style="margin-bottom:6px;"><strong>1.</strong> <a href="' + esc(f.url) + '" target="_blank" rel="noopener" style="color:' + p.color + ';">Open the sign-in page</a> and log in (Google sign-in works there).<br><strong>2.</strong> Enter this one-time code on that page:</div>';
+          html += '<div style="font-size:20px;font-weight:700;letter-spacing:2px;color:' + p.color + ';margin:2px 0 8px;">' + esc(f.userCode) + '</div>';
+          html += '<div class="stg-sublabel">Waiting for the approval — this updates by itself…</div>';
+          html += '<button class="stg-ai-btn" data-subact="cancel" data-sub="' + p.id + '">Cancel</button>';
         } else {
           html += '<div class="stg-sublabel" style="margin-bottom:6px;"><strong>1.</strong> <a href="' + esc(f.url) + '" target="_blank" rel="noopener" style="color:' + p.color + ';">Open the sign-in link</a> and approve (any browser where you\'re logged in — Google sign-in works).<br><strong>2.</strong> Copy the code it shows and paste it here:</div>';
           if (f.error) html += '<div class="stg-sublabel" style="color:var(--red,#ff3997);margin-bottom:4px;">' + esc(f.error) + '</div>';
@@ -354,7 +368,12 @@
       } else if (!aiSub.ready) {
         html += '<div class="stg-sublabel">Not available on this instance yet.</div>';
       } else if (aiSub.canManage) {
-        html += '<button class="stg-ai-btn stg-ai-connect" data-subact="connect" data-sub="' + p.id + '">Connect</button>';
+        if (p.mode === 'key') {
+          html += '<input type="password" class="stg-ai-key-input" id="aiSubKey-' + p.id + '" placeholder="xai-…">';
+          html += '<button class="stg-ai-btn stg-ai-connect" data-subact="key" data-sub="' + p.id + '">Connect</button>';
+        } else {
+          html += '<button class="stg-ai-btn stg-ai-connect" data-subact="connect" data-sub="' + p.id + '">Connect</button>';
+        }
       } else {
         html += '<div class="stg-sublabel">Ask the studio owner to connect.</div>';
       }
@@ -413,6 +432,16 @@
         var r2 = await API.post('/ai-accounts/connect/' + aiSub.flow.sid + '/code', { code: code });
         if (r2 && r2.ok) { aiSub.flow.status = 'exchanging'; renderAISubs(); }
         else toast((r2 && r2.error) || 'Code rejected');
+      } else if (act === 'key') {
+        // API-key connect (grok): server pings the provider before storing.
+        var kinp = document.getElementById('aiSubKey-' + p);
+        var kval = kinp ? kinp.value.trim() : '';
+        if (!kval) { if (kinp) { kinp.style.borderColor = 'var(--red)'; kinp.focus(); setTimeout(function() { kinp.style.borderColor = ''; }, 1500); } return; }
+        btn.disabled = true; btn.textContent = 'Checking key…';
+        var kr = await API.post('/ai-accounts/' + p + '/key', { key: kval });
+        btn.disabled = false; btn.textContent = 'Connect';
+        if (kr && kr.ok) { toast('Grok connected — key verified'); loadAISubs(); }
+        else toast((kr && kr.error) || 'Key rejected');
       } else if (act === 'cancel') {
         if (aiSub.flow) {
           clearInterval(aiSub.flow.timer);

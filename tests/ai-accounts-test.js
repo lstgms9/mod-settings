@@ -58,6 +58,20 @@ const card = () => document.querySelector('#aiSubGrid .stg-ai-card[data-sub="cla
     });
     ok(!!cardState, 'Claude subscription card rendered');
     ok(cardState && /Not connected/.test(cardState.text) && cardState.hasConnect, 'card shows Not connected + Connect');
+    // Phase B cards: ChatGPT (device flow) + Grok (API key input).
+    const b = await page.evaluate(() => {
+      const gpt = document.querySelector('#aiSubGrid .stg-ai-card[data-sub="gpt"]');
+      const grok = document.querySelector('#aiSubGrid .stg-ai-card[data-sub="grok"]');
+      return {
+        gpt: gpt && { text: gpt.textContent, hasConnect: !!gpt.querySelector('[data-subact="connect"]') },
+        grok: grok && { hasInput: !!grok.querySelector('#aiSubKey-grok'), hasKeyBtn: !!grok.querySelector('[data-subact="key"]') },
+      };
+    });
+    ok(b.gpt && /ChatGPT/.test(b.gpt.text) && b.gpt.hasConnect, 'ChatGPT card rendered with Connect');
+    ok(b.grok && b.grok.hasInput && b.grok.hasKeyBtn, 'Grok card rendered with key input + Connect');
+    // Grok bad key → live rejection, nothing stored.
+    const badKey = await req('POST', '/api/settings/ai-accounts/grok/key', { key: 'xai-' + 'bogus'.repeat(10) }, t);
+    ok(badKey && badKey.error, 'bogus grok key rejected by the live ping (' + String(badKey.error).slice(0, 40) + '…)');
     await page.screenshot({ path: SHOTS + '/1-not-connected.png' });
 
     // Connect → REAL setup-token spawns server-side → live OAuth URL relayed.

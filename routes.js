@@ -181,6 +181,23 @@ module.exports = function(router, ctx) {
     res.json(s);
   });
 
+  // Grok = xAI API key (no subscription CLI): validate with a live ping
+  // against api.x.ai's Anthropic-native endpoint — the same path builds use —
+  // then store it encrypted like any other connection.
+  router.post('/ai-accounts/grok/key', async (req, res) => {
+    if (!req.user) return res.error(401, 'Not logged in');
+    if (!canManageAI(req)) return res.error(403, 'Only the studio owner/admin can connect AI accounts');
+    const key = String((req.body || {}).key || '').trim();
+    const v = await aiAuth.validateGrokKey(key);
+    if (!v.ok) return res.error(400, v.error || 'key rejected');
+    try {
+      aiAuth.saveConnection(aiBase(req), req.user.studio, 'grok', {
+        kind: 'apikey', secret: { apiKey: key }, identity: 'xAI key ••••' + key.slice(-4),
+      });
+    } catch (e) { return res.error(400, e.message); }
+    res.json({ ok: true });
+  });
+
   router.post('/ai-accounts/connect/:sid/code', async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');
     if (!canManageAI(req)) return res.error(403, 'Forbidden');
