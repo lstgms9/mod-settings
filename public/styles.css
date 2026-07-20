@@ -17,7 +17,7 @@
   padding: 24px 0; overflow-y: auto;
 }
 .stg-sidebar-title {
-  font-family: var(--font-head); font-size: 12px;
+  font-family: var(--font-head); font-size: 14px;
   color: var(--primary); padding: 0 20px; margin-bottom: 24px; letter-spacing: 1px;
 }
 .stg-nav-item {
@@ -48,7 +48,7 @@
 }
 .stg-group:hover { border-color: var(--border2); }
 .stg-group-label {
-  font-family: var(--font-head); font-size: 13px; letter-spacing: 1.5px;
+  font-family: var(--font-head); font-size: 14px; letter-spacing: 1.5px;
   color: var(--primary); margin-bottom: 14px;
 }
 
@@ -60,7 +60,7 @@
 .stg-row:last-child { border-bottom: none; padding-bottom: 0; }
 .stg-row:first-of-type { padding-top: 0; }
 .stg-label { font-size: 14px; font-weight: 500; color: var(--text); }
-.stg-sublabel { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.stg-sublabel { font-size: 14px; color: var(--text-dim); margin-top: 2px; }
 .stg-mono-cyan { font-family: var(--font-mono); color: var(--primary); }
 
 /* ── Segmented control ───────────────────────── */
@@ -105,7 +105,7 @@
 .stg-select:focus { border-color: var(--primary); }
 .stg-select-wrap::after {
   content: '\25BE'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-  color: var(--text-dim); pointer-events: none; font-size: 12px;
+  color: var(--text-dim); pointer-events: none; font-size: 14px;
 }
 .stg-select option { background: var(--bg); color: var(--text); }
 
@@ -120,7 +120,7 @@
   background: var(--primary); border-radius: 50%; cursor: pointer;
   box-shadow: 0 0 8px color-mix(in srgb, var(--accent), transparent 70%);
 }
-.stg-range-val { font-size: 12px; font-family: var(--font-mono); color: var(--primary); min-width: 36px; text-align: center; }
+.stg-range-val { font-size: 14px; font-family: var(--font-mono); color: var(--primary); min-width: 36px; text-align: center; }
 
 /* ── Time input ──────────────────────────────── */
 .stg-time-input {
@@ -145,9 +145,9 @@
   font-size: 18px; font-weight: 700; flex-shrink: 0;
 }
 .stg-ai-name { font-family: var(--font-head); font-size: 14px; color: var(--text); }
-.stg-ai-provider { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+.stg-ai-provider { font-size: 14px; color: var(--text-dim); margin-top: 1px; }
 .stg-ai-status {
-  font-size: 11px; font-family: var(--font-mono); color: var(--text-dim);
+  font-size: 14px; font-family: var(--font-mono); color: var(--text-dim);
   margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
 }
 .stg-ai-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim); }
@@ -155,7 +155,7 @@
 .stg-ai-card.connected .stg-ai-dot { background: #39ff7f; box-shadow: 0 0 6px rgba(57,255,127,0.3); }
 .stg-ai-key-input {
   width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
-  padding: 7px 10px; font-size: 12px; font-family: var(--font-mono); color: var(--text);
+  padding: 7px 10px; font-size: 14px; font-family: var(--font-mono); color: var(--text);
   outline: none; transition: border-color 0.2s; margin-bottom: 8px;
 }
 .stg-ai-key-input:focus { border-color: var(--primary); }
@@ -165,7 +165,7 @@
    site's dark theme + cyan focus instead of the browser default grey. */
 #settings-app .stg-input, #settings-app select.stg-input, #settings-app textarea.stg-input {
   background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
-  padding: 8px 12px; font-size: 13px; font-family: inherit; color: var(--text);
+  padding: 8px 12px; font-size: 14px; font-family: inherit; color: var(--text);
   outline: none; transition: border-color 0.2s; appearance: none;
   -webkit-appearance: none; -moz-appearance: none;
 }
@@ -189,34 +189,34 @@
 /* Real flag image inside the preview box (always a flag, never bare letters). */
 #settings-app .stg-flag-preview .stg-flag-img { height:20px; width:auto; border-radius:3px; box-shadow:0 0 0 1px rgba(0,0,0,.3); }
 .stg-ai-btn {
-  width: 100%; padding: 7px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  width: 100%; padding: 7px; border-radius: 6px; font-size: 14px; font-weight: 600;
   font-family: inherit; cursor: pointer; border: 1px solid; transition: all 0.2s;
 }
 .stg-ai-connect { background: color-mix(in srgb, var(--accent), transparent 92%); border-color: var(--primary); color: var(--primary); }
 .stg-ai-connect:hover { background: color-mix(in srgb, var(--accent), transparent 85%); }
 .stg-ai-disconnect { background: rgba(255,57,151,0.06); border-color: rgba(255,57,151,0.3); color: var(--red); }
 .stg-ai-disconnect:hover { background: rgba(255,57,151,0.12); }
-.stg-ai-models { font-size: 11px; color: var(--text-dim); margin-top: 8px; line-height: 1.6; }
+.stg-ai-models { font-size: 14px; color: var(--text-dim); margin-top: 8px; line-height: 1.6; }
 .stg-ai-models span {
   display: inline-block; background: color-mix(in srgb, var(--accent), transparent 95%); border: 1px solid color-mix(in srgb, var(--accent), transparent 90%);
-  padding: 1px 7px; border-radius: 4px; margin: 2px 3px 2px 0; font-family: var(--font-mono); font-size: 10px;
+  padding: 1px 7px; border-radius: 4px; margin: 2px 3px 2px 0; font-family: var(--font-mono); font-size: 14px;
 }
 .stg-ai-default-badge {
-  position: absolute; top: 10px; right: 10px; font-size: 9px; font-family: var(--font-head);
+  position: absolute; top: 10px; right: 10px; font-size: 14px; font-family: var(--font-head);
   letter-spacing: 1px; padding: 2px 7px; border-radius: 4px;
   background: rgba(255,215,0,0.1); color: var(--yellow); border: 1px solid rgba(255,215,0,0.2);
 }
 .stg-ai-set-default {
-  font-size: 11px; color: var(--text-dim); cursor: pointer; margin-top: 6px;
+  font-size: 14px; color: var(--text-dim); cursor: pointer; margin-top: 6px;
   display: inline-block; transition: color 0.2s;
 }
 .stg-ai-set-default:hover { color: var(--yellow); }
-.stg-ai-masked { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; font-family: var(--font-mono); }
+.stg-ai-masked { font-size: 14px; color: var(--text-dim); margin-bottom: 8px; font-family: var(--font-mono); }
 
 /* ── Info box ────────────────────────────────── */
 .stg-info-box {
   background: color-mix(in srgb, var(--accent), transparent 97%); border: 1px solid color-mix(in srgb, var(--accent), transparent 90%); border-radius: 8px;
-  padding: 12px 16px; font-size: 12px; color: var(--text-dim); line-height: 1.6; margin-top: 14px;
+  padding: 12px 16px; font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-top: 14px;
 }
 .stg-info-box strong { color: var(--primary); font-weight: 600; }
 
@@ -224,7 +224,7 @@
 .stg-danger-group { border-color: rgba(255,57,151,0.2); }
 .stg-danger-group .stg-group-label { color: var(--red); }
 .stg-btn-danger {
-  padding: 7px 18px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  padding: 7px 18px; border-radius: 6px; font-size: 14px; font-weight: 600;
   font-family: inherit; cursor: pointer;
   background: rgba(255,57,151,0.06); border: 1px solid rgba(255,57,151,0.3); color: var(--red); transition: all 0.2s;
 }
@@ -237,7 +237,7 @@
 .stg-server-dot.red { background: var(--red); box-shadow: 0 0 8px rgba(255,57,151,0.4); }
 .stg-storage-bar { height: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
 .stg-storage-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; background: linear-gradient(90deg, var(--primary), #39ff7f); }
-.stg-storage-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--text-dim); }
+.stg-storage-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 14px; color: var(--text-dim); }
 .stg-storage-legend-item { display: flex; align-items: center; gap: 5px; }
 .stg-storage-dot { width: 8px; height: 8px; border-radius: 2px; }
 
@@ -251,7 +251,7 @@
 .stg-shortcut-keys { display: flex; gap: 4px; }
 .stg-key {
   background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
-  padding: 2px 7px; font-size: 11px; font-family: var(--font-mono); color: var(--text-dim);
+  padding: 2px 7px; font-size: 14px; font-family: var(--font-mono); color: var(--text-dim);
   min-width: 22px; text-align: center;
 }
 
@@ -279,7 +279,7 @@
 .stg-font-card.active { border-color: var(--primary); box-shadow: 0 0 12px color-mix(in srgb, var(--accent), transparent 85%); background: color-mix(in srgb, var(--accent), transparent 94%); }
 .stg-font-card.active .stg-font-name { color: var(--primary); }
 .stg-font-preview { font-size: 18px; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
-.stg-font-name { font-size: 10px; font-family: var(--font-mono); color: var(--text-dim); }
+.stg-font-name { font-size: 14px; font-family: var(--font-mono); color: var(--text-dim); }
 
 /* ── 2FA panel ───────────────────────────────── */
 .stg-tfa-panel {
@@ -299,7 +299,7 @@
   justify-content: center; background: var(--bg); border-radius: 8px; flex-shrink: 0;
 }
 .stg-tfa-method-name { font-size: 14px; font-weight: 600; color: var(--text); }
-.stg-tfa-method-desc { font-size: 12px; color: var(--text-dim); margin-top: 3px; line-height: 1.5; }
+.stg-tfa-method-desc { font-size: 14px; color: var(--text-dim); margin-top: 3px; line-height: 1.5; }
 .stg-tfa-radio {
   width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 50%;
   margin-left: auto; flex-shrink: 0; margin-top: 2px; position: relative; transition: all 0.2s;
@@ -317,7 +317,7 @@
 }
 .stg-tfa-qr img { width: 100%; height: 100%; }
 .stg-tfa-secret {
-  text-align: center; font-family: var(--font-mono); font-size: 13px; color: var(--text-dim);
+  text-align: center; font-family: var(--font-mono); font-size: 14px; color: var(--text-dim);
   padding: 8px; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
   letter-spacing: 2px; margin-bottom: 14px; user-select: all;
 }
@@ -331,7 +331,7 @@
 .stg-tfa-verify-btn {
   display: block; margin: 0 auto; padding: 9px 28px;
   background: rgba(57,255,127,0.1); border: 1px solid #39ff7f; border-radius: 6px;
-  color: #39ff7f; font-size: 13px; font-weight: 600; font-family: inherit;
+  color: #39ff7f; font-size: 14px; font-weight: 600; font-family: inherit;
   cursor: pointer; transition: all 0.2s;
 }
 .stg-tfa-verify-btn:hover { background: rgba(57,255,127,0.2); }
@@ -345,12 +345,12 @@
 .stg-email-row:last-child { border-bottom: none; }
 .stg-email-addr { font-size: 14px; font-family: var(--font-mono); color: var(--text); }
 .stg-email-default-tag {
-  font-size: 9px; font-family: var(--font-head); letter-spacing: 1px;
+  font-size: 14px; font-family: var(--font-head); letter-spacing: 1px;
   padding: 2px 6px; border-radius: 4px; margin-left: 8px;
   background: color-mix(in srgb, var(--accent), transparent 90%); color: var(--primary); border: 1px solid color-mix(in srgb, var(--accent), transparent 80%);
 }
 .stg-email-actions { display: flex; gap: 12px; }
-.stg-email-action { font-size: 12px; color: var(--text-dim); cursor: pointer; transition: color 0.2s; }
+.stg-email-action { font-size: 14px; color: var(--text-dim); cursor: pointer; transition: color 0.2s; }
 .stg-email-action:hover { color: var(--primary); }
 .stg-email-delete:hover { color: var(--red); }
 .stg-email-add-form { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
@@ -367,7 +367,7 @@
 /* ── Revenue / Connect ───────────────────────── */
 .stg-connect-badge {
   display: inline-block; padding: 3px 10px; border-radius: 10px;
-  font-size: 11px; font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.04em;
+  font-size: 14px; font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.04em;
 }
 .stg-connect-badge.active { background: rgba(57,255,127,0.12); color: #39ff7f; border: 1px solid rgba(57,255,127,0.3); }
 .stg-connect-badge.pending { background: rgba(255,215,0,0.1); color: var(--yellow); border: 1px solid rgba(255,215,0,0.2); }
@@ -388,20 +388,20 @@
   width: 34px; height: 34px; border-radius: 50%;
   background: var(--bg3); border: 1px solid var(--border2);
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; color: var(--primary); flex-shrink: 0;
+  font-size: 14px; font-weight: 700; color: var(--primary); flex-shrink: 0;
 }
 .stg-team-info { flex: 1; min-width: 0; }
 .stg-team-name { font-size: 14px; font-weight: 500; color: var(--text); }
-.stg-team-email { font-size: 12px; color: var(--text-dim); font-family: var(--font-mono); }
+.stg-team-email { font-size: 14px; color: var(--text-dim); font-family: var(--font-mono); }
 .stg-role-badge {
-  font-size: 10px; font-family: var(--font-head); letter-spacing: 1px;
+  font-size: 14px; font-family: var(--font-head); letter-spacing: 1px;
   padding: 2px 8px; border-radius: 4px; text-transform: uppercase; flex-shrink: 0;
 }
 .stg-role-owner { background: rgba(255,215,0,0.1); color: var(--yellow); border: 1px solid rgba(255,215,0,0.2); }
 .stg-role-admin { background: color-mix(in srgb, var(--accent), transparent 90%); color: var(--primary); border: 1px solid color-mix(in srgb, var(--accent), transparent 80%); }
 .stg-role-member { background: var(--bg); color: var(--text-dim); border: 1px solid var(--border); }
 .stg-team-action {
-  padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600;
+  padding: 5px 12px; border-radius: 6px; font-size: 14px; font-weight: 600;
   font-family: inherit; cursor: pointer; border: 1px solid var(--border);
   background: var(--bg); color: var(--text-dim); transition: all 0.2s; flex-shrink: 0;
 }
@@ -417,13 +417,13 @@
 .stg-team-mod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; margin-top: 8px; }
 .stg-team-mod-check {
   display: flex; align-items: center; gap: 6px;
-  font-size: 13px; color: var(--text); cursor: pointer;
+  font-size: 14px; color: var(--text); cursor: pointer;
 }
 .stg-team-mod-check input[type="checkbox"] {
   accent-color: var(--primary); width: 14px; height: 14px;
 }
 .stg-team-mod-group {
-  font-size: 10px; color: var(--text-dim); font-family: var(--font-mono);
+  font-size: 14px; color: var(--text-dim); font-family: var(--font-mono);
   background: var(--bg2); padding: 1px 5px; border-radius: 3px; margin-left: auto;
 }
 
@@ -457,7 +457,7 @@
   .stg-connect-badge,
   .stg-section-desc { font-size: var(--m-text, 16px); }
   .stg-section-header { font-size: var(--m-title, 20px); }
-  .stg-sublabel, .stg-ai-provider, .stg-group-label { font-size: 13px; }
+  .stg-sublabel, .stg-ai-provider, .stg-group-label { font-size: 14px; }
 }
 
 /* ═══ Account section — merged Account+Profile redesign ═══
@@ -479,7 +479,7 @@
   border: 1px solid var(--border2);
   border-radius: 8px;
   color: var(--text); font-family: var(--font-head);
-  font-size: 13px; letter-spacing: 0.06em;
+  font-size: 14px; letter-spacing: 0.06em;
   text-decoration: none; cursor: pointer;
   transition: border-color 0.15s, transform 0.1s;
 }
@@ -547,7 +547,7 @@
 }
 .stg-acct-pair > label {
   display: flex; flex-direction: column; gap: 3px;
-  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--text-dim);
 }
 .stg-acct-pair > label .stg-input {
@@ -558,7 +558,7 @@
   font-family: inherit;
 }
 .stg-acct-pair > label select.stg-input { padding-right: 28px; }
-.stg-acct-pair > label .stg-input[readonly] { color: var(--primary); font-family: var(--font-mono); font-size: 13px; }
+.stg-acct-pair > label .stg-input[readonly] { color: var(--primary); font-family: var(--font-mono); font-size: 14px; }
 /* Composite email display: username@<studio-pill>.gamoids.com.
    The studio-name portion is highlighted so the user sees their
    studio identity at a glance — and that it's not editable here. */
@@ -611,21 +611,21 @@
    (cooldown countdown / availability). */
 .stg-acct-userrow { display: flex; align-items: center; gap: 10px; min-height: 30px; flex-wrap: wrap; }
 .stg-acct-userrow .stg-acct-username-input { flex: 1 1 auto; min-width: 160px; }
-.stg-acct-userrow .stg-acct-cta { width: auto; height: 30px; padding: 0 14px; font-size: 12px; flex: 0 0 auto; }
+.stg-acct-userrow .stg-acct-cta { width: auto; height: 30px; padding: 0 14px; font-size: 14px; flex: 0 0 auto; }
 .stg-acct-userrow .stg-acct-cta:disabled { opacity: 0.4; cursor: not-allowed; }
 /* Inline cooldown notice — sits right next to "Username" label
    text, orange, regular weight, lowercase. Same idiom as the
    "(locks at signup)" suffix on the signup form's Studio Slug. */
 .stg-acct-username-aside {
   color: #ff8c42;
-  font-size: 11px; font-weight: 400;
+  font-size: 14px; font-weight: 400;
   text-transform: none; letter-spacing: 0;
   margin-left: 8px;
 }
 /* Availability + post-save status — sits as its own row immediately
    BELOW the input/save row. Empty until the user types or saves. */
 .stg-acct-username-hint {
-  font-size: 12px; font-weight: 600;
+  font-size: 14px; font-weight: 600;
   text-transform: none; letter-spacing: 0;
   margin-top: 4px; min-height: 14px;
 }
@@ -672,7 +672,7 @@
 }
 .stg-modal-btn {
   padding: 8px 18px; border-radius: 6px;
-  font-size: 13px; font-weight: 600;
+  font-size: 14px; font-weight: 600;
   cursor: pointer; border: 1px solid transparent;
   font-family: inherit;
 }
@@ -694,7 +694,7 @@
 .stg-acct-planrow .stg-acct-static { padding: 0; min-height: 0; flex: 0 0 auto; white-space: nowrap; }
 .stg-acct-planrow .stg-acct-cta {
   align-self: auto; width: auto; height: 32px;
-  padding: 0 14px; font-size: 12px; flex: 0 0 auto;
+  padding: 0 14px; font-size: 14px; flex: 0 0 auto;
 }
 
 /* Locked identity field (Username, Studio Slug) — must not look
@@ -712,7 +712,7 @@
 }
 .stg-locked-tag {
   display: inline-block; margin-left: 6px;
-  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--text-dim);
   padding: 1px 6px; border-radius: 3px;
   background: rgba(255,255,255,0.04);
@@ -731,7 +731,7 @@
 }
 .stg-info-field { display: flex; flex-direction: column; gap: 6px; }
 .stg-info-label {
-  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim);
+  font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim);
 }
 .stg-info-field textarea.stg-input {
   width: 100%; box-sizing: border-box; resize: vertical; min-height: 64px;
@@ -766,3 +766,10 @@
 @media (max-width: 900px) {
   .stg-mbx-duet { grid-template-columns: 1fr; }
 }
+
+/* 14px floor for ALL settings text (Damon 2026-07-20: "no one can read the
+   tiny text — 14 min everywhere"). Form controls don't inherit font-size, so
+   shell button/input defaults land smaller — :where() keeps this at zero
+   specificity: any explicit class rule (all >=14 now) still wins. */
+:where(#settings-app) button, :where(#settings-app) input,
+:where(#settings-app) select, :where(#settings-app) textarea { font-size: 14px; }

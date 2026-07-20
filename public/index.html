@@ -133,71 +133,19 @@
       </div>
     </div>
 
-    <!-- AI ACCOUNTS -->
+    <!-- AI ACCOUNTS — the studio's own AI connections (AI-Accounts phase A+B).
+         The old "DEFAULT AI PROVIDERS" selects + API-key card grid were
+         removed 2026-07-20 (Damon: "if the other ai accounts r not working
+         just remove them") — nothing consumed those keys or defaults. -->
     <div class="stg-section" id="sec-ai">
       <div class="stg-section-header">AI Accounts</div>
-      <div class="stg-section-desc">Connect your AI provider accounts to power features across your business.</div>
-
-      <div class="stg-group">
-        <div class="stg-group-label">DEFAULT AI PROVIDERS</div>
-        <div class="stg-row">
-          <div><div class="stg-label">Primary AI for all modules</div><div class="stg-sublabel">Compose, chat assist, press kits, planner AI</div></div>
-          <div class="stg-select-wrap">
-            <select class="stg-select" id="defaultAI" data-key="defaultAI">
-              <option value="none">-- Not set --</option>
-              <option value="claude">Claude (Anthropic)</option>
-              <option value="openai">ChatGPT (OpenAI)</option>
-              <option value="gemini">Gemini (Google)</option>
-              <option value="grok">Grok (xAI)</option>
-              <option value="deepseek">DeepSeek</option>
-              <option value="mistral">Mistral</option>
-              <option value="llama">Llama (Meta)</option>
-            </select>
-          </div>
-        </div>
-        <div class="stg-row">
-          <div><div class="stg-label">Code generation</div><div class="stg-sublabel">Website builder, template editing, automation scripts</div></div>
-          <div class="stg-select-wrap">
-            <select class="stg-select" id="defaultCodeAI" data-key="defaultCodeAI">
-              <option value="none">-- Not set --</option>
-              <option value="claude">Claude (Anthropic)</option>
-              <option value="openai">ChatGPT (OpenAI)</option>
-              <option value="gemini">Gemini (Google)</option>
-              <option value="deepseek">DeepSeek</option>
-              <option value="mistral">Codestral (Mistral)</option>
-              <option value="grok">Grok (xAI)</option>
-              <option value="llama">Llama (Meta)</option>
-            </select>
-          </div>
-        </div>
-        <div class="stg-row">
-          <div><div class="stg-label">Image generation</div><div class="stg-sublabel">Art assets, thumbnails, social media visuals</div></div>
-          <div class="stg-select-wrap">
-            <select class="stg-select" id="defaultImageAI" data-key="defaultImageAI">
-              <option value="none">-- Not set --</option>
-              <option value="openai">DALL-E (OpenAI)</option>
-              <option value="midjourney">Midjourney</option>
-              <option value="stability">Stable Diffusion (Stability)</option>
-              <option value="ideogram">Ideogram</option>
-              <option value="flux">Flux (Black Forest)</option>
-            </select>
-          </div>
-        </div>
-      </div>
+      <div class="stg-section-desc">Connect the AI accounts your studio already pays for — game builds run on them.</div>
 
       <div class="stg-group">
         <div class="stg-group-label">GAME BUILD AI — YOUR SUBSCRIPTION</div>
         <div class="stg-ai-grid" id="aiSubGrid"></div>
         <div class="stg-info-box">
           <strong>Bring your own AI:</strong> connect the accounts your studio already pays for and game builds run on them. Claude: approve the sign-in link and paste the code back here. ChatGPT: open the sign-in page and type the one-time code there — it completes by itself. Grok: paste your xAI API key (console.x.ai) — we verify it live. The build AI picker fills from whatever is connected.
-        </div>
-      </div>
-
-      <div class="stg-group">
-        <div class="stg-group-label">CONNECTED ACCOUNTS</div>
-        <div class="stg-ai-grid" id="aiGrid"></div>
-        <div class="stg-info-box">
-          <strong>How it works:</strong> Paste your API key for each provider. Keys are stored on your instance. Each module that uses AI pulls from your default provider, or you can override per-module.
         </div>
       </div>
     </div>
@@ -370,7 +318,7 @@
           <div class="stg-toggle-wrap"><div class="stg-toggle" id="tfaToggle" data-key="tfa"></div><span class="stg-toggle-label" id="tfaLabel">OFF</span></div>
         </div>
         <div class="stg-tfa-panel" id="tfaPanel">
-          <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:12px;">Choose your 2FA method:</div>
+          <div style="font-size:14px;color:var(--text);font-weight:600;margin-bottom:12px;">Choose your 2FA method:</div>
           <div class="stg-tfa-method" id="tfa-totp" data-method="totp">
             <div class="stg-tfa-method-icon">&#128272;</div>
             <div style="flex:1">
@@ -389,22 +337,22 @@
           </div>
           <!-- TOTP setup -->
           <div class="stg-tfa-setup" id="setup-totp">
-            <div style="text-align:center;font-size:13px;color:var(--text-dim);margin-bottom:16px;">Scan this QR code with your authenticator app:</div>
+            <div style="text-align:center;font-size:14px;color:var(--text-dim);margin-bottom:16px;">Scan this QR code with your authenticator app:</div>
             <div class="stg-tfa-qr" id="tfaQr"></div>
-            <div style="text-align:center;font-size:11px;color:var(--text-dim);margin-bottom:8px;">Or enter this key manually:</div>
+            <div style="text-align:center;font-size:14px;color:var(--text-dim);margin-bottom:8px;">Or enter this key manually:</div>
             <div class="stg-tfa-secret" id="tfaSecret"></div>
-            <div style="text-align:center;font-size:13px;color:var(--text-dim);margin-bottom:8px;margin-top:20px;">Enter the 6-digit code from your app to verify:</div>
+            <div style="text-align:center;font-size:14px;color:var(--text-dim);margin-bottom:8px;margin-top:20px;">Enter the 6-digit code from your app to verify:</div>
             <div class="stg-tfa-code-row" id="totpCodeRow"></div>
             <button class="stg-tfa-verify-btn" id="totpVerifyBtn">Verify &amp; Enable</button>
           </div>
           <!-- Email setup -->
           <div class="stg-tfa-setup" id="setup-email">
-            <div style="text-align:center;font-size:13px;color:var(--text-dim);margin-bottom:12px;">We'll send a test code to your email to verify it works.</div>
+            <div style="text-align:center;font-size:14px;color:var(--text-dim);margin-bottom:12px;">We'll send a test code to your email to verify it works.</div>
             <div style="text-align:center;margin-bottom:16px;">
               <button class="stg-ai-btn stg-ai-connect" id="sendEmailCodeBtn" style="width:auto;padding:10px 24px;">Send Test Code</button>
             </div>
             <div id="emailCodeArea" style="display:none;">
-              <div style="text-align:center;font-size:13px;color:#39ff7f;margin-bottom:12px;">Code sent! Check your inbox.</div>
+              <div style="text-align:center;font-size:14px;color:#39ff7f;margin-bottom:12px;">Code sent! Check your inbox.</div>
               <div class="stg-tfa-code-row" id="emailCodeRow"></div>
               <button class="stg-tfa-verify-btn" id="emailVerifyBtn">Verify &amp; Enable</button>
             </div>
@@ -464,7 +412,7 @@
       <div class="stg-group">
         <div class="stg-group-label">STORAGE</div>
         <div id="storageBarWrap" style="margin-bottom:4px;">
-          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px;">
             <span style="color:var(--text-dim)">Instance data</span>
             <span class="stg-mono-cyan" id="storageSize">--</span>
           </div>
@@ -704,7 +652,7 @@
             <button class="stg-ai-btn stg-ai-connect" id="bkScriptBtn" style="width:auto;padding:8px 16px;" disabled>Show script</button>
           </div>
         </div>
-        <pre id="bkScriptOut" style="display:none;white-space:pre-wrap;word-break:break-all;background:var(--bg2,#111);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;margin:10px 0 0;"></pre>
+        <pre id="bkScriptOut" style="display:none;white-space:pre-wrap;word-break:break-all;background:var(--bg2,#111);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:14px;margin:10px 0 0;"></pre>
       </div>
     </div>
 
@@ -747,7 +695,7 @@
         <div class="stg-row">
           <div style="width:100%">
             <div class="stg-group-label" style="margin:14px 0 6px">BUILD LOG</div>
-            <pre id="relLog" style="margin:0;background:#0b0b14;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:280px;overflow:auto;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(empty)</pre>
+            <pre id="relLog" style="margin:0;background:#0b0b14;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:280px;overflow:auto;font-size:14px;line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(empty)</pre>
           </div>
         </div>
       </div>
@@ -766,7 +714,7 @@
           <div><div class="stg-label">Install + enable 2FA on this box</div><div class="stg-sublabel">installs the authenticator, seeds your existing code, switches on password+code login</div></div>
           <button class="stg-btn-primary" id="sbRun">Secure box</button>
         </div>
-        <div class="stg-row"><div style="width:100%"><pre id="sbResult" style="margin:0;background:#0b0b14;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:280px;overflow:auto;font-size:12px;line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(enter IP + password, then click Secure box)</pre></div></div>
+        <div class="stg-row"><div style="width:100%"><pre id="sbResult" style="margin:0;background:#0b0b14;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:280px;overflow:auto;font-size:14px;line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(enter IP + password, then click Secure box)</pre></div></div>
       </div>
     </div>
 

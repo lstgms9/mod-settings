@@ -1,21 +1,8 @@
 (function() {
   const API = window.platform.api;
   let prefs = {};
-  let connectedAIs = {};
   let saveTimer = null;
   let lastToast = null;
-
-  const AI_PROVIDERS = [
-    { id:'claude', name:'Claude', provider:'Anthropic', color:'#d4a574', icon:'\u25C8', placeholder:'sk-ant-... or OAuth token', models:['Opus 4','Sonnet 4','Haiku 3.5'] },
-    { id:'openai', name:'ChatGPT', provider:'OpenAI', color:'#10a37f', icon:'\u25C6', placeholder:'sk-...', models:['GPT-4o','GPT-4 Turbo','o1','o3-mini'] },
-    { id:'gemini', name:'Gemini', provider:'Google', color:'#4285f4', icon:'\u2726', placeholder:'AIza...', models:['Gemini 2.5 Pro','Gemini 2.5 Flash'] },
-    { id:'grok', name:'Grok', provider:'xAI', color:'#e4e4e4', icon:'X', placeholder:'xai-...', models:['Grok-3','Grok-3 Mini'] },
-    { id:'deepseek', name:'DeepSeek', provider:'DeepSeek', color:'#5b7ff5', icon:'\u25CE', placeholder:'sk-...', models:['DeepSeek-V3','DeepSeek-R1'] },
-    { id:'mistral', name:'Mistral', provider:'Mistral AI', color:'#ff7000', icon:'M', placeholder:'api-key...', models:['Mistral Large','Codestral','Mistral Medium'] },
-    { id:'llama', name:'Llama', provider:'Meta (via Groq/Together)', color:'#0668e1', icon:'\uD83E\uDD99', placeholder:'API key from Groq or Together', models:['Llama 4 Scout','Llama 4 Maverick'] },
-    { id:'stability', name:'Stable Diffusion', provider:'Stability AI', color:'#a855f7', icon:'\uD83C\uDFA8', placeholder:'sk-...', models:['SD3.5','SDXL'] },
-    { id:'midjourney', name:'Midjourney', provider:'Midjourney', color:'#ffffff', icon:'\u2B21', placeholder:'Session token or API key', models:['v6.1','v7'] },
-  ];
 
   const FONTS = [
     { id:'bungee', name:'Bungee', family:"'Bungee', cursive", sz:18 },
@@ -249,62 +236,6 @@
       prefs.headingFont = card.dataset.font;
       renderFontGrid();
       schedSave();
-    });
-  }
-
-  // ── AI cards ────────────────────────────────────────────────
-  function renderAICards() {
-    var grid = document.getElementById('aiGrid');
-    if (!grid) return;
-    var defaultAI = prefs.defaultAI || 'none';
-    grid.innerHTML = AI_PROVIDERS.map(function(ai) {
-      var masked = connectedAIs[ai.id];
-      var c = !!masked;
-      var html = '<div class="stg-ai-card ' + (c ? 'connected' : '') + '" data-provider="' + ai.id + '">';
-      if (c && defaultAI === ai.id) html += '<div class="stg-ai-default-badge">DEFAULT</div>';
-      html += '<div class="stg-ai-card-head">' +
-        '<div class="stg-ai-logo" style="background:' + ai.color + '22;color:' + ai.color + ';border:1px solid ' + ai.color + '33;">' + ai.icon + '</div>' +
-        '<div><div class="stg-ai-name">' + esc(ai.name) + '</div><div class="stg-ai-provider">' + esc(ai.provider) + '</div></div></div>';
-      html += '<div class="stg-ai-status"><span class="stg-ai-dot"></span>' + (c ? 'Connected' : 'Not connected') + '</div>';
-      if (!c) {
-        html += '<input type="password" class="stg-ai-key-input" data-provider="' + ai.id + '" placeholder="' + esc(ai.placeholder) + '">';
-        html += '<button class="stg-ai-btn stg-ai-connect" data-action="connect" data-provider="' + ai.id + '">Connect</button>';
-      } else {
-        html += '<div class="stg-ai-masked">' + esc(masked) + '</div>';
-        html += '<button class="stg-ai-btn stg-ai-disconnect" data-action="disconnect" data-provider="' + ai.id + '">Disconnect</button>';
-        if (defaultAI !== ai.id) html += '<div class="stg-ai-set-default" data-action="set-default" data-provider="' + ai.id + '">&#9733; Set as default</div>';
-      }
-      html += '<div class="stg-ai-models">' + ai.models.map(function(m) { return '<span>' + esc(m) + '</span>'; }).join('') + '</div>';
-      html += '</div>';
-      return html;
-    }).join('');
-  }
-
-  function initAIGrid() {
-    var grid = document.getElementById('aiGrid');
-    if (!grid) return;
-    grid.addEventListener('click', async function(e) {
-      var btn = e.target.closest('[data-action]');
-      if (!btn) return;
-      var action = btn.dataset.action;
-      var provider = btn.dataset.provider;
-      if (action === 'connect') {
-        var inp = grid.querySelector('input[data-provider="' + provider + '"]');
-        var key = inp ? inp.value.trim() : '';
-        if (!key) { if (inp) { inp.style.borderColor = 'var(--red)'; inp.focus(); setTimeout(function() { inp.style.borderColor = ''; }, 1500); } return; }
-        var r = await API.put('/ai-key/' + provider, { key: key });
-        if (r.ok) { connectedAIs[provider] = r.masked; if (prefs.defaultAI === 'none') prefs.defaultAI = provider; renderAICards(); toast('Connected ' + provider); }
-      } else if (action === 'disconnect') {
-        var r2 = await API.delete('/ai-key/' + provider);
-        if (r2.ok) { delete connectedAIs[provider]; if (prefs.defaultAI === provider) prefs.defaultAI = 'none'; renderAICards(); toast('Disconnected'); }
-      } else if (action === 'set-default') {
-        prefs.defaultAI = provider;
-        var defSel = document.getElementById('defaultAI');
-        if (defSel) defSel.value = provider;
-        renderAICards();
-        schedSave();
-        toast('Default AI: ' + provider);
-      }
     });
   }
 
@@ -550,7 +481,7 @@
           panel.innerHTML =
             '<div class="stg-tfa-recovery" style="padding:8px">' +
               '<h4 style="margin:0 0 6px">Save your recovery codes</h4>' +
-              '<p style="margin:0 0 10px;opacity:.8;font-size:13px">Each works once if you lose your authenticator. Store them safely — they won’t be shown again.</p>' +
+              '<p style="margin:0 0 10px;opacity:.8;font-size:14px">Each works once if you lose your authenticator. Store them safely — they won’t be shown again.</p>' +
               '<div class="stg-tfa-codes" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-family:ui-monospace,monospace;margin-bottom:12px">' +
                 codes.map(function(c){ return '<code style="background:#0b0b14;border:1px solid var(--border,#333);border-radius:4px;padding:6px 8px;letter-spacing:1px">' + c + '</code>'; }).join('') +
               '</div>' +
@@ -842,7 +773,7 @@
     if (tier === 'free') {
       el.innerHTML = '<div class="stg-upgrade-prompt">' +
         '<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;">Upgrade to accept payments</div>' +
-        '<div style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">Start with OK Lite (' + TIER_PRICES.lite + ') to accept payments from your customers with just a 5% platform fee.</div>' +
+        '<div style="font-size:14px;color:var(--text-dim);margin-bottom:12px;">Start with OK Lite (' + TIER_PRICES.lite + ') to accept payments from your customers with just a 5% platform fee.</div>' +
         '<button class="stg-ai-btn stg-ai-connect" style="width:auto;padding:8px 20px;" onclick="platform.nav.goto(\'/bill-pay\')">Upgrade Plan</button>' +
         '</div>';
       return;
@@ -1191,7 +1122,7 @@
     host.innerHTML = keys.map(function(k) {
       var handle = _platformState[k];
       return '<div class="stg-row" style="padding:6px 10px;background:var(--bg-card,#12121f);border:1px solid var(--border,#252540);border-radius:6px;gap:8px;">' +
-        '<span style="min-width:140px;font-size:13px">' + _platLabel(k) + '</span>' +
+        '<span style="min-width:140px;font-size:14px">' + _platLabel(k) + '</span>' +
         '<input type="text" class="stg-input plat-row-input" data-key="' + k + '" value="' + String(handle || '').replace(/"/g,'&quot;') + '" placeholder="handle / URL" style="flex:1">' +
         '<button class="stg-ai-btn" data-rm="' + k + '" style="width:auto;padding:6px 12px;background:transparent;border:1px solid var(--red,#ff3997);color:var(--red,#ff3997)">×</button>' +
       '</div>';
@@ -1295,8 +1226,8 @@
     }
     host.innerHTML = _pressState.map(function(r, i) {
       return '<div class="stg-row" style="padding:6px 10px;background:var(--bg-card,#12121f);border:1px solid var(--border,#252540);border-radius:6px;gap:8px;">' +
-        '<span style="min-width:140px;font-size:13px">' + (r.name || '').replace(/</g,'&lt;') + '</span>' +
-        '<a href="' + (r.url || '#').replace(/"/g,'&quot;') + '" target="_blank" rel="noopener" style="flex:1;font-size:12px;color:var(--primary);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.url || '').replace(/</g,'&lt;') + '</a>' +
+        '<span style="min-width:140px;font-size:14px">' + (r.name || '').replace(/</g,'&lt;') + '</span>' +
+        '<a href="' + (r.url || '#').replace(/"/g,'&quot;') + '" target="_blank" rel="noopener" style="flex:1;font-size:14px;color:var(--primary);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.url || '').replace(/</g,'&lt;') + '</a>' +
         '<button class="stg-ai-btn" data-press-rm="' + i + '" style="width:auto;padding:6px 12px;background:transparent;border:1px solid var(--red,#ff3997);color:var(--red,#ff3997)">×</button>' +
       '</div>';
     }).join('');
@@ -1637,7 +1568,7 @@
         return '<div class="stg-plan-row" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg2,#12121f);border:1px solid var(--border,#252540);border-radius:8px;margin-bottom:10px">' +
           '<div style="flex:1">' +
             '<div style="font-family:var(--font-head,Bungee);color:' + color + ';font-size:16px">' + (t.name || t.id).toUpperCase() + '</div>' +
-            '<div style="font-size:13px;color:var(--text-mid,#a0aab0);margin-top:4px">' + (t.tagline || t.description || '') + '</div>' +
+            '<div style="font-size:14px;color:var(--text-mid,#a0aab0);margin-top:4px">' + (t.tagline || t.description || '') + '</div>' +
           '</div>' +
           '<div style="text-align:right;margin-left:18px">' +
             '<div style="font-family:var(--font-mono,monospace);color:var(--text,#e4e4f0);font-size:18px;margin-bottom:6px">' + priceLabel + '</div>' +
@@ -1650,7 +1581,7 @@
           '<div style="background:var(--bg,#0b0b14);border:1px solid var(--border,#252540);border-radius:14px;padding:28px;width:520px;max-width:90vw;max-height:85vh;overflow:auto;position:relative">' +
             '<button id="stgPlanClose" style="position:absolute;top:10px;right:14px;background:none;border:0;color:var(--text-mid,#a0aab0);font-size:22px;cursor:pointer">&times;</button>' +
             '<h2 style="font-family:var(--font-head,Bungee);margin:0 0 6px;color:var(--text,#e4e4f0);font-size:20px">Manage Plan</h2>' +
-            '<p style="margin:0 0 18px;font-size:13px;color:var(--text-mid,#a0aab0)">Current: <strong style="color:var(--text,#e4e4f0)">' + cur.toUpperCase() + '</strong>. Upgrades route through Stripe.</p>' +
+            '<p style="margin:0 0 18px;font-size:14px;color:var(--text-mid,#a0aab0)">Current: <strong style="color:var(--text,#e4e4f0)">' + cur.toUpperCase() + '</strong>. Upgrades route through Stripe.</p>' +
             (tiers.length ? rows : '<div style="color:var(--text-mid,#a0aab0);font-size:14px">No tier config available.</div>') +
           '</div>' +
         '</div>';
@@ -2118,13 +2049,13 @@
         '<div style="background:var(--bg,#0b0b14);border:1px solid var(--border,#252540);border-radius:14px;padding:28px;width:500px;max-width:90vw;position:relative">' +
           '<button id="stgSlugClose" style="position:absolute;top:10px;right:14px;background:none;border:0;color:var(--text-mid,#a0aab0);font-size:22px;cursor:pointer">&times;</button>' +
           '<h2 style="font-family:var(--font-head,Bungee);margin:0 0 6px;color:var(--text,#e4e4f0);font-size:20px">Choose your studio URL</h2>' +
-          '<p style="margin:0 0 14px;font-size:13px;color:var(--text-mid,#a0aab0);line-height:1.45">Pick your studio URL. It becomes your website (<strong>your-slug.' + mailDomain + '</strong>) and your studio email (<strong>your-slug@' + mailDomain + '</strong>). <strong style="color:var(--red,#ff3997)">It can&rsquo;t be changed later</strong> — choose carefully.</p>' +
+          '<p style="margin:0 0 14px;font-size:14px;color:var(--text-mid,#a0aab0);line-height:1.45">Pick your studio URL. It becomes your website (<strong>your-slug.' + mailDomain + '</strong>) and your studio email (<strong>your-slug@' + mailDomain + '</strong>). <strong style="color:var(--red,#ff3997)">It can&rsquo;t be changed later</strong> — choose carefully.</p>' +
           '<div style="display:flex;align-items:center;background:var(--bg2,#12121f);border:1px solid var(--border,#252540);border-radius:8px;padding:4px 4px 4px 12px;margin-bottom:8px">' +
             '<input id="stgSlugIn" type="text" placeholder="gamebolina" maxlength="30" autocapitalize="off" spellcheck="false" autocomplete="off" style="flex:1;background:transparent;border:none;color:var(--text,#e4e4f0);font-family:var(--font-mono,monospace);font-size:15px;outline:none;padding:8px 0">' +
             '<span style="font-family:var(--font-mono,monospace);font-size:15px;color:var(--text-mid,#a0aab0);padding:8px 12px 8px 4px">.' + mailDomain + '</span>' +
           '</div>' +
-          '<div id="stgSlugStatus" style="font-size:12px;min-height:18px;font-family:var(--font-mono,monospace);color:var(--text-mid,#a0aab0)">3-30 chars, lowercase letters, numbers, hyphens.</div>' +
-          '<div style="background:rgba(255,57,151,0.08);border:1px solid rgba(255,57,151,0.3);border-radius:8px;padding:10px 12px;margin:14px 0;font-size:13px;color:var(--text,#e4e4f0);line-height:1.4">' +
+          '<div id="stgSlugStatus" style="font-size:14px;min-height:18px;font-family:var(--font-mono,monospace);color:var(--text-mid,#a0aab0)">3-30 chars, lowercase letters, numbers, hyphens.</div>' +
+          '<div style="background:rgba(255,57,151,0.08);border:1px solid rgba(255,57,151,0.3);border-radius:8px;padding:10px 12px;margin:14px 0;font-size:14px;color:var(--text,#e4e4f0);line-height:1.4">' +
             '<strong style="color:var(--red,#ff3997)">Heads up:</strong> Your studio website (<span id="stgSlugPreview1" style="color:var(--primary)">…</span>) and emails (<span id="stgSlugPreview2" style="color:var(--primary)">…@…</span>) will use this URL forever.' +
           '</div>' +
           '<div style="display:flex;gap:8px;justify-content:flex-end">' +
@@ -2269,9 +2200,7 @@
 
     var data = await API.get('/prefs');
     if (data && !data.error) {
-      // separate AI keys from prefs
-      connectedAIs = data.aiKeys || {};
-      delete data.aiKeys;
+      delete data.aiKeys;   // legacy API-key grid removed 2026-07-20 — keys ignored
       prefs = data;
     }
 
@@ -2292,8 +2221,6 @@
     initSelects();
     initTimeInputs();
     renderFontGrid();
-    renderAICards();
-    initAIGrid();
     initAISubs();
     init2FA();
     initRevenue();
@@ -2483,19 +2410,19 @@
       return Math.round(s / 3600) + 'h ago';
     }
     var td = 'padding:6px 10px;border-top:1px solid var(--border)';
-    var th = 'text-align:left;padding:6px 10px;color:var(--text-mid);font-size:10px;letter-spacing:.08em;text-transform:uppercase';
+    var th = 'text-align:left;padding:6px 10px;color:var(--text-mid);font-size:14px;letter-spacing:.08em;text-transform:uppercase';
     function render(s) {
       var m = s.manifest;
       if (!m || !m.version) {
         manEl.innerHTML = '<span style="color:var(--text-mid)">No releases built yet.</span>';
       } else {
         manEl.innerHTML =
-          '<div style="font-size:13px">Latest build: <b>v' + m.version + '</b>' +
+          '<div style="font-size:14px">Latest build: <b>v' + m.version + '</b>' +
           ' · ' + fmtSize(m.size) + ' · okdunio <b>' + esc(m.sha.okdunio) + '</b>' +
           ' · shell-core <b>' + esc(m.sha.shellCore) + '</b>' +
           (m.dirtyMods && m.dirtyMods.length ? ' · <span style="color:#ff8c00">dirty: ' + esc(m.dirtyMods.join(' ')) + '</span>' : '') +
           '</div>' +
-          '<div style="margin-top:4px;font-size:12px;color:var(--text-mid)">canary → <b style="color:var(--text)">v' + (m.channels.canary || 0) + '</b>' +
+          '<div style="margin-top:4px;font-size:14px;color:var(--text-mid)">canary → <b style="color:var(--text)">v' + (m.channels.canary || 0) + '</b>' +
           ' · stable → <b style="color:var(--text)">v' + (m.channels.stable || 0) + '</b>' +
           (m.urgent ? ' · <span style="color:#ff8c00">URGENT (boxes skip quiet hours)</span>' : '') + '</div>';
       }
@@ -2503,7 +2430,7 @@
       if (!names.length) {
         boxesEl.innerHTML = '<span style="color:var(--text-mid)">No box check-ins yet.</span>';
       } else {
-        var rows = '<table style="width:100%;border-collapse:collapse;font-size:12px;font-family:ui-monospace,Menlo,monospace"><thead><tr>' +
+        var rows = '<table style="width:100%;border-collapse:collapse;font-size:14px;font-family:ui-monospace,Menlo,monospace"><thead><tr>' +
           '<th style="' + th + '">Box</th><th style="' + th + '">Channel</th><th style="' + th + '">Version</th>' +
           '<th style="' + th + '">Health</th><th style="' + th + '">Last seen</th><th style="' + th + '">Flags</th></tr></thead><tbody>';
         names.forEach(function(n) {
@@ -2530,7 +2457,7 @@
         var tags = [];
         if (a.version === (m2.channels || {}).canary) tags.push('canary');
         if (a.version === (m2.channels || {}).stable) tags.push('stable');
-        return '<span style="display:inline-block;margin:0 10px 6px 0;font-size:12px;font-family:ui-monospace,Menlo,monospace">v' + a.version +
+        return '<span style="display:inline-block;margin:0 10px 6px 0;font-size:14px;font-family:ui-monospace,Menlo,monospace">v' + a.version +
           ' · ' + fmtSize(a.size) + (tags.length ? ' <b style="color:var(--primary)">[' + tags.join(', ') + ']</b>' : '') + '</span>';
       }).join('') || '—';
       logEl.textContent = s.buildLog || '(empty)';
@@ -2642,7 +2569,6 @@
   window.platform.module.destroy = function() {
     clearTimeout(saveTimer);
     prefs = {};
-    connectedAIs = {};
   };
 
   // ── Early apply from localStorage (before module loads) ─────
