@@ -308,6 +308,127 @@
     });
   }
 
+  // ── AI subscription connections (phase A) ───────────────────
+  // The studio's own provider accounts (Claude first): Connect starts a
+  // server-side device-code login; we show the sign-in URL, the user approves
+  // it in any logged-in browser and pastes the code back; the server stores
+  // the credential encrypted. Game-build pickers fill from these connections.
+  var SUB_PROVIDERS = [{ id: 'claude', name: 'Claude', provider: 'Anthropic — powers game builds', icon: 'C', color: '#d97757' }];
+  var aiSub = { conns: [], canManage: false, ready: true, flow: null };
+
+  function aiSubConn(id) {
+    for (var i = 0; i < aiSub.conns.length; i++) if (aiSub.conns[i].provider === id) return aiSub.conns[i];
+    return null;
+  }
+  function renderAISubs() {
+    var grid = document.getElementById('aiSubGrid');
+    if (!grid) return;
+    grid.innerHTML = SUB_PROVIDERS.map(function(p) {
+      var c = aiSubConn(p.id);
+      var f = aiSub.flow && aiSub.flow.provider === p.id ? aiSub.flow : null;
+      var html = '<div class="stg-ai-card ' + (c ? 'connected' : '') + '" data-sub="' + p.id + '">';
+      html += '<div class="stg-ai-card-head">' +
+        '<div class="stg-ai-logo" style="background:' + p.color + '22;color:' + p.color + ';border:1px solid ' + p.color + '33;">' + p.icon + '</div>' +
+        '<div><div class="stg-ai-name">' + esc(p.name) + '</div><div class="stg-ai-provider">' + esc(p.provider) + '</div></div></div>';
+      html += '<div class="stg-ai-status"><span class="stg-ai-dot"></span>' +
+        (c ? 'Connected — builds run on this account' : f ? 'Connecting…' : 'Not connected') + '</div>';
+      if (c) {
+        html += '<div class="stg-ai-masked">' + esc(c.identity || 'Claude subscription') +
+          (c.connectedAt ? ' · since ' + esc(String(c.connectedAt).slice(0, 10)) : '') + '</div>';
+        if (aiSub.canManage) html += '<button class="stg-ai-btn stg-ai-disconnect" data-subact="disconnect" data-sub="' + p.id + '">Disconnect</button>';
+      } else if (f) {
+        if (f.status === 'error') {
+          html += '<div class="stg-sublabel" style="color:var(--red,#ff3997);">' + esc(f.error || 'Sign-in failed') + '</div>' +
+            '<button class="stg-ai-btn stg-ai-connect" data-subact="connect" data-sub="' + p.id + '">Try again</button>';
+        } else if (!f.url) {
+          html += '<div class="stg-sublabel">Starting sign-in…</div>' +
+            '<button class="stg-ai-btn" data-subact="cancel" data-sub="' + p.id + '">Cancel</button>';
+        } else {
+          html += '<div class="stg-sublabel" style="margin-bottom:6px;"><strong>1.</strong> <a href="' + esc(f.url) + '" target="_blank" rel="noopener" style="color:' + p.color + ';">Open the sign-in link</a> and approve (any browser where you\'re logged in — Google sign-in works).<br><strong>2.</strong> Copy the code it shows and paste it here:</div>';
+          if (f.error) html += '<div class="stg-sublabel" style="color:var(--red,#ff3997);margin-bottom:4px;">' + esc(f.error) + '</div>';
+          html += '<input type="text" class="stg-ai-key-input" id="aiSubCode-' + p.id + '" placeholder="Paste code" ' + (f.status === 'exchanging' ? 'disabled' : '') + '>';
+          html += '<button class="stg-ai-btn stg-ai-connect" data-subact="code" data-sub="' + p.id + '" ' + (f.status === 'exchanging' ? 'disabled' : '') + '>' +
+            (f.status === 'exchanging' ? 'Verifying…' : 'Submit code') + '</button>';
+          html += '<button class="stg-ai-btn" data-subact="cancel" data-sub="' + p.id + '">Cancel</button>';
+        }
+      } else if (!aiSub.ready) {
+        html += '<div class="stg-sublabel">Not available on this instance yet.</div>';
+      } else if (aiSub.canManage) {
+        html += '<button class="stg-ai-btn stg-ai-connect" data-subact="connect" data-sub="' + p.id + '">Connect</button>';
+      } else {
+        html += '<div class="stg-sublabel">Ask the studio owner to connect.</div>';
+      }
+      html += '</div>';
+      return html;
+    }).join('');
+  }
+  async function loadAISubs() {
+    try {
+      var r = await API.get('/ai-accounts');
+      aiSub.conns = (r && r.connections) || [];
+      aiSub.canManage = !!(r && r.canManage);
+      aiSub.ready = !r || r.ready !== false;
+    } catch (e) { aiSub.conns = []; }
+    renderAISubs();
+  }
+  function aiSubPoll() {
+    if (!aiSub.flow || !aiSub.flow.sid) return;
+    var f = aiSub.flow;
+    f.timer = setInterval(async function() {
+      try {
+        var s = await API.get('/ai-accounts/connect/' + f.sid);
+        if (!s || !s.status) throw new Error('gone');   // res.error → {error} only
+        var changed = s.status !== f.status || s.url !== f.url || s.error !== f.error;
+        f.status = s.status; f.url = s.url; f.error = s.error;
+        if (s.status === 'connected') {
+          clearInterval(f.timer); aiSub.flow = null;
+          toast('Claude connected — builds now run on your account');
+          loadAISubs(); return;
+        }
+        if (s.status === 'error') clearInterval(f.timer);
+        // Never re-render while the user is typing the code.
+        var typing = document.activeElement && /^aiSubCode-/.test(document.activeElement.id || '');
+        if (changed && !typing) renderAISubs();
+      } catch (e) { clearInterval(f.timer); aiSub.flow = null; renderAISubs(); }
+    }, 1500);
+  }
+  function initAISubs() {
+    var grid = document.getElementById('aiSubGrid');
+    if (!grid) return;
+    grid.addEventListener('click', async function(e) {
+      var btn = e.target.closest('[data-subact]');
+      if (!btn) return;
+      var act = btn.dataset.subact, p = btn.dataset.sub;
+      if (act === 'connect') {
+        try {
+          var r = await API.post('/ai-accounts/' + p + '/connect', {});
+          if (!r || !r.sid) throw new Error((r && r.error) || 'could not start');
+          aiSub.flow = { provider: p, sid: r.sid, status: 'starting', url: null, error: null };
+          renderAISubs(); aiSubPoll();
+        } catch (err) { toast('Connect failed: ' + err.message); }
+      } else if (act === 'code') {
+        var inp = document.getElementById('aiSubCode-' + p);
+        var code = inp ? inp.value.trim() : '';
+        if (!code) { if (inp) { inp.style.borderColor = 'var(--red)'; inp.focus(); setTimeout(function() { inp.style.borderColor = ''; }, 1500); } return; }
+        var r2 = await API.post('/ai-accounts/connect/' + aiSub.flow.sid + '/code', { code: code });
+        if (r2 && r2.ok) { aiSub.flow.status = 'exchanging'; renderAISubs(); }
+        else toast((r2 && r2.error) || 'Code rejected');
+      } else if (act === 'cancel') {
+        if (aiSub.flow) {
+          clearInterval(aiSub.flow.timer);
+          try { await API.post('/ai-accounts/connect/' + aiSub.flow.sid + '/cancel', {}); } catch (err) {}
+          aiSub.flow = null;
+        }
+        renderAISubs();
+      } else if (act === 'disconnect') {
+        if (!confirm('Disconnect this account? Builds will need another connected AI (or ask in Settings again).')) return;
+        var r3 = await API.delete('/ai-accounts/' + p);
+        if (r3 && r3.ok) { toast('Disconnected'); loadAISubs(); }
+      }
+    });
+    loadAISubs();
+  }
+
   // ── 2FA ─────────────────────────────────────────────────────
   function buildCodeInputs(container, count) {
     container.innerHTML = '';
@@ -2144,6 +2265,7 @@
     renderFontGrid();
     renderAICards();
     initAIGrid();
+    initAISubs();
     init2FA();
     initRevenue();
     initExport();

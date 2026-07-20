@@ -135,6 +135,74 @@ module.exports = function(router, ctx) {
     res.json({ ok: true });
   });
 
+  // ── AI ACCOUNTS (phase A) — per-STUDIO subscription connections ───────
+  // The studio brings its own AI: `claude setup-token` runs server-side in a
+  // pty (shell-core/ai-auth), we relay the OAuth URL to the browser, the user
+  // approves it wherever they're signed in and pastes the code back, and the
+  // long-lived token lands AES-GCM-encrypted under this instance's
+  // storage/ai-auth/<studio>/claude/. Build pickers (mod-game /ai-options)
+  // read the same store. Client only ever sees status + masked identity.
+  const aiAuth = require((process.env.SHELL_CORE_DIR || '/home/damon/shell-core') + '/ai-auth');
+  function aiBase(req) {
+    return path.join(INSTANCES_DIR, req.instanceSlug || 'inst-dev', 'storage');
+  }
+  // Connections attach to the STUDIO — team members ride them but only the
+  // studio account itself (owner/admin/client) may connect or disconnect.
+  function canManageAI(req) {
+    return req.user && ['owner', 'admin', 'client'].indexOf(req.user.role) >= 0;
+  }
+  function maskIdentity(id) {
+    if (!id) return null;
+    const at = id.indexOf('@');
+    if (at < 1) return id.slice(0, 2) + '•••';
+    return id[0] + '•••@' + id.slice(at + 1);
+  }
+
+  router.get('/ai-accounts', async (req, res) => {
+    if (!req.user) return res.error(401, 'Not logged in');
+    const conns = aiAuth.listConnections(aiBase(req), req.user.studio)
+      .map(c => ({ ...c, identity: maskIdentity(c.identity) }));
+    res.json({ ready: aiAuth.hasKey(), canManage: canManageAI(req), connections: conns });
+  });
+
+  router.post('/ai-accounts/:provider/connect', async (req, res) => {
+    if (!req.user) return res.error(401, 'Not logged in');
+    if (!canManageAI(req)) return res.error(403, 'Only the studio owner/admin can connect AI accounts');
+    try {
+      const { sid } = aiAuth.startConnect({ base: aiBase(req), studio: req.user.studio, provider: req.params.provider });
+      res.json({ ok: true, sid });
+    } catch (e) { res.error(400, e.message); }
+  });
+
+  router.get('/ai-accounts/connect/:sid', async (req, res) => {
+    if (!req.user) return res.error(401, 'Not logged in');
+    const s = aiAuth.connectStatus(req.params.sid, req.user.studio);
+    if (!s) return res.error(404, 'No such connect session');
+    res.json(s);
+  });
+
+  router.post('/ai-accounts/connect/:sid/code', async (req, res) => {
+    if (!req.user) return res.error(401, 'Not logged in');
+    if (!canManageAI(req)) return res.error(403, 'Forbidden');
+    const r = aiAuth.submitCode(req.params.sid, req.user.studio, (req.body || {}).code);
+    if (!r.ok) return res.error(400, r.error);
+    res.json({ ok: true });
+  });
+
+  router.post('/ai-accounts/connect/:sid/cancel', async (req, res) => {
+    if (!req.user) return res.error(401, 'Not logged in');
+    const s = aiAuth.connectStatus(req.params.sid, req.user.studio);
+    if (s) aiAuth.cancelConnect(req.params.sid);
+    res.json({ ok: true });
+  });
+
+  router.delete('/ai-accounts/:provider', async (req, res) => {
+    if (!req.user) return res.error(401, 'Not logged in');
+    if (!canManageAI(req)) return res.error(403, 'Only the studio owner/admin can disconnect AI accounts');
+    aiAuth.removeConnection(aiBase(req), req.user.studio, req.params.provider);
+    res.json({ ok: true });
+  });
+
   // ── 2FA: TOTP setup ─────────────────────────────────────────
   router.post('/2fa/setup-totp', async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');
