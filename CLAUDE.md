@@ -1,6 +1,11 @@
 # mod-settings — Settings Module
 
 ## Read First
+- **⚠ RESOLVE DOCS FIRST**: `/home/damon/platform/admin/INDEX.md` — before you
+  build from, cite, or audit ANY document (specs, plans, data models — even
+  ones named in your task), look it up there: it says which doc is CANON,
+  which is superseded, and which is stale. Do not trust a doc because its
+  filename looks right.
 - **Central rules**: `/home/damon/platform/admin/RULES.md`
 - **Architecture**: `/home/damon/platform/admin/ARCHITECTURE.md`
 - **Module contract**: `/home/damon/platform/admin/MODULE_CONTRACT_SPEC.md`
