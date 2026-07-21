@@ -2356,6 +2356,29 @@
     }
     autoBtn.onclick = function() { setMode('auto'); };
     manBtn.onclick = function() { setMode('manual'); };
+    // Media backup (default-on auto-download to the user's machine)
+    var mOn = document.getElementById('bkMediaOn');
+    var mOff = document.getElementById('bkMediaOff');
+    var mNow = document.getElementById('bkMediaNow');
+    var mInfo = document.getElementById('bkMediaInfo');
+    function paintMedia(on) {
+      mOn.classList.toggle('stg-ai-connect', on);
+      mOff.classList.toggle('stg-ai-connect', !on);
+    }
+    async function setMedia(on) {
+      await fetch('/api/files/backup/settings', { method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mediaAuto: on }) });
+      paintMedia(on);
+    }
+    mOn.onclick = function() { setMedia(true); };
+    mOff.onclick = function() { setMedia(false); };
+    mNow.onclick = function() { location.href = '/api/files/export?mine=1'; };
+    fetch('/api/files/media-export/status', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(st) {
+        paintMedia(st.auto !== false);
+        if (st.count) mInfo.textContent = st.count + ' files, ' + (st.bytes / 1048576).toFixed(1) + ' MB. When your uploads change, a current archive downloads to your computer automatically (at most weekly).';
+      }).catch(function(){});
     tokBtn.onclick = async function() {
       if (!confirm('Generate a new backup token? Any existing pull script stops working.')) return;
       await fetch('/api/files/backup/token', { method: 'POST', credentials: 'same-origin' });
