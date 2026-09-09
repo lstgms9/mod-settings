@@ -796,6 +796,32 @@ module.exports = function(router, ctx) {
     res.json({ ok: true, box });
   });
 
+  // POST /release/stats — a box's live metrics payload (Damon 2026-09-06: the
+  // Prod tab on the server dashboard shows the production box like B1/Dev).
+  // Same PUSH law as b1's collector: the box reaches out with its own token,
+  // master never reaches in. The body is mod-server lib/metrics.js's own
+  // payload; we store it verbatim and stamp which box sent it — mod-server's
+  // /metrics/prod reads the file and applies the age/staleness law.
+  const PROD_STATS_FILE = '/home/damon/b1-stats/prod.json';
+  router.post('/release/stats', async (req, res) => {
+    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
+    const box = boxFromToken(req);
+    if (!box) return res.error(403, 'Box token required');
+    const b = req.body || {};
+    if (!b || typeof b !== 'object' || !b.cpu) return res.error(400, 'Not a metrics payload');
+    b.box = box;
+    b.receivedAt = Date.now();
+    try {
+      fs.mkdirSync(path.dirname(PROD_STATS_FILE), { recursive: true });
+      const tmp = PROD_STATS_FILE + '.tmp-' + process.pid;
+      fs.writeFileSync(tmp, JSON.stringify(b));
+      fs.renameSync(tmp, PROD_STATS_FILE);
+      res.json({ ok: true, box });
+    } catch (e) {
+      res.error(500, 'stats write failed: ' + (e.message || e));
+    }
+  });
+
   // GET /release/status — owner panel feed: manifest + check-ins + artifacts
   router.get('/release/status', async (req, res) => {
     if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
