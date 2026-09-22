@@ -55,7 +55,24 @@ const OWNER = { email: process.env.HASHOID_EMAIL || 'lstgms9@gmail.com', passwor
   // just be in settings — wallet"). It is admin-only (the Settings nav item is
   // tier-gated; billpay refuses anyone who is not the wallet's owner), so this
   // look signs in as the owner and opens /settings → Wallet.
-  await test.nav(SITE + '/settings');
+  // ⚠ THE WAY HE ACTUALLY GETS THERE (Damon 2026-09-22: "I do not see settings
+  // when I go to top right and click on my icon"): the avatar menu must carry
+  // the Settings entry for the wallet's owner, and the entry must land on the
+  // page that holds the Wallet. Straight to the URL would test neither.
+  await test.nav(SITE + '/');
+  const door = await test.waitUntil('the avatar menu offers Settings to the owner', () => {
+    const btn = document.getElementById('pubUserBtn');
+    if (!btn) return null;
+    btn.click();
+    const menu = document.getElementById('pubUserMenu');
+    const link = menu && menu.querySelector('a[href="/settings"]');
+    return link ? { href: link.getAttribute('href'), text: link.textContent.trim() } : null;
+  }, { timeout: 30000 });
+  test.assert('⚠ the avatar menu has Settings for the owner (' + door.text + ' → ' + door.href + ')',
+    door.href === '/settings' && /settings/i.test(door.text), 'this is the door Damon could not find');
+  await test.page.evaluate(() => document.querySelector('#pubUserMenu a[href="/settings"]').click());
+  await test.waitUntil('the shell lands on /settings', () =>
+    location.pathname === '/settings' ? true : null, { timeout: 30000 });
   await test.settle(3000, 'the settings mod mounts after the shell');
   const probe = await test.page.evaluate(() => ({
     navItems: [...document.querySelectorAll('.stg-nav-item')].map((n) => (n.dataset.section || '') + (getComputedStyle(n).display === 'none' ? '(hidden)' : '')),
