@@ -114,8 +114,13 @@ const OWNER = { email: process.env.HASHOID_EMAIL || 'lstgms9@gmail.com', passwor
     return img && img.complete && img.naturalWidth > 0 ? { w: img.naturalWidth } : null;
   }, { timeout: 15000 });
   test.assert('⚠ …with a QR that paints (' + painted.w + 'px)', painted.w > 100);
-  test.assert('the send form is there',
-    !!document.getElementById('stg-wallet-send') && !!document.getElementById('stg-wallet-send-dest'));
+  const forms = await test.page.evaluate(() => ({
+    send: !!document.getElementById('stg-wallet-send'),
+    amount: !!document.getElementById('stg-wallet-send-amt'),
+    dest: !!document.getElementById('stg-wallet-send-dest'),
+  }));
+  test.assert('the send form is there (' + JSON.stringify(forms) + ')',
+    forms.send && forms.amount && forms.dest);
   await test.shot('settings-wallet');
 
   await test.finish({ pass: true });
