@@ -773,3 +773,27 @@
    specificity: any explicit class rule (all >=14 now) still wins. */
 :where(#settings-app) button, :where(#settings-app) input,
 :where(#settings-app) select, :where(#settings-app) textarea { font-size: 14px; }
+
+/* ── WALLET (Damon 2026-09-22) — the company's bitcoin: what came in, and the
+   two ways to move it. Admin-only section. */
+.stg-wallet-card { background: rgba(255,255,255,.03); border: 1px solid var(--border, #23233a); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; }
+.stg-wallet-label { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--text-dim, #8a8a9a); margin: 12px 0 4px; }
+.stg-wallet-sats { font-size: 30px; font-weight: 800; color: var(--primary, #f7931a); font-variant-numeric: tabular-nums; }
+.stg-wallet-sats span { font-size: 15px; font-weight: 600; }
+.stg-wallet-sub { font-size: 13px; color: var(--text-mid, #9a9aac); margin-top: 2px; }
+.stg-wallet-addr { font-family: ui-monospace, monospace; font-size: 14px; color: var(--text, #e8e8f0); overflow-wrap: anywhere; }
+.stg-wallet-forms { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.stg-wallet-forms .stg-input { width: auto; margin: 0; }
+.stg-wallet-amt { width: 150px; }
+.stg-wallet-memo { width: 210px; }
+.stg-wallet-dest { flex: 1 1 330px; }
+.stg-wallet-out { margin-top: 8px; }
+.stg-wallet-note { color: #39ff7f; font-size: 15px; }
+.stg-wallet-err { color: var(--red, #ff5a5a); font-size: 15px; }
+.stg-wallet-qr { margin: 6px 0; }
+.stg-wallet-qr img { width: 200px; height: 200px; background: #fff; border-radius: 10px; padding: 6px; }
+.stg-wallet-amtline { font-size: 17px; font-weight: 700; color: var(--primary, #f7931a); margin: 4px 0; }
+.stg-wallet-bolt { font-family: ui-monospace, monospace; font-size: 12px; color: var(--text-mid, #9a9aac); overflow-wrap: anywhere; max-width: 620px; margin-bottom: 6px; }
+.stg-wallet-row { display: flex; justify-content: space-between; gap: 14px; padding: 7px 2px; border-bottom: 1px solid rgba(255,255,255,.05); font-size: 14px; }
+.stg-wallet-row i { color: var(--text-dim, #8a8a9a); font-style: normal; font-size: 12px; margin-left: 6px; }
+.stg-wallet-row span:last-child { color: var(--primary, #f7931a); font-variant-numeric: tabular-nums; white-space: nowrap; }
