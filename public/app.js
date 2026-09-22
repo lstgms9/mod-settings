@@ -119,7 +119,6 @@
     var el = document.getElementById('sec-' + sec);
     if (el) el.classList.add('active');
     if (sec === 'revenue') loadConnectStatus();
-    if (sec === 'wallet') loadWallet();
     if (!opts || opts.persist !== false) { try { localStorage.setItem(SEC_LS, sec); } catch (e) {} }
     return true;
   }
@@ -849,128 +848,6 @@
       if (data.url) window.open(data.url, '_blank');
       else toast(data.error || 'Failed');
     } catch(e) { toast('Connection error'); }
-  }
-
-  // ── WALLET (Damon 2026-09-22) ────────────────────────────────
-  // The company's bitcoin, not the shop's till: what came in (by source), the
-  // Lightning address it goes on to, and the two ways to move it — mint an
-  // invoice to receive, pay out to send. billpay owns every number here; this
-  // panel only reads and draws it. Admin only (the nav item is tier-gated, and
-  // billpay refuses anyone who is not the wallet's owner).
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) {
-    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
-  function walletSay(which, msg, cls) {
-    var out = document.getElementById('stg-wallet-' + which + '-out');
-    if (out) out.innerHTML = '<div class="stg-wallet-' + (cls || 'note') + '">' + msg + '</div>';
-  }
-  function loadWallet() {
-    var el = document.getElementById('walletContent');
-    if (!el) return;
-    fetch('/api/billpay/wallet/summary', { credentials: 'include', headers: { accept: 'application/json' } })
-      .then(function(r) { return r.json(); }).catch(function() { return null; })
-      .then(renderWallet);
-  }
-  function renderWallet(w) {
-    var el = document.getElementById('walletContent');
-    if (!el) return;
-    if (!w || !w.ok) {
-      el.innerHTML = '<div class="stg-hint">' + esc((w && w.error) || 'wallet unavailable') + '</div>';
-      return;
-    }
-    var h = '<div class="stg-wallet-card">' +
-      '<div class="stg-wallet-label">received</div>' +
-      '<div class="stg-wallet-sats">' + (w.incoming.sats || 0).toLocaleString('en-US') + ' <span>sats</span></div>' +
-      '<div class="stg-wallet-sub">' + w.incoming.count + ' paid invoice' + (w.incoming.count === 1 ? '' : 's') +
-        (w.invoices ? ' of ' + w.invoices.total : '') + '</div>' +
-      '<div class="stg-wallet-label" style="margin-top:14px">wallet it goes to</div>' +
-      '<div class="stg-wallet-addr">' + (w.lightningAddress ? esc(w.lightningAddress) : 'no Lightning address set') + '</div>' +
-      '</div>' +
-      '<div class="stg-wallet-label">receive</div>' +
-      '<div class="stg-wallet-forms">' +
-        '<input class="stg-input stg-wallet-amt" id="stg-wallet-recv-amt" inputmode="numeric" placeholder="sats to receive">' +
-        '<input class="stg-input stg-wallet-memo" id="stg-wallet-recv-memo" maxlength="80" placeholder="what it is for (optional)">' +
-        '<button class="stg-btn" id="stg-wallet-recv">create invoice</button>' +
-      '</div>' +
-      '<div id="stg-wallet-recv-out" class="stg-wallet-out"></div>' +
-      '<div class="stg-wallet-label" style="margin-top:14px">send</div>' +
-      '<div class="stg-wallet-forms">' +
-        '<input class="stg-input stg-wallet-amt" id="stg-wallet-send-amt" inputmode="numeric" placeholder="sats to send">' +
-        '<input class="stg-input stg-wallet-dest" id="stg-wallet-send-dest" placeholder="Lightning address or BOLT11">' +
-        '<button class="stg-btn" id="stg-wallet-send">send</button>' +
-      '</div>' +
-      '<div id="stg-wallet-send-out" class="stg-wallet-out"></div>';
-    if ((w.recent || []).length) {
-      h += '<div class="stg-wallet-label" style="margin-top:16px">what came in</div>';
-      w.recent.forEach(function(r) {
-        h += '<div class="stg-wallet-row"><span>' + esc(r.what) + ' <i>' + esc(r.source) + '</i></span>' +
-          '<span>' + (r.sats || 0).toLocaleString('en-US') + ' sats</span></div>';
-      });
-    }
-    el.innerHTML = h;
-  }
-  function walletReceive() {
-    var amt = parseInt((document.getElementById('stg-wallet-recv-amt') || {}).value, 10) || 0;
-    var memo = (document.getElementById('stg-wallet-recv-memo') || {}).value || '';
-    if (!(amt > 0)) { walletSay('recv', 'how many sats?', 'err'); return; }
-    walletSay('recv', 'minting&hellip;');
-    fetch('/api/billpay/wallet/receive', { method: 'POST', credentials: 'include',
-      headers: { 'content-type': 'application/json' }, body: JSON.stringify({ amountSats: amt, memo: memo }) })
-      .then(function(r) { return r.json(); })
-      .then(function(j) {
-        if (!j || !j.ok) { walletSay('recv', esc((j && j.error) || 'could not mint an invoice'), 'err'); return; }
-        walletSay('recv', '<div class="stg-wallet-qr"><img src="' + esc(j.qrUrl) + '" alt="invoice QR"></div>' +
-          '<div class="stg-wallet-amtline">' + j.amountSats.toLocaleString('en-US') + ' sats</div>' +
-          '<div class="stg-wallet-bolt">' + esc(j.bolt11) + '</div>' +
-          '<button class="stg-btn" id="stg-wallet-copy">copy invoice</button>' +
-          '<div class="stg-wallet-sub">waiting for payment&hellip;</div>');
-        var cp = document.getElementById('stg-wallet-copy');
-        if (cp) cp.addEventListener('click', function() {
-          try { navigator.clipboard.writeText(j.bolt11); walletSay('recv', 'copied — paste it into your wallet', 'note'); } catch (e) {}
-        });
-        walletWatchPaid(j.invoiceId);
-      })
-      .catch(function() { walletSay('recv', 'could not reach the wallet', 'err'); });
-  }
-  // only billpay's own status decides that money arrived
-  function walletWatchPaid(invoiceId, tries) {
-    tries = tries || 0;
-    if (tries > 150) return;
-    setTimeout(function() {
-      fetch('/api/billpay/lightning/' + encodeURIComponent(invoiceId) + '/status', { credentials: 'include' })
-        .then(function(r) { return r.json(); })
-        .then(function(j) {
-          var st = j && (j.status || (j.invoice && j.invoice.status));
-          if (st === 'paid') { loadWallet(); return; }
-          walletWatchPaid(invoiceId, tries + 1);
-        })
-        .catch(function() { walletWatchPaid(invoiceId, tries + 1); });
-    }, 4000);
-  }
-  function walletSend() {
-    var amt = parseInt((document.getElementById('stg-wallet-send-amt') || {}).value, 10) || 0;
-    var dest = ((document.getElementById('stg-wallet-send-dest') || {}).value || '').trim();
-    if (!(amt > 0) || !dest) { walletSay('send', 'a destination and an amount, both', 'err'); return; }
-    var msg = 'Send ' + amt.toLocaleString('en-US') + ' sats to ' + dest + '? It cannot be recalled.';
-    if (!window.confirm(msg)) return;
-    walletSay('send', 'sending&hellip;');
-    fetch('/api/billpay/wallet/send', { method: 'POST', credentials: 'include',
-      headers: { 'content-type': 'application/json' }, body: JSON.stringify({ amountSats: amt, destination: dest }) })
-      .then(function(r) { return r.json(); })
-      .then(function(j) {
-        if (!j || !j.ok) { walletSay('send', esc((j && j.error) || 'the send failed'), 'err'); return; }
-        walletSay('send', 'sent ' + j.amountSats.toLocaleString('en-US') + ' sats to ' + esc(j.destination) +
-          (j.status ? ' (' + esc(j.status) + ')' : '') + (j.stub ? ' — stub node, no real payout' : ''), 'note');
-        loadWallet();
-      })
-      .catch(function() { walletSay('send', 'could not reach the wallet', 'err'); });
-  }
-  function initWallet() {
-    var el = document.getElementById('walletContent');
-    if (!el) return;
-    el.addEventListener('click', function(e) {
-      if (e.target.closest('#stg-wallet-recv')) walletReceive();
-      else if (e.target.closest('#stg-wallet-send')) walletSend();
-    });
   }
 
   function initRevenue() {
@@ -2347,7 +2224,6 @@
     initAISubs();
     init2FA();
     initRevenue();
-    initWallet();
     initExport();
     initCacheClear();
     initPasswordChange();
