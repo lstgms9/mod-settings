@@ -859,28 +859,9 @@
   // billpay refuses anyone who is not the wallet's owner).
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) {
     return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
-  // ⚠ A MINTED INVOICE SURVIVES A RE-RENDER (uniMaster, 2026-09-22 — the panel
-  // re-paints when the section is re-selected, and the invoice it had just
-  // minted vanished with it). The last invoice is kept and re-painted, exactly
-  // as the checkout keeps a live one; nothing else in this panel is stateful.
-  var _walletInv = null, _walletNote = null;
   function walletSay(which, msg, cls) {
-    if (which === 'recv' && !_walletInv) _walletNote = { msg: msg, cls: cls || 'note' };
     var out = document.getElementById('stg-wallet-' + which + '-out');
     if (out) out.innerHTML = '<div class="stg-wallet-' + (cls || 'note') + '">' + msg + '</div>';
-  }
-  function walletPaintInvoice() {
-    var out = document.getElementById('stg-wallet-recv-out');
-    if (!out || !_walletInv) return;
-    out.innerHTML = '<div class="stg-wallet-qr"><img src="' + esc(_walletInv.qrUrl) + '" alt="invoice QR"></div>' +
-      '<div class="stg-wallet-amtline">' + _walletInv.amountSats.toLocaleString('en-US') + ' sats</div>' +
-      '<div class="stg-wallet-bolt">' + esc(_walletInv.bolt11) + '</div>' +
-      '<button class="stg-btn" id="stg-wallet-copy">copy invoice</button>' +
-      '<div class="stg-wallet-sub">waiting for payment&hellip;</div>';
-    var cp = document.getElementById('stg-wallet-copy');
-    if (cp) cp.addEventListener('click', function() {
-      try { navigator.clipboard.writeText(_walletInv.bolt11); walletSay('recv', 'copied — paste it into your wallet', 'note'); } catch (e) {}
-    });
   }
   function loadWallet() {
     var el = document.getElementById('walletContent');
@@ -926,8 +907,6 @@
       });
     }
     el.innerHTML = h;
-    if (_walletInv) walletPaintInvoice();                                  // the invoice outlives the paint
-    else if (_walletNote) walletSay('recv', _walletNote.msg, _walletNote.cls);
   }
   function walletReceive() {
     var amt = parseInt((document.getElementById('stg-wallet-recv-amt') || {}).value, 10) || 0;
@@ -939,8 +918,15 @@
       .then(function(r) { return r.json(); })
       .then(function(j) {
         if (!j || !j.ok) { walletSay('recv', esc((j && j.error) || 'could not mint an invoice'), 'err'); return; }
-        _walletInv = j;
-        walletPaintInvoice();
+        walletSay('recv', '<div class="stg-wallet-qr"><img src="' + esc(j.qrUrl) + '" alt="invoice QR"></div>' +
+          '<div class="stg-wallet-amtline">' + j.amountSats.toLocaleString('en-US') + ' sats</div>' +
+          '<div class="stg-wallet-bolt">' + esc(j.bolt11) + '</div>' +
+          '<button class="stg-btn" id="stg-wallet-copy">copy invoice</button>' +
+          '<div class="stg-wallet-sub">waiting for payment&hellip;</div>');
+        var cp = document.getElementById('stg-wallet-copy');
+        if (cp) cp.addEventListener('click', function() {
+          try { navigator.clipboard.writeText(j.bolt11); walletSay('recv', 'copied — paste it into your wallet', 'note'); } catch (e) {}
+        });
         walletWatchPaid(j.invoiceId);
       })
       .catch(function() { walletSay('recv', 'could not reach the wallet', 'err'); });

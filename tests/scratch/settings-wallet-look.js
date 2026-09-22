@@ -56,16 +56,6 @@ const OWNER = { email: process.env.HASHOID_EMAIL || 'lstgms9@gmail.com', passwor
   // tier-gated; billpay refuses anyone who is not the wallet's owner), so this
   // look signs in as the owner and opens /settings → Wallet.
   await test.nav(SITE + '/settings');
-  await test.settle(3000, 'the settings mod mounts after the shell');
-  const probe = await test.page.evaluate(() => ({
-    navItems: [...document.querySelectorAll('.stg-nav-item')].map((n) => (n.dataset.section || '') + (getComputedStyle(n).display === 'none' ? '(hidden)' : '')),
-    sidebar: !!document.getElementById('stgSidebar'),
-    settingsApp: !!document.getElementById('settings-app'),
-    walletSec: !!document.getElementById('sec-wallet'),
-    path: location.pathname,
-    mods: [...document.querySelectorAll('[id^="view-"]')].map((e) => e.id).slice(0, 6),
-  }));
-  console.log('   settings probe: ' + JSON.stringify(probe));
   const wallet = await test.waitUntil('Settings shows the Wallet section for the owner', () => {
     const nav = document.querySelector('.stg-nav-item[data-section="wallet"]');
     if (!nav || getComputedStyle(nav).display === 'none') return null;
@@ -95,20 +85,8 @@ const OWNER = { email: process.env.HASHOID_EMAIL || 'lstgms9@gmail.com', passwor
     if (err) return { err: err.textContent.trim() };
     return bolt ? { bolt: bolt.textContent.trim().slice(0, 24) } : null;
   }, { timeout: 30000 });
-  console.log('   minted: ' + JSON.stringify(minted));
-  const dz = await test.page.evaluate(() => (document.getElementById('stg-wallet-recv-out') || {}).innerHTML || '');
-  console.log('   recv-out: ' + String(dz).replace(/\s+/g, ' ').slice(0, 300));
   test.assert('⚠ …and receive mints a real invoice (' + JSON.stringify(minted) + ')',
     !!(minted && /^lnbc/.test(minted.bolt || '')), 'the panel must produce a payable invoice');
-  const qrProbe = await test.page.evaluate(async () => {
-    const img = document.querySelector('.stg-wallet-qr img');
-    if (!img) return { none: true };
-    try {
-      const r = await fetch(img.getAttribute('src'), { credentials: 'include' });
-      return { status: r.status, type: r.headers.get('content-type'), complete: img.complete, nw: img.naturalWidth };
-    } catch (e) { return { err: String(e && e.message) }; }
-  });
-  console.log('   qr probe: ' + JSON.stringify(qrProbe));
   const painted = await test.waitUntil('the invoice QR paints', () => {
     const img = document.querySelector('.stg-wallet-qr img');
     return img && img.complete && img.naturalWidth > 0 ? { w: img.naturalWidth } : null;
