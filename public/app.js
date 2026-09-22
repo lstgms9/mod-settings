@@ -971,6 +971,17 @@
       if (e.target.closest('#stg-wallet-recv')) walletReceive();
       else if (e.target.closest('#stg-wallet-send')) walletSend();
     });
+    // ⚠ THE DOOR OPENS FOR THE OWNER ONLY, AND THE SERVER SAYS WHO THAT IS
+    // (Damon 2026-09-22: "no one else needs a settings option"). Not a tier the
+    // page guesses — billpay answers, and it refuses the same person again if
+    // the endpoint is called anyway.
+    fetch('/api/billpay/wallet/me', { credentials: 'include', headers: { accept: 'application/json' } })
+      .then(function(r) { return r.json(); })
+      .then(function(j) {
+        var nav = document.getElementById('stgWalletNav');
+        if (nav && j && j.owner) nav.style.display = '';
+      })
+      .catch(function() {});
   }
 
   function initRevenue() {
