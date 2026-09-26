@@ -61,15 +61,23 @@ function setCookies(res) {
   await h.ctx.clearCookies();
   await h.ctx.addCookies(jar);
 
-  await h.nav(SITE + '/settings');
+  // ⚠ HERE IS THE RULE ZERO PART (Damon, 2026-09-26). Loading /settings by
+  // hand proved nothing about HIS view: hashoid points its Settings entry at
+  // the wallet (shell.settingsMod, 2026-09-22), so the page he opens has no
+  // Deploy item at all. The gate walks the menu he actually clicks — home →
+  // avatar → Deploy — so a green run means the door exists on the tenant he
+  // is looking at, not on a URL only a test knows.
+  await h.nav(SITE + '/');
 
-  const nav = await h.waitUntil('the Deploy nav is revealed for an admin-role client', () => {
-    const el = document.getElementById('stgDeployNav');
-    return el ? getComputedStyle(el).display !== 'none' : false;
+  await h.page.click('#pubUserBtn');
+  const entry = await h.waitUntil('the user menu carries a Deploy entry', () => {
+    const a = document.getElementById('pubDeployItem');
+    return !!a && a.offsetParent !== null ? a.getAttribute('href') : false;
   });
-  h.assert('the Deploy nav renders for a hashoid admin (role door, email not allowlisted)', nav === true);
+  h.assert('the avatar menu offers Deploy on hashoid', entry === '/settings#deploy');
 
-  await h.page.click('#stgDeployNav');
+  await h.page.click('#pubDeployItem');
+
   const cut = await h.waitUntil('the Cut release button is on screen', () => {
     const b = document.getElementById('relCut');
     return b ? b.offsetParent !== null : false;
@@ -87,7 +95,7 @@ function setCookies(res) {
   h.assert('the release feed answered (manifest or "no releases", not "loading…")',
     /Latest build/.test(feed) || /No releases/.test(feed));
 
-  const pass = nav === true && cut === true && promote === true && /Latest build|No releases/.test(feed);
+  const pass = entry === '/settings#deploy' && cut === true && promote === true && /Latest build|No releases/.test(feed);
   await h.finish({ pass, extra: { site: HOST, feed: feed.slice(0, 60) } });
   console.log(pass ? '\nALL PASS' : '\nFAILED');
   process.exit(pass ? 0 : 1);

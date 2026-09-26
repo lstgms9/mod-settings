@@ -2241,6 +2241,14 @@
     applyPrefs();
     applyVisual();
     restoreSection();
+    // Deep link: /settings#<section> opens that section — the shell's user-menu
+    // Deploy entry points at /settings#deploy, which is the ONLY way to reach
+    // the release panel on a tenant whose Settings entry is something else
+    // (hashoid's settings IS the wallet, Damon 2026-09-22). Wins over the
+    // remembered section; ignored when this viewer has no such section.
+    if (location.hash.length > 1) {
+      try { selectSection(decodeURIComponent(location.hash.slice(1))); } catch (_) {}
+    }
     initDeployPanel();
     initSecureBox();
     initPublishPanel();
@@ -2423,8 +2431,11 @@
     if (!first) return;  // not owner, OR worker mode → keep hidden
     nav.style.display = '';
     // Deploy nav is revealed asynchronously — re-apply a saved Deploy
-    // section now that it's visible (unless the user already navigated).
-    restoreSection();
+    // section now that it's visible (unless the user already navigated), or
+    // honour the #deploy deep link the user-menu entry carries (below the
+    // nav was still hidden, so the earlier call could not select it).
+    var _h = location.hash.length > 1 ? decodeURIComponent(location.hash.slice(1)) : '';
+    if (!(_h && selectSection(_h))) restoreSection();
     function fmtSize(n) { return n > 1e9 ? (n / 1e9).toFixed(1) + 'G' : Math.round(n / 1e6) + 'M'; }
     function fmtAgo(iso) {
       var s = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
