@@ -674,6 +674,14 @@
       <div class="stg-group">
         <div class="stg-group-label">RELEASE</div>
         <div id="relManifest" style="margin:0 0 12px">loading…</div>
+        <!-- A cut takes ~10 minutes and Promote flips a live fleet — both show
+             what they are doing (Damon, 2026-09-26). Filled by app.js. -->
+        <div id="relProgress" style="display:none;margin:0 0 14px">
+          <div id="relProgressText" style="font-size:14px;font-family:ui-monospace,Menlo,monospace;color:var(--text-mid);margin-bottom:6px"></div>
+          <div style="height:6px;border-radius:3px;background:var(--border);overflow:hidden">
+            <div id="relProgressBar" style="height:100%;width:0;background:var(--primary);transition:width .4s"></div>
+          </div>
+        </div>
         <div class="stg-row">
           <div>
             <div class="stg-label">Cut a release</div>

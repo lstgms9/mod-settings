@@ -100,7 +100,43 @@ function setCookies(res) {
   h.assert('the release feed answered (manifest or "no releases", not "loading…")',
     /Latest build/.test(feed) || /No releases/.test(feed));
 
-  const pass = entry === '/settings#deploy' && cut === true && promote === true && /Latest build|No releases/.test(feed);
+  // ── THE PROGRESS UI (Damon, 2026-09-26, raised twice: no bare 'Building…').
+  // Idle it is hidden; a cut in flight draws real bytes against the last
+  // release's size. Nothing is building on the live fleet, so the shape comes
+  // from the REAL endpoint and the drawing from a stubbed payload — the same
+  // bytes the server computes when a build runs.
+  const progIdle = await h.page.evaluate(() => {
+    const el = document.getElementById('relProgress');
+    return { exists: !!el, hidden: !el || getComputedStyle(el).display === 'none' };
+  });
+  h.assert('the progress strip exists and stays hidden while nothing runs', progIdle.exists && progIdle.hidden);
+
+  const feedShape = await h.page.evaluate(async () => {
+    const s = await (await fetch('/api/settings/release/status', { credentials: 'same-origin', cache: 'no-store' })).json();
+    return Object.prototype.hasOwnProperty.call(s, 'building');
+  });
+  h.assert('the release feed carries the building field', feedShape === true);
+
+  await h.page.route('**/api/settings/release/status', (route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({
+      manifest: { version: 99, created: new Date().toISOString(), size: 1, sha: { okdunio: 'abc', shellCore: 'abc' }, channels: { canary: 99, stable: 98 }, urgent: false },
+      boxes: {}, artifacts: [], buildLog: '',
+      building: { version: 99, bytes: 1300000000, total: 2600000000, startedAt: new Date(Date.now() - 200000).toISOString(), last: 'tar -czf release-99.tar.gz .' },
+    }),
+  }));
+  await h.page.click('#relRefresh');
+  const prog = await h.waitUntil('the bar draws a running cut', () => {
+    const el = document.getElementById('relProgress');
+    const t = document.getElementById('relProgressText');
+    return el && getComputedStyle(el).display !== 'none' ? t.textContent : false;
+  });
+  h.assert('a running cut draws bytes, percent and elapsed',
+    /building v99/.test(prog) && /50%/.test(prog) && /1\.3G of 2\.6G/.test(prog) && /3m20s in/.test(prog));
+  await h.page.unroute('**/api/settings/release/status');
+
+  const pass = entry === '/settings#deploy' && cut === true && promote === true && /Latest build|No releases/.test(feed)
+    && progIdle.exists && progIdle.hidden && feedShape === true && /building v99/.test(prog);
   await h.finish({ pass, extra: { site: HOST, feed: feed.slice(0, 60) } });
   console.log(pass ? '\nALL PASS' : '\nFAILED');
   process.exit(pass ? 0 : 1);

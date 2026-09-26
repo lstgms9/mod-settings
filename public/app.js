@@ -2417,6 +2417,9 @@
     var cutBtn = document.getElementById('relCut');
     var promoteBtn = document.getElementById('relPromote');
     var promoteHint = document.getElementById('relPromoteHint');
+    var progEl = document.getElementById('relProgress');
+    var progText = document.getElementById('relProgressText');
+    var progBar = document.getElementById('relProgressBar');
     if (!nav || !manEl || !cutBtn) return;
     async function loadStatus() {
       try {
@@ -2508,8 +2511,28 @@
         else { why = 'waiting for a healthy canary check-in on v' + m2.channels.canary; }
       }
       promoteBtn.disabled = !canPromote;
-      promoteBtn.textContent = canPromote ? ('Promote v' + m2.channels.canary) : 'Promote';
+      promoteBtn.textContent = (promoteBtn.dataset.busy ? promoteBtn.textContent : (canPromote ? ('Promote v' + m2.channels.canary) : 'Promote'));
       promoteHint.textContent = why;
+      // A cut in flight draws itself: real bytes on disk against the last
+      // release's size, on the log's own clock. Returns the percent so the
+      // Cut button can say where it is (Damon, 2026-09-26 — twice raised).
+      var pct = 0;
+      if (progEl) {
+        var b = s.building;
+        if (b && b.version) {
+          pct = b.total ? Math.min(99, Math.round(b.bytes / b.total * 100)) : 0;
+          var secs = Math.max(0, Math.round((Date.now() - new Date(b.startedAt).getTime()) / 1000));
+          progEl.style.display = '';
+          progBar.style.width = b.total ? pct + '%' : '100%';
+          progBar.style.opacity = b.total ? '1' : '.35';
+          progText.textContent = 'building v' + b.version + ' · ' + fmtSize(b.bytes) +
+            (b.total ? ' of ' + fmtSize(b.total) + ' (' + pct + '%, the last release\'s size)' : ' written') +
+            ' · ' + Math.floor(secs / 60) + 'm' + ('0' + (secs % 60)).slice(-2) + 's in · ' + b.last;
+        } else {
+          progEl.style.display = 'none';
+        }
+      }
+      s._pct = pct;
       return s;
     }
     render(first);
@@ -2533,7 +2556,8 @@
       for (var i = 0; i < 120; i++) {
         await new Promise(function(r) { setTimeout(r, 2000); });
         var s = await loadStatus(); if (!s) continue;
-        render(s);
+        var shown = render(s) || {};
+        cutBtn.textContent = shown._pct ? ('Cutting… ' + shown._pct + '%') : 'Cutting…';
         if (s.manifest && (s.manifest.version || 0) > preV) break;
         if (countFails(s) > preFails) break;
       }
@@ -2546,15 +2570,30 @@
       var ok = platform.ui ? await platform.ui.confirm(msg) : window.confirm(msg);
       if (!ok) return;
       promoteBtn.disabled = true;
+      // Promote flips a LIVE FLEET — say so while it happens, and say what
+      // happened after (Damon, 2026-09-26: no bare states).
+      promoteBtn.dataset.busy = '1';
+      promoteBtn.textContent = 'Promoting…';
+      var msg = 'pointing stable at v' + v + ' — boxes apply it in their quiet window';
+      promoteHint.textContent = msg;
       try {
         var r = await fetch('/api/settings/release/promote', {
           method: 'POST', credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ version: v }),
         });
+        msg = r.ok
+          ? ('stable is now v' + v + ' — boxes pick it up in their quiet window')
+          : ('promote failed (' + r.status + ') — stable unchanged at v' + (s.manifest.channels.stable || 0));
         if (!r.ok && platform.ui) platform.ui.toast && platform.ui.toast('Promote failed');
-      } catch (_) {}
+      } catch (e) {
+        msg = 'promote failed — stable unchanged at v' + (s.manifest.channels.stable || 0);
+      }
+      delete promoteBtn.dataset.busy;
       var s2 = await loadStatus(); if (s2) render(s2);
+      // render() rewrites the hint from the fresh manifest — put the outcome
+      // back so the press is acknowledged.
+      promoteHint.textContent = msg;
     });
   }
 

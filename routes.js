@@ -851,11 +851,37 @@ module.exports = function(router, ctx) {
         .sort((a, b) => b.version - a.version);
     } catch {}
     let buildLog = '';
+    let building = null;
     try {
       const lines = fs.readFileSync('/home/damon/platform/.runtime/release-build.log', 'utf8').split('\n').filter(Boolean);
       buildLog = lines.slice(-20).join('\n');
+      // ── A CUT IN FLIGHT IS MEASURABLE (Damon, 2026-09-26, raised twice: a
+      // bare 'Building…' is not progress). The log's newest build line says
+      // whether one is running — "started" with no matching "complete" — and
+      // the tarball the build is writing IS the meter: bytes on disk against
+      // the last release's size, with the log line's own timestamp as the
+      // start. No estimate, no fake creep; nothing here when no build runs.
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const m = lines[i].match(/^\[([^\]]+)\] ── build v(\d+) (started|complete)/);
+        if (!m) continue;
+        if (m[3] === 'started') {
+          const v = parseInt(m[2], 10);
+          const f = path.join(REL_DIR, 'release-' + v + '.tar.gz');
+          const prev = artifacts.find(a => a.version < v);
+          if (fs.existsSync(f)) {
+            building = {
+              version: v,
+              bytes: fs.statSync(f).size,
+              total: (prev && prev.size) || 0,
+              startedAt: new Date(m[1].replace(' ', 'T')).toISOString(),
+              last: lines[lines.length - 1].replace(/^\[[^\]]+\] /, ''),
+            };
+          }
+        }
+        break;   // the newest build line decides — idle either way
+      }
     } catch {}
-    res.json({ manifest, boxes, artifacts, buildLog });
+    res.json({ manifest, boxes, artifacts, buildLog, building });
   });
 
   // POST /release/build — cut a new release (detached; watch via /release/status)
