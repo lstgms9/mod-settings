@@ -8,12 +8,17 @@
 // (records.data.role='admin') and auth.js builds the session from it, so the
 // role is the general door on ANY tenant; the allowlist stays as the second.
 //
-// This runs against the LIVE hashoid tenant with a client whose email is NOT
-// on the allowlist, so a green run can only come from the ROLE door:
-//   /settings → Deploy nav revealed → Cut release + Promote on screen, and the
-//   panel feed answers 200 (403 before the fix, and the nav stays hidden).
-// The account (relpanel-admin@hashoid.test, role=admin) is the hashoid twin of
-// the gamoid Rule Zero studio account in admin/test-lib/harness-login.js.
+// ⚠ THIS GATE WALKS DAMON'S PATH, NOT A TEST'S PATH (Rule Zero, 2026-09-26).
+// hashoid points its Settings entry at the WALLET (shell.settingsMod), so
+// loading /settings by hand — which is what the first version of this gate did
+// — proved nothing: his page has no Deploy item at all. The gate now goes
+// home → avatar menu → Deploy (the shell's user-menu entry) and asserts the
+// panel is on screen there.
+//
+// It runs against the LIVE hashoid tenant with a client whose email is NOT on
+// the allowlist, so a green run can only come from the ROLE door. The account
+// (relpanel-admin@hashoid.test, role=admin) is the hashoid twin of the gamoid
+// Rule Zero studio account in admin/test-lib/harness-login.js.
 //
 // Run: node modules/mod-settings/tests/release-admin-role-test.js
 'use strict';
