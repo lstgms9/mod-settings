@@ -712,12 +712,23 @@ module.exports = function(router, ctx) {
     }
     return null;
   }
-  // Release admins: explicit allowlist (RELEASE_ADMIN_EMAILS in master
-  // ~/.env). The old deployGuard's flat-file role check breaks on
-  // DB-backed tenants (user JSONs there are stale), and "any studio
-  // owner" was never the right bar for cutting/promoting fleet releases.
+  // Release admins: TWO doors, one bar — the platform ADMIN role, or the
+  // explicit allowlist (RELEASE_ADMIN_EMAILS in ~/.env).
+  // The ADMIN ROLE is the general door (Damon 2026-09-26): admin is a DATA
+  // flag on the client record — records.data.role='admin' — and auth.js
+  // builds the session from it, so it is authoritative on every tenant, DB-
+  // backed or not. The allowlist alone made the panel GAMOID-ONLY setup: a
+  // tenant whose admin logs in by username (hashoid's `damondo`, whose record
+  // carries role='admin' but no @ email) had no door at all — the panel
+  // never rendered. The old flat-file role check this replaced was a
+  // different thing (a users/<slug>.json read, stale on DB tenants); the
+  // session role comes from the record itself.
+  // NB: a session cookie is minted at login — an account promoted to admin
+  // since its last login must sign out and back in before this door opens.
   function releaseAdmin(req) {
-    if (!req.user || !req.user.email) return false;
+    if (!req.user) return false;
+    if (req.user.role === 'admin') return true;
+    if (!req.user.email) return false;
     const list = String(process.env.RELEASE_ADMIN_EMAILS || '')
       .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
     return list.includes(String(req.user.email).toLowerCase());
