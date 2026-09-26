@@ -165,6 +165,10 @@
       var btn = e.target.closest('.stg-seg-btn');
       if (!btn) return;
       var seg = btn.closest('.stg-seg');
+      // A LONE .stg-seg-btn is legal (Deploy's Refresh sits in a plain row, not
+      // in a segmented group) — reading .dataset off the missing group threw an
+      // uncaught TypeError on every Refresh click (caught by the gate, 2026-09-26).
+      if (!seg) return;
       var key = seg.dataset.key;
       seg.querySelectorAll('.stg-seg-btn').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
