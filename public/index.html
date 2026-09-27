@@ -669,33 +669,25 @@
 
     <div class="stg-section" id="sec-deploy">
       <div class="stg-section-header">Deploy</div>
-      <div class="stg-section-desc">Cut a pinned release, watch the canary soak it, then promote to stable. Boxes pull it themselves in their quiet window and check in below.</div>
+      <div class="stg-section-desc">One deployer for every site. A cut records the current dev commits as a numbered version; <b>promote</b> is the only thing that moves a box, and it moves it now — each box fetches just the difference between its version and stable.</div>
 
       <div class="stg-group">
         <div class="stg-group-label">RELEASE</div>
         <div id="relManifest" style="margin:0 0 12px">loading…</div>
-        <!-- A cut takes ~10 minutes and Promote flips a live fleet — both show
-             what they are doing (Damon, 2026-09-26). Filled by app.js. -->
-        <div id="relProgress" style="display:none;margin:0 0 14px">
-          <div id="relProgressText" style="font-size:14px;font-family:ui-monospace,Menlo,monospace;color:var(--text-mid);margin-bottom:6px"></div>
-          <div style="height:6px;border-radius:3px;background:var(--border);overflow:hidden">
-            <div id="relProgressBar" style="height:100%;width:0;background:var(--primary);transition:width .4s"></div>
-          </div>
-        </div>
         <div class="stg-row">
           <div>
-            <div class="stg-label">Cut a release</div>
-            <div class="stg-sublabel">bundle current dev code (okdunio + shell-core + mods + deps) into a pinned artifact — canary applies it automatically</div>
+            <div class="stg-label">Cut a version</div>
+            <div class="stg-sublabel">record the current dev commits as the next numbered version — nothing is bundled, and no box moves until you promote</div>
           </div>
           <div style="display:flex;gap:8px">
             <button class="stg-seg-btn" id="relRefresh">Refresh</button>
-            <button class="stg-btn-primary" id="relCut">Cut release</button>
+            <button class="stg-btn-primary" id="relCut">Cut version</button>
           </div>
         </div>
         <div class="stg-row">
           <div>
-            <div class="stg-label">Promote to stable</div>
-            <div class="stg-sublabel" id="relPromoteHint">enabled once the canary is healthy on the latest release</div>
+            <div class="stg-label">Promote</div>
+            <div class="stg-sublabel" id="relPromoteHint">point stable at the latest cut — every box applies it now</div>
           </div>
           <div>
             <button class="stg-btn-primary" id="relPromote" disabled>Promote</button>
@@ -709,11 +701,11 @@
       </div>
 
       <div class="stg-group">
-        <div class="stg-group-label">RELEASES ON DISK</div>
+        <div class="stg-group-label">VERSIONS</div>
         <div id="relHistory" style="margin:0 0 4px">—</div>
         <div class="stg-row">
           <div style="width:100%">
-            <div class="stg-group-label" style="margin:14px 0 6px">BUILD LOG</div>
+            <div class="stg-group-label" style="margin:14px 0 6px">DEPLOY LOG</div>
             <pre id="relLog" style="margin:0;background:#0b0b14;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:280px;overflow:auto;font-size:14px;line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(empty)</pre>
           </div>
         </div>

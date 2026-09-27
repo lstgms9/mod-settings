@@ -683,17 +683,12 @@ module.exports = function(router, ctx) {
     res.json({ ok: true });
   });
 
-  // ── Release distribution + check-ins (pull-based fleet deploy) ──
-  // Master builds pinned release artifacts (scripts/release-build.sh);
-  // boxes poll the manifest here with a per-box token, download, apply
-  // in their quiet window, and POST heartbeat check-ins. Owner panel
-  // uses the same endpoints via session auth. WORKER_MODE boxes 404 —
-  // a box never serves releases.
   const REL_DIR = '/home/damon/platform/.releases';
   const BOXES_FILE = '/home/damon/platform/.runtime/release-boxes.json';
 
+  // Box identity comes from the per-box token (RELEASE_TOKENS='w1:<hex>,…' in
+  // ~/.env) — a box can only ever claim to be itself.
   function releaseTokens() {
-    // RELEASE_TOKENS='w1:<token>,fakebox:<token>' in master ~/.env
     const out = {};
     for (const pair of String(process.env.RELEASE_TOKENS || '').split(',')) {
       const i = pair.indexOf(':');
@@ -712,19 +707,11 @@ module.exports = function(router, ctx) {
     }
     return null;
   }
-  // Release admins: TWO doors, one bar — the platform ADMIN role, or the
-  // explicit allowlist (RELEASE_ADMIN_EMAILS in ~/.env).
-  // The ADMIN ROLE is the general door (Damon 2026-09-26): admin is a DATA
-  // flag on the client record — records.data.role='admin' — and auth.js
-  // builds the session from it, so it is authoritative on every tenant, DB-
-  // backed or not. The allowlist alone made the panel GAMOID-ONLY setup: a
-  // tenant whose admin logs in by username (hashoid's `damondo`, whose record
-  // carries role='admin' but no @ email) had no door at all — the panel
-  // never rendered. The old flat-file role check this replaced was a
-  // different thing (a users/<slug>.json read, stale on DB tenants); the
-  // session role comes from the record itself.
-  // NB: a session cookie is minted at login — an account promoted to admin
-  // since its last login must sign out and back in before this door opens.
+  // Release admins: TWO doors, one bar — the platform ADMIN role (admin is a
+  // DATA flag, records.data.role='admin', which auth.js builds the session
+  // from) or the RELEASE_ADMIN_EMAILS allowlist. The role door is what makes
+  // the panel open on a tenant whose admin logs in by username (hashoid's
+  // damondo had no door at all until 2026-09-26).
   function releaseAdmin(req) {
     if (!req.user) return false;
     if (req.user.role === 'admin') return true;
@@ -733,55 +720,89 @@ module.exports = function(router, ctx) {
       .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
     return list.includes(String(req.user.email).toLowerCase());
   }
-  // Box token OR allowlisted admin session; workers 404 like the deploy panel.
+  // Box token OR allowlisted admin session; workers 404 (a box never deploys).
   function releaseGuard(req) {
     if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return 'worker-mode';
     if (boxFromToken(req)) return null;
     if (releaseAdmin(req)) return null;
     return 'admin-only';
   }
-  function readManifest() {
-    try { return JSON.parse(fs.readFileSync(path.join(REL_DIR, 'manifest.json'), 'utf8')); }
-    catch { return null; }
-  }
-  function writeManifest(m) {
-    const p = path.join(REL_DIR, 'manifest.json');
-    fs.writeFileSync(p + '.tmp', JSON.stringify(m, null, 2));
-    fs.renameSync(p + '.tmp', p);
-  }
   function readBoxes() {
     try { return JSON.parse(fs.readFileSync(BOXES_FILE, 'utf8')); } catch { return { boxes: {} }; }
   }
 
-  // GET /release/manifest — what should I be running?
+  // ── THE DEPLOYER — one for every site (Damon's ruling 2026-09-27) ──────
+  // The release fleet's full-tarball transport is GONE (not disabled): no
+  // release-N.tar.gz, no artifacts bookkeeping, no canary/urgent channels. A
+  // version is a NUMBER over a commit set, a box receives a DELTA over git
+  // (scripts/deploy-lib.js — the same transfer dev has used since
+  // admin/DEV_DEPLOY_DELTA_PLAN.md), and PROMOTE is the only thing that moves
+  // a prod box. Rollback is promoting an older number: deltas are
+  // direction-free, so a box asks for the diff from ITS version and applies it.
+  const deployLib = require('/home/damon/platform/scripts/deploy-lib.js');
+  const DELTA_DIR = path.join(REL_DIR, 'deltas');
+  const CUT_LOG = '/home/damon/platform/.runtime/deploy-cut.log';
+
+  // GET /release/manifest — what a box should be running, and what each
+  // version's scope is. Numbers only: a box never needs another site's shas.
   router.get('/release/manifest', async (req, res) => {
     const why = releaseGuard(req);
     if (why === 'worker-mode') return res.error(404, 'Not available on workers');
     if (why) return res.error(403, 'Release admin or box token required');
-    res.json(readManifest() || { version: 0, channels: { canary: 0, stable: 0 } });
+    const m = deployLib.readManifest();
+    const versions = {};
+    for (const [v, rec] of Object.entries(m.versions || {})) {
+      versions[v] = {
+        createdAt: rec.createdAt,
+        sites: Object.fromEntries(Object.entries(rec.sites || {}).map(([slug, s]) => [slug, { mods: (s.mods || []).length, depsHash: s.depsHash }])),
+      };
+    }
+    res.json({ version: m.version || 0, stable: m.stable || 0, versions });
   });
 
-  // GET /release/download/:version — stream the artifact
-  router.get('/release/download/:version', async (req, res) => {
+  // GET /release/delta?from=<v>&to=<v> — the changed bytes between two
+  // versions, for the box's site, built from git on demand and cached.
+  router.get('/release/delta', async (req, res) => {
     const why = releaseGuard(req);
     if (why === 'worker-mode') return res.error(404, 'Not available on workers');
     if (why) return res.error(403, 'Release admin or box token required');
-    const v = parseInt(req.params.version, 10);
-    if (!v || v < 1) return res.error(400, 'Bad version');
-    const file = path.join(REL_DIR, 'release-' + v + '.tar.gz');
-    let st;
-    try { st = fs.statSync(file); } catch { return res.error(404, 'No such release'); }
+    const box = boxFromToken(req);
+    const to = parseInt(req.query.to, 10);
+    const from = parseInt(req.query.from, 10) || 0;
+    if (!to || to < 1) return res.error(400, 'Bad to');
+    // A box's site comes from the registry (its token names it); an admin can
+    // ask for any site explicitly.
+    const registry = readBoxes().boxes || {};
+    const site = (box && registry[box] && registry[box].site) || String(req.query.site || '');
+    if (!site) return res.error(400, 'No site for this box — check in once, or pass ?site=');
+    const file = path.join(DELTA_DIR, 'delta-' + from + '-' + to + '-' + site + '.tar.zst');
+    let existed = false;
+    try { fs.statSync(file); existed = true; } catch {}
+    if (!existed) {
+      try {
+        const r = deployLib.buildBundle({ site, fromV: from || null, toV: to, out: file, log: (l) => cutLog(l) });
+        cutLog('── delta v' + from + '→v' + to + ' for ' + site + ': ' + r.files + ' file(s), ' + r.deletes + ' delete(s), ' + (r.bytes / 1024).toFixed(0) + ' KB' + (r.depsMoved ? ' (deps moved)' : '') + ' ──');
+      } catch (e) {
+        return res.error(500, 'delta build failed: ' + e.message);
+      }
+    }
+    const st = fs.statSync(file);
+    const buf = fs.readFileSync(file);
     const rawRes = res._res || res;
     rawRes.writeHead(200, {
-      'Content-Type': 'application/gzip',
+      'Content-Type': 'application/zstd',
       'Content-Length': st.size,
-      'Content-Disposition': 'attachment; filename="release-' + v + '.tar.gz"',
+      'X-Delta-Sha256': crypto.createHash('sha256').update(buf).digest('hex'),
+      'X-Delta-From': String(from),
+      'X-Delta-To': String(to),
+      'X-Delta-Site': site,
     });
     fs.createReadStream(file).pipe(rawRes);
   });
 
-  // POST /release/checkin — box heartbeat (box token ONLY; stamps identity
-  // from the token so a box can't impersonate another).
+  // POST /release/checkin — box heartbeat (box token ONLY; the token stamps
+  // identity, so a box can never impersonate another). `site` is how the
+  // registry learns which scope this box receives.
   router.post('/release/checkin', async (req, res) => {
     if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
     const box = boxFromToken(req);
@@ -789,126 +810,92 @@ module.exports = function(router, ctx) {
     const b = req.body || {};
     const all = readBoxes();
     all.boxes = all.boxes || {};
+    const prev = all.boxes[box] || {};
     all.boxes[box] = {
       version: parseInt(b.version, 10) || 0,
-      legacySha: String(b.legacySha || '').slice(0, 16),
-      channel: String(b.channel || 'stable').slice(0, 16),
+      site: String(b.site || prev.site || '').slice(0, 40),
       health: String(b.health || 'unknown').slice(0, 32),
       uptime: parseInt(b.uptime, 10) || 0,
       rolledBack: !!b.rolledBack,
-      holding: !!b.holding,
       lastSeen: new Date().toISOString(),
     };
-    all.updated = new Date().toISOString();
-    fs.mkdirSync(path.dirname(BOXES_FILE), { recursive: true });
-    const tmp = BOXES_FILE + '.tmp-' + process.pid;
-    fs.writeFileSync(tmp, JSON.stringify(all, null, 2));
-    fs.renameSync(tmp, BOXES_FILE);
-    res.json({ ok: true, box });
+    all.updated = all.boxes[box].lastSeen;
+    writeBoxes(all);
+    res.json({ ok: true, box, stable: deployLib.readManifest().stable || 0 });
   });
 
-  // POST /release/stats — a box's live metrics payload (Damon 2026-09-06: the
-  // Prod tab on the server dashboard shows the production box like B1/Dev).
-  // Same PUSH law as b1's collector: the box reaches out with its own token,
-  // master never reaches in. The body is mod-server lib/metrics.js's own
-  // payload; we store it verbatim and stamp which box sent it — mod-server's
-  // /metrics/prod reads the file and applies the age/staleness law.
-  const PROD_STATS_FILE = '/home/damon/b1-stats/prod.json';
-  router.post('/release/stats', async (req, res) => {
+  // POST /release/cut — a number over the current commit set. No bundling, no
+  // 11-minute build: it records what GitHub already holds. (Deltas are built
+  // when a box asks for one.)
+  router.post('/release/cut', async (req, res) => {
     if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
-    const box = boxFromToken(req);
-    if (!box) return res.error(403, 'Box token required');
-    const b = req.body || {};
-    if (!b || typeof b !== 'object' || !b.cpu) return res.error(400, 'Not a metrics payload');
-    b.box = box;
-    b.receivedAt = Date.now();
+    if (!releaseAdmin(req)) return res.error(403, 'Release admin only');
     try {
-      fs.mkdirSync(path.dirname(PROD_STATS_FILE), { recursive: true });
-      const tmp = PROD_STATS_FILE + '.tmp-' + process.pid;
-      fs.writeFileSync(tmp, JSON.stringify(b));
-      fs.renameSync(tmp, PROD_STATS_FILE);
-      res.json({ ok: true, box });
+      cutLog('── cut started ──');
+      const m = deployLib.recordVersion();
+      const sites = Object.keys((m.versions[m.version] || {}).sites || {});
+      cutLog('── v' + m.version + ' recorded over ' + sites.join(', ') + ' (stable stays v' + m.stable + ') ──');
+      res.json({ ok: true, version: m.version, stable: m.stable, sites });
     } catch (e) {
-      res.error(500, 'stats write failed: ' + (e.message || e));
+      cutLog('── CUT FAILED: ' + e.message + ' ──');
+      res.error(500, 'cut failed: ' + e.message);
     }
   });
 
-  // GET /release/status — owner panel feed: manifest + check-ins + artifacts
-  router.get('/release/status', async (req, res) => {
-    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
-    if (!releaseAdmin(req)) return res.error(403, 'Release admin only');
-    const manifest = readManifest();
-    const boxes = readBoxes().boxes || {};
-    let artifacts = [];
-    try {
-      artifacts = fs.readdirSync(REL_DIR)
-        .map(f => f.match(/^release-(\d+)\.tar\.gz$/))
-        .filter(Boolean)
-        .map(m => {
-          const st = fs.statSync(path.join(REL_DIR, m[0]));
-          return { version: parseInt(m[1], 10), size: st.size, created: st.mtime.toISOString() };
-        })
-        .sort((a, b) => b.version - a.version);
-    } catch {}
-    let buildLog = '';
-    let building = null;
-    try {
-      const lines = fs.readFileSync('/home/damon/platform/.runtime/release-build.log', 'utf8').split('\n').filter(Boolean);
-      buildLog = lines.slice(-20).join('\n');
-      // ── A CUT IN FLIGHT IS MEASURABLE (Damon, 2026-09-26, raised twice: a
-      // bare 'Building…' is not progress). The log's newest build line says
-      // whether one is running — "started" with no matching "complete" — and
-      // the tarball the build is writing IS the meter: bytes on disk against
-      // the last release's size, with the log line's own timestamp as the
-      // start. No estimate, no fake creep; nothing here when no build runs.
-      for (let i = lines.length - 1; i >= 0; i--) {
-        const m = lines[i].match(/^\[([^\]]+)\] ── build v(\d+) (started|complete)/);
-        if (!m) continue;
-        if (m[3] === 'started') {
-          const v = parseInt(m[2], 10);
-          const f = path.join(REL_DIR, 'release-' + v + '.tar.gz');
-          const prev = artifacts.find(a => a.version < v);
-          if (fs.existsSync(f)) {
-            building = {
-              version: v,
-              bytes: fs.statSync(f).size,
-              total: (prev && prev.size) || 0,
-              startedAt: new Date(m[1].replace(' ', 'T')).toISOString(),
-              last: lines[lines.length - 1].replace(/^\[[^\]]+\] /, ''),
-            };
-          }
-        }
-        break;   // the newest build line decides — idle either way
-      }
-    } catch {}
-    res.json({ manifest, boxes, artifacts, buildLog, building });
-  });
-
-  // POST /release/build — cut a new release (detached; watch via /release/status)
-  router.post('/release/build', async (req, res) => {
-    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
-    if (!releaseAdmin(req)) return res.error(403, 'Release admin only');
-    const { spawn } = require('child_process');
-    const child = spawn('/home/damon/platform/scripts/release-build.sh', [], { detached: true, stdio: 'ignore' });
-    child.unref();
-    res.json({ ok: true, pid: child.pid });
-  });
-
-  // POST /release/promote — point the stable channel at a built version
+  // POST /release/promote — point stable at a number. THE ONLY THING THAT
+  // MOVES A PROD BOX (Damon 2026-09-27: promote means NOW, always — no quiet
+  // window, no canary channel, no urgent flag). Promoting an older number is
+  // the rollback, and nothing here treats it differently.
   router.post('/release/promote', async (req, res) => {
     if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
     if (!releaseAdmin(req)) return res.error(403, 'Release admin only');
     const v = parseInt((req.body || {}).version, 10);
     if (!v || v < 1) return res.error(400, 'Bad version');
-    const m = readManifest();
-    if (!m) return res.error(404, 'No manifest — build a release first');
-    if (!fs.existsSync(path.join(REL_DIR, 'release-' + v + '.tar.gz'))) return res.error(404, 'No artifact for v' + v);
-    m.channels = m.channels || {};
-    m.channels.stable = v;
-    m.urgent = !!(req.body || {}).urgent;
-    writeManifest(m);
-    res.json({ ok: true, stable: v, urgent: m.urgent });
+    const m = deployLib.readManifest();
+    if (!(m.versions || {})[v]) return res.error(404, 'No such version v' + v);
+    m.stable = v;
+    deployLib.writeManifest(m);
+    res.json({ ok: true, stable: v, direction: v < (m.version || 0) ? 'rollback' : 'forward' });
   });
+
+  // GET /release/status — the panel's feed: versions, the boxes, and the
+  // deploy log (cut + delta lines).
+  router.get('/release/status', async (req, res) => {
+    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
+    if (!releaseAdmin(req)) return res.error(403, 'Release admin only');
+    const m = deployLib.readManifest();
+    const versions = Object.keys(m.versions || {}).map(Number).sort((a, b) => b - a).map(v => ({
+      version: v,
+      createdAt: m.versions[v].createdAt,
+      sites: Object.keys(m.versions[v].sites || {}),
+    }));
+    res.json({
+      version: m.version || 0,
+      stable: m.stable || 0,
+      createdAt: m.createdAt || null,
+      versions,
+      boxes: readBoxes().boxes || {},
+      buildLog: readCutLog(),
+    });
+  });
+
+  function cutLog(line) {
+    try {
+      fs.mkdirSync(path.dirname(CUT_LOG), { recursive: true });
+      fs.appendFileSync(CUT_LOG, '[' + new Date().toISOString() + '] ' + line + '\n');
+    } catch {}
+  }
+  function readCutLog() {
+    try { return fs.readFileSync(CUT_LOG, 'utf8').split('\n').filter(Boolean).slice(-20).join('\n'); } catch { return ''; }
+  }
+  function writeBoxes(all) {
+    try {
+      fs.mkdirSync(path.dirname(BOXES_FILE), { recursive: true });
+      fs.writeFileSync(BOXES_FILE + '.tmp', JSON.stringify(all, null, 2));
+      fs.renameSync(BOXES_FILE + '.tmp', BOXES_FILE);
+    } catch {}
+  }
+
 
   // Secure-a-box: owner enters a box's IP + root password; we SSH in (password
   // auth), install + configure SSH 2FA seeded with the OWNER's EXISTING

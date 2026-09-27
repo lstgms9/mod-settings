@@ -2421,14 +2421,10 @@
     var cutBtn = document.getElementById('relCut');
     var promoteBtn = document.getElementById('relPromote');
     var promoteHint = document.getElementById('relPromoteHint');
-    var progEl = document.getElementById('relProgress');
-    var progText = document.getElementById('relProgressText');
-    var progBar = document.getElementById('relProgressBar');
     if (!nav || !manEl || !cutBtn) return;
     async function loadStatus() {
       try {
-        // cache:'no-store' — Chromium heuristically caches this GET otherwise,
-        // freezing the panel on the first response while a build/apply runs.
+        // cache:'no-store' — Chromium heuristically caches this GET otherwise.
         var r = await fetch('/api/settings/release/status', { credentials: 'same-origin', cache: 'no-store' });
         if (!r.ok) return null;
         return await r.json();
@@ -2437,10 +2433,6 @@
     var first = await loadStatus();
     if (!first) return;  // not owner, OR worker mode → keep hidden
     nav.style.display = '';
-    // Deploy nav is revealed asynchronously — re-apply a saved Deploy
-    // section now that it's visible (unless the user already navigated), or
-    // honour the #deploy deep link the user-menu entry carries (below the
-    // nav was still hidden, so the earlier call could not select it).
     var _h = location.hash.length > 1 ? decodeURIComponent(location.hash.slice(1)) : '';
     if (!(_h && selectSection(_h))) restoreSection();
     function fmtSize(n) { return n > 1e9 ? (n / 1e9).toFixed(1) + 'G' : Math.round(n / 1e6) + 'M'; }
@@ -2453,90 +2445,62 @@
     var td = 'padding:6px 10px;border-top:1px solid var(--border)';
     var th = 'text-align:left;padding:6px 10px;color:var(--text-mid);font-size:14px;letter-spacing:.08em;text-transform:uppercase';
     function render(s) {
-      var m = s.manifest;
-      if (!m || !m.version) {
-        manEl.innerHTML = '<span style="color:var(--text-mid)">No releases built yet.</span>';
-      } else {
-        manEl.innerHTML =
-          '<div style="font-size:14px">Latest build: <b>v' + m.version + '</b>' +
-          ' · ' + fmtSize(m.size) + ' · okdunio <b>' + esc(m.sha.okdunio) + '</b>' +
-          ' · shell-core <b>' + esc(m.sha.shellCore) + '</b>' +
-          (m.dirtyMods && m.dirtyMods.length ? ' · <span style="color:#ff8c00">dirty: ' + esc(m.dirtyMods.join(' ')) + '</span>' : '') +
-          '</div>' +
-          '<div style="margin-top:4px;font-size:14px;color:var(--text-mid)">canary → <b style="color:var(--text)">v' + (m.channels.canary || 0) + '</b>' +
-          ' · stable → <b style="color:var(--text)">v' + (m.channels.stable || 0) + '</b>' +
-          (m.urgent ? ' · <span style="color:#ff8c00">URGENT (boxes skip quiet hours)</span>' : '') + '</div>';
-      }
+      // ── ONE DEPLOYER (Damon 2026-09-27): a version is a NUMBER over a commit
+      // set — nothing is bundled, so there is no size, no sha, no dirty flag.
+      // Promote is the only thing that moves a box, and it means NOW.
+      manEl.innerHTML =
+        '<div style="font-size:14px">Latest cut: <b>v' + (s.version || 0) + '</b>' +
+        (s.createdAt ? ' · ' + fmtAgo(s.createdAt) : '') +
+        ' · stable → <b style="color:var(--text)">v' + (s.stable || 0) + '</b>' +
+        (s.stable === s.version ? ' <span style="color:var(--text-mid)">(boxes are on the latest)</span>'
+                                 : ' <span style="color:#ff8c00">(promote to move every box)</span>') +
+        '</div>' +
+        '<div style="margin-top:4px;font-size:14px;color:var(--text-mid)">A cut records the current dev commits; boxes fetch only the difference between their version and stable.</div>';
+
       var names = Object.keys(s.boxes || {});
       if (!names.length) {
         boxesEl.innerHTML = '<span style="color:var(--text-mid)">No box check-ins yet.</span>';
       } else {
         var rows = '<table style="width:100%;border-collapse:collapse;font-size:14px;font-family:ui-monospace,Menlo,monospace"><thead><tr>' +
-          '<th style="' + th + '">Box</th><th style="' + th + '">Channel</th><th style="' + th + '">Version</th>' +
-          '<th style="' + th + '">Health</th><th style="' + th + '">Last seen</th><th style="' + th + '">Flags</th></tr></thead><tbody>';
-        names.forEach(function(n) {
+          '<th style="' + th + '">Box</th><th style="' + th + '">Site</th><th style="' + th + '">Version</th>' +
+          '<th style="' + th + '">Health</th><th style="' + th + '">Doing</th><th style="' + th + '">Last seen</th><th style="' + th + '">Flags</th></tr></thead><tbody>';
+        names.forEach(function (n) {
           var b = s.boxes[n];
           var stale = (Date.now() - new Date(b.lastSeen).getTime()) > 15 * 60 * 1000;
-          var ver = b.version ? 'v' + b.version : (b.legacySha ? 'legacy ' + esc(b.legacySha) : 'none');
           var flags = [];
           if (b.rolledBack) flags.push('<span style="color:#ff5566">⚠ rolled back</span>');
-          if (b.holding) flags.push('<span style="color:#ff8c00">hold</span>');
-          var healthCol = b.health === '200' ? '#39ff7f' : '#ff8c00';
+          var healthCol = b.health === '200' || b.health === 200 ? '#39ff7f' : '#ff8c00';
+          var doing = b.phase && b.phase !== 'idle' ? '<span style="color:#ff8c00">' + esc(b.phase) + '…</span>' : '—';
           rows += '<tr>' +
             '<td style="' + td + '">' + esc(n) + '</td>' +
-            '<td style="' + td + '">' + esc(b.channel) + '</td>' +
-            '<td style="' + td + '">' + ver + '</td>' +
-            '<td style="' + td + ';color:' + healthCol + '">' + esc(b.health) + '</td>' +
+            '<td style="' + td + '">' + esc(b.site || '—') + '</td>' +
+            '<td style="' + td + '">v' + (b.version || 0) + '</td>' +
+            '<td style="' + td + ';color:' + healthCol + '">' + esc(String(b.health)) + '</td>' +
+            '<td style="' + td + '">' + doing + '</td>' +
             '<td style="' + td + (stale ? ';color:#ff5566' : '') + '">' + fmtAgo(b.lastSeen) + (stale ? ' — STALE' : '') + '</td>' +
             '<td style="' + td + '">' + (flags.join(' ') || '—') + '</td>' +
             '</tr>';
         });
         boxesEl.innerHTML = rows + '</tbody></table>';
       }
-      var m2 = s.manifest || { channels: {} };
-      histEl.innerHTML = (s.artifacts || []).map(function(a) {
+      histEl.innerHTML = (s.versions || []).map(function (a) {
         var tags = [];
-        if (a.version === (m2.channels || {}).canary) tags.push('canary');
-        if (a.version === (m2.channels || {}).stable) tags.push('stable');
+        if (a.version === s.stable) tags.push('stable');
+        if (a.version === s.version) tags.push('latest');
         return '<span style="display:inline-block;margin:0 10px 6px 0;font-size:14px;font-family:ui-monospace,Menlo,monospace">v' + a.version +
-          ' · ' + fmtSize(a.size) + (tags.length ? ' <b style="color:var(--primary)">[' + tags.join(', ') + ']</b>' : '') + '</span>';
+          ' · ' + fmtAgo(a.createdAt) + (a.sites && a.sites.length ? ' · ' + esc(a.sites.join(' ')) : '') +
+          (tags.length ? ' <b style="color:var(--primary)">[' + tags.join(', ') + ']</b>' : '') + '</span>';
       }).join('') || '—';
       logEl.textContent = s.buildLog || '(empty)';
-      // Promote: enabled when a canary box is healthy on the latest build
-      // and stable isn't already there.
-      var canPromote = false, why = 'no canary check-in yet';
-      if (m2.version) {
-        var canaryOk = names.some(function(n) {
-          var b = s.boxes[n];
-          return b.channel === 'canary' && b.version === m2.channels.canary && b.health === '200' && !b.rolledBack;
-        });
-        if (m2.channels.stable === m2.channels.canary) { why = 'stable already on v' + m2.channels.stable; }
-        else if (canaryOk) { canPromote = true; why = 'canary healthy on v' + m2.channels.canary + ' — boxes apply in their quiet window'; }
-        else { why = 'waiting for a healthy canary check-in on v' + m2.channels.canary; }
-      }
+      // Promote moves EVERY box — enabled whenever stable is behind the latest
+      // cut (no canary gate: the fleet has no canary box, and the ruling is
+      // that promote means now).
+      var canPromote = !!(s.version && s.version !== s.stable);
       promoteBtn.disabled = !canPromote;
-      promoteBtn.textContent = (promoteBtn.dataset.busy ? promoteBtn.textContent : (canPromote ? ('Promote v' + m2.channels.canary) : 'Promote'));
-      promoteHint.textContent = why;
-      // A cut in flight draws itself: real bytes on disk against the last
-      // release's size, on the log's own clock. Returns the percent so the
-      // Cut button can say where it is (Damon, 2026-09-26 — twice raised).
-      var pct = 0;
-      if (progEl) {
-        var b = s.building;
-        if (b && b.version) {
-          pct = b.total ? Math.min(99, Math.round(b.bytes / b.total * 100)) : 0;
-          var secs = Math.max(0, Math.round((Date.now() - new Date(b.startedAt).getTime()) / 1000));
-          progEl.style.display = '';
-          progBar.style.width = b.total ? pct + '%' : '100%';
-          progBar.style.opacity = b.total ? '1' : '.35';
-          progText.textContent = 'building v' + b.version + ' · ' + fmtSize(b.bytes) +
-            (b.total ? ' of ' + fmtSize(b.total) + ' (' + pct + '%, the last release\'s size)' : ' written') +
-            ' · ' + Math.floor(secs / 60) + 'm' + ('0' + (secs % 60)).slice(-2) + 's in · ' + b.last;
-        } else {
-          progEl.style.display = 'none';
-        }
-      }
-      s._pct = pct;
+      if (!promoteBtn.dataset.busy) promoteBtn.textContent = canPromote ? ('Promote v' + s.version) : 'Promote';
+      promoteHint.textContent = canPromote
+        ? ('applies v' + s.version + ' to every box now — each fetches only its difference')
+        : (s.stable ? 'stable is already v' + s.stable : 'nothing promoted yet');
       return s;
     }
     render(first);
@@ -2546,60 +2510,51 @@
       refreshBtn.disabled = false;
     });
     cutBtn.addEventListener('click', async function() {
-      var ok = platform.ui ? await platform.ui.confirm('Cut a new release from current dev code? The canary applies it automatically.') : window.confirm('Cut a new release?');
+      var ok = platform.ui ? await platform.ui.confirm('Record the current dev commits as the next version? Boxes do not move until you promote.') : window.confirm('Cut a new version?');
       if (!ok) return;
-      cutBtn.disabled = true; cutBtn.textContent = 'Building…';
-      // Done = manifest version increments (build completed) or a NEW
-      // "BUILD FAILED" line appears — old log lines in the tail must not
-      // end the watch early.
+      cutBtn.disabled = true; cutBtn.textContent = 'Cutting…';
       var pre = await loadStatus();
-      var preV = (pre && pre.manifest && pre.manifest.version) || 0;
-      var countFails = function(s2) { return ((s2 && s2.buildLog) || '').split('\n').filter(function(l) { return l.indexOf('BUILD FAILED') >= 0; }).length; };
-      var preFails = countFails(pre);
-      try { await fetch('/api/settings/release/build', { method: 'POST', credentials: 'same-origin' }); } catch (_) {}
-      for (var i = 0; i < 120; i++) {
-        await new Promise(function(r) { setTimeout(r, 2000); });
+      var preV = (pre && pre.version) || 0;
+      try { await fetch('/api/settings/release/cut', { method: 'POST', credentials: 'same-origin' }); } catch (_) {}
+      for (var i = 0; i < 30; i++) {
+        await new Promise(function(r) { setTimeout(r, 1000); });
         var s = await loadStatus(); if (!s) continue;
         var shown = render(s) || {};
-        cutBtn.textContent = shown._pct ? ('Cutting… ' + shown._pct + '%') : 'Cutting…';
-        if (s.manifest && (s.manifest.version || 0) > preV) break;
-        if (countFails(s) > preFails) break;
+        cutBtn.textContent = 'Cutting… v' + (shown.version || '?');
+        if ((shown.version || 0) > preV) break;
       }
-      cutBtn.disabled = false; cutBtn.textContent = 'Cut release';
+      cutBtn.disabled = false; cutBtn.textContent = 'Cut version';
     });
     promoteBtn.addEventListener('click', async function() {
-      var s = await loadStatus(); if (!s || !s.manifest) return;
-      var v = s.manifest.channels.canary;
-      var msg = 'Point the STABLE channel at v' + v + '? Every stable box (incl. production) applies it in its next quiet window.';
+      var s = await loadStatus(); if (!s) return;
+      var v = s.version;
+      var msg = 'Point STABLE at v' + v + '? Every box applies it now (each fetches only its difference).';
       var ok = platform.ui ? await platform.ui.confirm(msg) : window.confirm(msg);
       if (!ok) return;
       promoteBtn.disabled = true;
-      // Promote flips a LIVE FLEET — say so while it happens, and say what
-      // happened after (Damon, 2026-09-26: no bare states).
       promoteBtn.dataset.busy = '1';
       promoteBtn.textContent = 'Promoting…';
-      var msg = 'pointing stable at v' + v + ' — boxes apply it in their quiet window';
-      promoteHint.textContent = msg;
+      var msg2 = 'stable is now v' + v + ' — boxes are fetching and applying';
+      promoteHint.textContent = msg2;
       try {
         var r = await fetch('/api/settings/release/promote', {
           method: 'POST', credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ version: v }),
         });
-        msg = r.ok
-          ? ('stable is now v' + v + ' — boxes pick it up in their quiet window')
-          : ('promote failed (' + r.status + ') — stable unchanged at v' + (s.manifest.channels.stable || 0));
+        msg2 = r.ok
+          ? ('stable is now v' + v + ' — boxes apply it on their next tick (watch the Doing column)')
+          : ('promote failed (' + r.status + ') — stable unchanged at v' + s.stable);
         if (!r.ok && platform.ui) platform.ui.toast && platform.ui.toast('Promote failed');
       } catch (e) {
-        msg = 'promote failed — stable unchanged at v' + (s.manifest.channels.stable || 0);
+        msg2 = 'promote failed — stable unchanged at v' + s.stable;
       }
       delete promoteBtn.dataset.busy;
       var s2 = await loadStatus(); if (s2) render(s2);
-      // render() rewrites the hint from the fresh manifest — put the outcome
-      // back so the press is acknowledged.
-      promoteHint.textContent = msg;
+      promoteHint.textContent = msg2;     // render() rewrites it from the feed
     });
   }
+
 
   // ── Secure-a-box panel (owner-only) ─────────────────────────
   // Reveal for owners (same gate as deploy). Sends IP + root password to the
