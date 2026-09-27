@@ -776,15 +776,23 @@ module.exports = function(router, ctx) {
     const site = (box && registry[box] && registry[box].site) || String(req.query.site || '');
     if (!site) return res.error(400, 'No site for this box — check in once, or pass ?site=');
     const file = path.join(DELTA_DIR, 'delta-' + from + '-' + to + '-' + site + '.tar.zst');
-    let existed = false;
-    try { fs.statSync(file); existed = true; } catch {}
-    if (!existed) {
-      try {
-        const r = deployLib.buildBundle({ site, fromV: from || null, toV: to, out: file, log: (l) => cutLog(l) });
-        cutLog('── delta v' + from + '→v' + to + ' for ' + site + ': ' + r.files + ' file(s), ' + r.deletes + ' delete(s), ' + (r.bytes / 1024).toFixed(0) + ' KB' + (r.depsMoved ? ' (deps moved)' : '') + ' ──');
-      } catch (e) {
-        return res.error(500, 'delta build failed: ' + e.message);
+    let ready = false;
+    try { ready = fs.statSync(file).size > 0; } catch {}
+    if (!ready) {
+      // A scoped-full first hop is ~260 MB to archive and compress — longer
+      // than a proxy's read timeout, which is how prod's first fetch died on
+      // a 504 (2026-09-27). So the build runs DETACHED and the box is told to
+      // come back: a long build is a state, not a failed request, and every
+      // later box asking for the same pair finds the finished file.
+      const lock = file + '.lock';
+      let building = false;
+      try { building = Date.now() - fs.statSync(lock).mtimeMs < 10 * 60 * 1000; } catch {}
+      if (!building) {
+        const { spawn } = require('child_process');
+        const child = spawn(process.execPath, ['/home/damon/platform/scripts/deploy-delta-build.js', site, String(from || 0), String(to), file], { detached: true, stdio: 'ignore' });
+        child.unref();
       }
+      return res.status(202).json({ building: true, from, to, site, retryInMs: building ? 5000 : 15000 });
     }
     const st = fs.statSync(file);
     const buf = fs.readFileSync(file);
