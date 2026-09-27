@@ -65,6 +65,11 @@ function setCookies(res) {
   // as the wrong account. Clear the jar, then seed ours.
   await h.ctx.clearCookies();
   await h.ctx.addCookies(jar);
+  // Static module assets (index.html, app.js) live in a REUSED profile, so a
+  // run can measure yesterday's panel — the first one-click run did exactly
+  // that and failed on a button that was already on the server (2026-09-27).
+  const cdp = await h.ctx.newCDPSession(h.page);
+  await cdp.send('Network.clearBrowserCache');
 
   // ⚠ HERE IS THE RULE ZERO PART (Damon, 2026-09-26). Loading /settings by
   // hand proved nothing about HIS view: hashoid points its Settings entry at
@@ -144,6 +149,7 @@ function setCookies(res) {
   });
   await h.page.route('**/api/settings/release/promote', (route) => {
     promoted = route.request().postDataJSON();
+    FD.stable = 98;                            // what a real promote does
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, stable: 98 }) });
   });
   await h.page.route('**/api/settings/release/deploy', (route) => {
@@ -152,17 +158,21 @@ function setCookies(res) {
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, version: 100, stable: 100 }) });
   });
 
+  // ⚠ waitUntil's condition runs INSIDE the page — it can see the DOM, never
+  // a node-side capture. So each click waits on what the PANEL says, and the
+  // request body is asserted from node afterwards.
   await h.page.click('.rel-promote[data-v="98"]');
-  const rolled = await h.waitUntil('rolling back to v98 posts that number', () => (promoted ? promoted : false));
-  h.assert('the rollback gesture promotes the OLD number', rolled && rolled.version === 98, rolled);
+  const rolledHint = await h.waitUntil('the rollback click settles the panel', () =>
+    (/stable is v98/.test(document.getElementById('relDeployHint').innerText) ? document.getElementById('relDeployHint').innerText : false));
+  h.assert('the rollback gesture promotes the OLD number', promoted && promoted.version === 98, promoted);
+  h.assert('the panel reports the stable number after the rollback', /stable is v98/.test(String(rolledHint)), String(rolledHint).slice(0, 60));
 
   FD.version = 99; FD.stable = 99;
   await h.page.click('#relRefresh');
   await h.page.click('#relDeploy');
-  const d = await h.waitUntil('Deploy posts the one-click action', () => (deployed ? true : false));
-  h.assert('Deploy cuts AND moves in one action (POST /release/deploy)', d === true);
   const said = await h.waitUntil('the panel says what is happening, not a bare state', () =>
     (/stable is v100/.test(document.getElementById('relDeployHint').innerText) ? document.getElementById('relDeployHint').innerText : false));
+  h.assert('Deploy cuts AND moves in one action (POST /release/deploy)', deployed === 'POST', deployed);
   h.assert('the hint reports the live version after the click', /v100/.test(String(said)), String(said).slice(0, 80));
 
   await h.page.unroute('**/api/settings/release/status');
@@ -172,7 +182,7 @@ function setCookies(res) {
   const pass = entry === '/settings#deploy' && one && one.text === 'Deploy' && !one.hasCut && !one.hasPromote
     && /Latest cut: v\d+/.test(feed) && /stable → v\d+/.test(feed) && /applying/.test(String(doing))
     && rows && rows.oldText === 'Roll back' && rows.stableDisabled === true
-    && rolled && rolled.version === 98 && d === true && /v100/.test(String(said));
+    && promoted && promoted.version === 98 && deployed === 'POST' && /v100/.test(String(said));
   await h.finish({ pass, extra: { site: HOST, feed: feed.slice(0, 60) } });
   console.log(pass ? '\nALL PASS' : '\nFAILED');
   process.exit(pass ? 0 : 1);

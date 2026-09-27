@@ -2499,12 +2499,11 @@
           (a.version === s.stable ? ' disabled' : '') + '>' + (back ? 'Roll back' : 'Promote') + '</button></div></div>';
       }).join('') || '—';
       logEl.textContent = s.buildLog || '(empty)';
-      // The hint states what the next click will do, in numbers.
-      if (!pendingMsg) {
-        deployHint.textContent = 'one click: numbers the current dev commits as v' + ((s.version || 0) + 1) +
-          ' and moves every box to it now' +
-          (s.stable && s.stable !== s.version ? ' — stable is still v' + s.stable : '');
-      }
+      // The hint states what the next click will do, in numbers — unless an
+      // action is in flight, whose own line wins until it settles.
+      deployHint.textContent = pendingMsg || ('one click: numbers the current dev commits as v' + ((s.version || 0) + 1) +
+        ' and moves every box to it now' +
+        (s.stable && s.stable !== s.version ? ' — stable is still v' + s.stable : ''));
       return s;
     }
     render(first);
@@ -2537,7 +2536,8 @@
       if (!await ask('Deploy v' + next + '? This numbers the current dev commits and points stable at v' + next +
                      ' — every box applies it now (each fetches only its difference).')) return;
       deployBtn.disabled = true; deployBtn.dataset.busy = '1'; deployBtn.textContent = 'Deploying… v' + next;
-      deployHint.textContent = 'deploying v' + next + ' — watch the Doing column: boxes fetch, apply, restart, health-check';
+      pendingMsg = 'deploying v' + next + ' — watch the Doing column: boxes fetch, apply, restart, health-check';
+      render(s);
       var okDeploy = false;
       try {
         var r = await fetch('/api/settings/release/deploy', { method: 'POST', credentials: 'same-origin' });
@@ -2547,10 +2547,9 @@
       var st = okDeploy ? await settle(next, 'Deploying…') : null;
       delete deployBtn.dataset.busy;
       deployBtn.disabled = false; deployBtn.textContent = 'Deploy';
-      deployHint.textContent = st
-        ? ('stable is v' + st.stable + ' — boxes are fetching and applying (Doing column)')
-        : (okDeploy ? 'deploy sent — refresh to see the boxes' : 'deploy failed — stable unchanged at v' + s.stable);
+      pendingMsg = st ? null : (okDeploy ? 'deploy sent — refreshing…' : 'deploy failed — stable unchanged at v' + s.stable);
       var s2 = await loadStatus(); if (s2) render(s2);
+      if (st) deployHint.textContent = 'stable is v' + st.stable + ' — boxes are fetching and applying (Doing column)';
     });
     // Rollback: promoting an OLD number is the only other gesture on this page.
     histEl.addEventListener('click', async function(e) {
@@ -2563,6 +2562,7 @@
                      ' Every box applies it now (each fetches only its difference).')) return;
       var label = b.textContent;
       b.disabled = true; b.textContent = back ? 'Rolling back…' : 'Promoting…';
+      pendingMsg = (back ? 'rolling back to v' + v : 'promoting v' + v) + ' — watch the Doing column';
       var ok = false;
       try {
         var r = await fetch('/api/settings/release/promote', {
@@ -2574,10 +2574,9 @@
       } catch (e) {}
       var st = ok ? await settle(v, back ? 'Rolling back…' : 'Promoting…') : null;
       b.disabled = false; b.textContent = label;
-      deployHint.textContent = st
-        ? ('stable is v' + st.stable + ' — boxes are applying it (Doing column)')
-        : ('failed — stable unchanged at v' + s.stable);
+      pendingMsg = st ? null : ('failed — stable unchanged at v' + s.stable);
       var s2 = await loadStatus(); if (s2) render(s2);
+      if (st) deployHint.textContent = 'stable is v' + st.stable + ' — boxes are applying it (Doing column)';
     });
   }
 
