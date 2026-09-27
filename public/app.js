@@ -2418,10 +2418,9 @@
     var histEl = document.getElementById('relHistory');
     var logEl = document.getElementById('relLog');
     var refreshBtn = document.getElementById('relRefresh');
-    var cutBtn = document.getElementById('relCut');
-    var promoteBtn = document.getElementById('relPromote');
-    var promoteHint = document.getElementById('relPromoteHint');
-    if (!nav || !manEl || !cutBtn) return;
+    var deployBtn = document.getElementById('relDeploy');
+    var deployHint = document.getElementById('relDeployHint');
+    if (!nav || !manEl || !deployBtn) return;
     async function loadStatus() {
       try {
         // cache:'no-store' — Chromium heuristically caches this GET otherwise.
@@ -2430,6 +2429,7 @@
         return await r.json();
       } catch (e) { return null; }
     }
+    var pendingMsg = null;
     var first = await loadStatus();
     if (!first) return;  // not owner, OR worker mode → keep hidden
     nav.style.display = '';
@@ -2483,24 +2483,28 @@
         });
         boxesEl.innerHTML = rows + '</tbody></table>';
       }
+      // ONE CLICK (Damon 2026-09-27): the numbered list is the ROLLBACK surface.
+      // Promoting an older number IS the rollback gesture; nothing else here
+      // moves a box.
       histEl.innerHTML = (s.versions || []).map(function (a) {
         var tags = [];
         if (a.version === s.stable) tags.push('stable');
         if (a.version === s.version) tags.push('latest');
-        return '<span style="display:inline-block;margin:0 10px 6px 0;font-size:14px;font-family:ui-monospace,Menlo,monospace">v' + a.version +
+        var back = a.version < s.version;
+        return '<div class="stg-row" style="padding:4px 0;border-top:1px solid var(--border)">' +
+          '<div style="font-size:14px;font-family:ui-monospace,Menlo,monospace">v' + a.version +
           ' · ' + fmtAgo(a.createdAt) + (a.sites && a.sites.length ? ' · ' + esc(a.sites.join(' ')) : '') +
-          (tags.length ? ' <b style="color:var(--primary)">[' + tags.join(', ') + ']</b>' : '') + '</span>';
+          (tags.length ? ' <b style="color:var(--primary)">[' + tags.join(', ') + ']</b>' : '') +
+          '</div><div><button class="stg-seg-btn rel-promote" data-v="' + a.version + '"' +
+          (a.version === s.stable ? ' disabled' : '') + '>' + (back ? 'Roll back' : 'Promote') + '</button></div></div>';
       }).join('') || '—';
       logEl.textContent = s.buildLog || '(empty)';
-      // Promote moves EVERY box — enabled whenever stable is behind the latest
-      // cut (no canary gate: the fleet has no canary box, and the ruling is
-      // that promote means now).
-      var canPromote = !!(s.version && s.version !== s.stable);
-      promoteBtn.disabled = !canPromote;
-      if (!promoteBtn.dataset.busy) promoteBtn.textContent = canPromote ? ('Promote v' + s.version) : 'Promote';
-      promoteHint.textContent = canPromote
-        ? ('applies v' + s.version + ' to every box now — each fetches only its difference')
-        : (s.stable ? 'stable is already v' + s.stable : 'nothing promoted yet');
+      // The hint states what the next click will do, in numbers.
+      if (!pendingMsg) {
+        deployHint.textContent = 'one click: numbers the current dev commits as v' + ((s.version || 0) + 1) +
+          ' and moves every box to it now' +
+          (s.stable && s.stable !== s.version ? ' — stable is still v' + s.stable : '');
+      }
       return s;
     }
     render(first);
@@ -2509,49 +2513,71 @@
       var s = await loadStatus(); if (s) render(s);
       refreshBtn.disabled = false;
     });
-    cutBtn.addEventListener('click', async function() {
-      var ok = platform.ui ? await platform.ui.confirm('Record the current dev commits as the next version? Boxes do not move until you promote.') : window.confirm('Cut a new version?');
-      if (!ok) return;
-      cutBtn.disabled = true; cutBtn.textContent = 'Cutting…';
-      var pre = await loadStatus();
-      var preV = (pre && pre.version) || 0;
-      try { await fetch('/api/settings/release/cut', { method: 'POST', credentials: 'same-origin' }); } catch (_) {}
-      for (var i = 0; i < 30; i++) {
-        await new Promise(function(r) { setTimeout(r, 1000); });
-        var s = await loadStatus(); if (!s) continue;
-        var shown = render(s) || {};
-        cutBtn.textContent = 'Cutting… v' + (shown.version || '?');
-        if ((shown.version || 0) > preV) break;
+    function ask(msg) {
+      return platform.ui ? platform.ui.confirm(msg) : Promise.resolve(window.confirm(msg));
+    }
+    function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+    // Watch the feed until stable lands on `want`, so the button counts the
+    // work instead of showing a bare "…" (Damon, twice).
+    async function settle(want, label) {
+      for (var i = 0; i < 60; i++) {
+        var st = await loadStatus();
+        if (st) {
+          render(st);
+          if ((st.stable || 0) >= want) return st;
+          deployBtn.textContent = label + ' v' + (st.version || want) + '…';
+        }
+        await sleep(1000);
       }
-      cutBtn.disabled = false; cutBtn.textContent = 'Cut version';
-    });
-    promoteBtn.addEventListener('click', async function() {
+      return null;
+    }
+    deployBtn.addEventListener('click', async function() {
       var s = await loadStatus(); if (!s) return;
-      var v = s.version;
-      var msg = 'Point STABLE at v' + v + '? Every box applies it now (each fetches only its difference).';
-      var ok = platform.ui ? await platform.ui.confirm(msg) : window.confirm(msg);
-      if (!ok) return;
-      promoteBtn.disabled = true;
-      promoteBtn.dataset.busy = '1';
-      promoteBtn.textContent = 'Promoting…';
-      var msg2 = 'stable is now v' + v + ' — boxes are fetching and applying';
-      promoteHint.textContent = msg2;
+      var next = (s.version || 0) + 1;
+      if (!await ask('Deploy v' + next + '? This numbers the current dev commits and points stable at v' + next +
+                     ' — every box applies it now (each fetches only its difference).')) return;
+      deployBtn.disabled = true; deployBtn.dataset.busy = '1'; deployBtn.textContent = 'Deploying… v' + next;
+      deployHint.textContent = 'deploying v' + next + ' — watch the Doing column: boxes fetch, apply, restart, health-check';
+      var okDeploy = false;
+      try {
+        var r = await fetch('/api/settings/release/deploy', { method: 'POST', credentials: 'same-origin' });
+        okDeploy = r.ok;
+        if (!r.ok && platform.ui && platform.ui.toast) platform.ui.toast('Deploy failed');
+      } catch (e) {}
+      var st = okDeploy ? await settle(next, 'Deploying…') : null;
+      delete deployBtn.dataset.busy;
+      deployBtn.disabled = false; deployBtn.textContent = 'Deploy';
+      deployHint.textContent = st
+        ? ('stable is v' + st.stable + ' — boxes are fetching and applying (Doing column)')
+        : (okDeploy ? 'deploy sent — refresh to see the boxes' : 'deploy failed — stable unchanged at v' + s.stable);
+      var s2 = await loadStatus(); if (s2) render(s2);
+    });
+    // Rollback: promoting an OLD number is the only other gesture on this page.
+    histEl.addEventListener('click', async function(e) {
+      var b = e.target.closest && e.target.closest('.rel-promote');
+      if (!b || b.disabled) return;
+      var v = parseInt(b.dataset.v, 10);
+      var s = await loadStatus(); if (!s || !v) return;
+      var back = v < (s.version || 0);
+      if (!await ask((back ? 'Roll back to v' + v + '?' : 'Promote v' + v + '?') +
+                     ' Every box applies it now (each fetches only its difference).')) return;
+      var label = b.textContent;
+      b.disabled = true; b.textContent = back ? 'Rolling back…' : 'Promoting…';
+      var ok = false;
       try {
         var r = await fetch('/api/settings/release/promote', {
           method: 'POST', credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ version: v }),
         });
-        msg2 = r.ok
-          ? ('stable is now v' + v + ' — boxes apply it on their next tick (watch the Doing column)')
-          : ('promote failed (' + r.status + ') — stable unchanged at v' + s.stable);
-        if (!r.ok && platform.ui) platform.ui.toast && platform.ui.toast('Promote failed');
-      } catch (e) {
-        msg2 = 'promote failed — stable unchanged at v' + s.stable;
-      }
-      delete promoteBtn.dataset.busy;
+        ok = r.ok;
+      } catch (e) {}
+      var st = ok ? await settle(v, back ? 'Rolling back…' : 'Promoting…') : null;
+      b.disabled = false; b.textContent = label;
+      deployHint.textContent = st
+        ? ('stable is v' + st.stable + ' — boxes are applying it (Doing column)')
+        : ('failed — stable unchanged at v' + s.stable);
       var s2 = await loadStatus(); if (s2) render(s2);
-      promoteHint.textContent = msg2;     // render() rewrites it from the feed
     });
   }
 

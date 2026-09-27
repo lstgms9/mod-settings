@@ -83,17 +83,20 @@ function setCookies(res) {
 
   await h.page.click('#pubDeployItem');
 
-  const cut = await h.waitUntil('the Cut release button is on screen', () => {
-    const b = document.getElementById('relCut');
-    return b ? b.offsetParent !== null : false;
+  // ── ONE CLICK (Damon 2026-09-27): exactly one forward action, and its word
+  // is Deploy. The old pair (Cut / Promote) must be GONE from the page — a
+  // gate that only checks the new button exists would pass with the old ones
+  // still sitting there.
+  const one = await h.waitUntil('the Deploy button is on screen', () => {
+    const b = document.getElementById('relDeploy');
+    if (!b || b.offsetParent === null) return false;
+    return { text: b.textContent.trim(), hasCut: !!document.getElementById('relCut'),
+             hasPromote: !!document.getElementById('relPromote'),
+             cutWords: /\bCut (version|a version)\b/.test(document.getElementById('sec-deploy').innerText) };
   });
-  h.assert('Cut release is rendered', cut === true);
-
-  const promote = await h.waitUntil('the Promote button is on screen', () => {
-    const b = document.getElementById('relPromote');
-    return b ? b.offsetParent !== null : false;
-  });
-  h.assert('Promote is rendered', promote === true);
+  h.assert('one button, and its word is Deploy', one && one.text === 'Deploy', one);
+  h.assert('no Cut button and no separate Promote button remain',
+    one && !one.hasCut && !one.hasPromote && !one.cutWords, one);
 
   // The panel feed itself: 403 (or "loading…" forever) is the old failure.
   const feed = await h.page.evaluate(() => (document.getElementById('relManifest') || {}).innerText || '');
@@ -104,15 +107,16 @@ function setCookies(res) {
   // commits, so the work a person watches is the BOX's — the feed carries a
   // phase per box and the table says what it is doing. Asserted against a
   // stubbed payload so a box mid-apply is seen, not assumed.
+  const statusBody = () => ({
+    version: FD.version, stable: FD.stable, createdAt: new Date().toISOString(),
+    versions: [{ version: FD.version, createdAt: new Date().toISOString(), sites: ['hashoid'] },
+               { version: FD.version - 1, createdAt: new Date(Date.now() - 3600000).toISOString(), sites: ['hashoid'] }],
+    boxes: { w1: { version: FD.version, site: 'hashoid', health: '200', phase: 'applying', uptime: 10, rolledBack: false, lastSeen: new Date().toISOString() } },
+    buildLog: '',
+  });
+  const FD = { version: 99, stable: 99 };
   await h.page.route('**/api/settings/release/status', (route) => route.fulfill({
-    status: 200, contentType: 'application/json',
-    body: JSON.stringify({
-      version: 99, stable: 99, createdAt: new Date().toISOString(),
-      versions: [{ version: 99, createdAt: new Date().toISOString(), sites: ['hashoid'] },
-                 { version: 98, createdAt: new Date(Date.now() - 3600000).toISOString(), sites: ['hashoid'] }],
-      boxes: { w1: { version: 99, site: 'hashoid', health: '200', phase: 'applying', uptime: 10, rolledBack: false, lastSeen: new Date().toISOString() } },
-      buildLog: '',
-    }),
+    status: 200, contentType: 'application/json', body: JSON.stringify(statusBody()),
   }));
   await h.page.click('#relRefresh');
   const doing = await h.waitUntil('a box mid-apply is visible in the table', () => {
@@ -120,10 +124,55 @@ function setCookies(res) {
     return el && /applying/.test(el.innerText) ? el.innerText : false;
   });
   h.assert('a box mid-apply shows what it is doing', /applying/.test(doing) && /hashoid/.test(doing) && /v99/.test(doing));
-  await h.page.unroute('**/api/settings/release/status');
+  // The numbered list IS the rollback surface: an older number carries its own
+  // gesture, the stable one carries none.
+  const rows = await h.waitUntil('the version list is the rollback surface', () => {
+    const list = document.getElementById('relHistory');
+    const old = list.querySelector('.rel-promote[data-v="98"]');
+    const stable = list.querySelector('.rel-promote[data-v="99"]');
+    if (!old || !stable) return false;
+    return { oldText: old.textContent.trim(), oldDisabled: old.disabled, stableDisabled: stable.disabled };
+  });
+  h.assert('an older version offers its own rollback gesture, stable offers none',
+    rows && rows.oldText === 'Roll back' && rows.oldDisabled === false && rows.stableDisabled === true, rows);
 
-  const pass = entry === '/settings#deploy' && cut === true && promote === true
-    && /Latest cut: v\d+/.test(feed) && /stable → v\d+/.test(feed) && /applying/.test(String(doing));
+  // Confirms alone would be a dialog test — the gesture must POST the number.
+  let promoted = null, deployed = false;
+  await h.page.evaluate(() => {
+    window.confirm = () => true;
+    if (window.platform) window.platform.ui = Object.assign({}, window.platform.ui, { confirm: () => Promise.resolve(true) });
+  });
+  await h.page.route('**/api/settings/release/promote', (route) => {
+    promoted = route.request().postDataJSON();
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, stable: 98 }) });
+  });
+  await h.page.route('**/api/settings/release/deploy', (route) => {
+    deployed = route.request().method();
+    FD.version = 100; FD.stable = 100;        // what a real deploy does, so the panel settles
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, version: 100, stable: 100 }) });
+  });
+
+  await h.page.click('.rel-promote[data-v="98"]');
+  const rolled = await h.waitUntil('rolling back to v98 posts that number', () => (promoted ? promoted : false));
+  h.assert('the rollback gesture promotes the OLD number', rolled && rolled.version === 98, rolled);
+
+  FD.version = 99; FD.stable = 99;
+  await h.page.click('#relRefresh');
+  await h.page.click('#relDeploy');
+  const d = await h.waitUntil('Deploy posts the one-click action', () => (deployed ? true : false));
+  h.assert('Deploy cuts AND moves in one action (POST /release/deploy)', d === true);
+  const said = await h.waitUntil('the panel says what is happening, not a bare state', () =>
+    (/stable is v100/.test(document.getElementById('relDeployHint').innerText) ? document.getElementById('relDeployHint').innerText : false));
+  h.assert('the hint reports the live version after the click', /v100/.test(String(said)), String(said).slice(0, 80));
+
+  await h.page.unroute('**/api/settings/release/status');
+  await h.page.unroute('**/api/settings/release/promote');
+  await h.page.unroute('**/api/settings/release/deploy');
+
+  const pass = entry === '/settings#deploy' && one && one.text === 'Deploy' && !one.hasCut && !one.hasPromote
+    && /Latest cut: v\d+/.test(feed) && /stable → v\d+/.test(feed) && /applying/.test(String(doing))
+    && rows && rows.oldText === 'Roll back' && rows.stableDisabled === true
+    && rolled && rolled.version === 98 && d === true && /v100/.test(String(said));
   await h.finish({ pass, extra: { site: HOST, feed: feed.slice(0, 60) } });
   console.log(pass ? '\nALL PASS' : '\nFAILED');
   process.exit(pass ? 0 : 1);

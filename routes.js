@@ -850,6 +850,27 @@ module.exports = function(router, ctx) {
     }
   });
 
+  // POST /release/deploy — ONE CLICK (Damon 2026-09-27): number the current
+  // commits and point stable at that number, in one motion. Deploy is the only
+  // forward action on the panel; promoting an older number is the rollback.
+  router.post('/release/deploy', async (req, res) => {
+    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
+    if (!releaseAdmin(req)) return res.error(403, 'Release admin only');
+    try {
+      cutLog('── deploy started ──');
+      const m = deployLib.recordVersion();
+      const v = m.version;
+      const sites = Object.keys((m.versions[v] || {}).sites || []);
+      m.stable = v;
+      deployLib.writeManifest(m);
+      cutLog('── deploy v' + v + ' over ' + sites.join(', ') + ' — stable → v' + v + ' (every box applies it now) ──');
+      res.json({ ok: true, version: v, stable: v, sites, direction: 'forward' });
+    } catch (e) {
+      cutLog('── DEPLOY FAILED: ' + e.message + ' ──');
+      res.error(500, 'deploy failed: ' + e.message);
+    }
+  });
+
   // POST /release/promote — point stable at a number. THE ONLY THING THAT
   // MOVES A PROD BOX (Damon 2026-09-27: promote means NOW, always — no quiet
   // window, no canary channel, no urgent flag). Promoting an older number is

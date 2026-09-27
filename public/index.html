@@ -676,21 +676,12 @@
         <div id="relManifest" style="margin:0 0 12px">loading…</div>
         <div class="stg-row">
           <div>
-            <div class="stg-label">Cut a version</div>
-            <div class="stg-sublabel">record the current dev commits as the next numbered version — nothing is bundled, and no box moves until you promote</div>
+            <div class="stg-label">Deploy the current commits</div>
+            <div class="stg-sublabel" id="relDeployHint">one click: numbers the current dev commits and moves every box to that version now — each fetches only its difference</div>
           </div>
           <div style="display:flex;gap:8px">
             <button class="stg-seg-btn" id="relRefresh">Refresh</button>
-            <button class="stg-btn-primary" id="relCut">Cut version</button>
-          </div>
-        </div>
-        <div class="stg-row">
-          <div>
-            <div class="stg-label">Promote</div>
-            <div class="stg-sublabel" id="relPromoteHint">point stable at the latest cut — every box applies it now</div>
-          </div>
-          <div>
-            <button class="stg-btn-primary" id="relPromote" disabled>Promote</button>
+            <button class="stg-btn-primary" id="relDeploy">Deploy</button>
           </div>
         </div>
       </div>
