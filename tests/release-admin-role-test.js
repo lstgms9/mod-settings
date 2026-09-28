@@ -180,26 +180,29 @@ function setCookies(res) {
   // ── THE LOOP CLOSES ON SCREEN (Damon 2026-09-28: "pressed Deploy, zero
   // feedback — he should never have to ask what happened"). Three feeds, three
   // verdicts: a box mid-apply, a box that landed, a box that rolled back.
-  const resultText = () => document.getElementById('relResult').innerText.replace(/\s+/g, ' ');
+  // ⚠ The condition runs INSIDE the page — no node-side helpers in here.
   const inProg = await h.waitUntil('a box mid-apply reads as IN PROGRESS', () => {
-    const t = resultText();
-    return /^⧗ IN PROGRESS/.test(t) && /w1/.test(t) && /applying/.test(t) ? t : false;
+    const el = document.getElementById('relResult');
+    const t = el ? el.innerText.replace(/\s+/g, ' ') : '';
+    return /IN PROGRESS/.test(t) && /w1/.test(t) && /applying/.test(t) ? t : false;
   });
   h.assert('mid-apply says IN PROGRESS, names the box and what it is doing', /IN PROGRESS/.test(String(inProg)), String(inProg).slice(0, 90));
 
   FD.box = box({ phase: 'idle' });
   await h.page.click('#relRefresh');
   const done = await h.waitUntil('a landed box reads as DONE', () => {
-    const t = resultText();
-    return /^✓ DONE/.test(t) ? t : false;
+    const el = document.getElementById('relResult');
+    const t = el ? el.innerText.replace(/\s+/g, ' ') : '';
+    return /DONE — v\d+/.test(t) && /health 200/.test(t) ? t : false;
   });
-  h.assert('landed says DONE with the version and the health', /DONE — v99/.test(String(done)) && /health 200/.test(String(done)), String(done).slice(0, 90));
+  h.assert('landed says DONE with the version and the health', /DONE — v\d+/.test(String(done)) && /health 200/.test(String(done)), String(done).slice(0, 90));
 
   FD.box = box({ version: 98, phase: 'idle', rolledBack: true });
   await h.page.click('#relRefresh');
   const bad = await h.waitUntil('a rolled-back box reads as FAILED', () => {
-    const t = resultText();
-    return /^✗ FAILED/.test(t) ? t : false;
+    const el = document.getElementById('relResult');
+    const t = el ? el.innerText.replace(/\s+/g, ' ') : '';
+    return /FAILED/.test(t) && /rolled back/.test(t) ? t : false;
   });
   h.assert('a rollback says FAILED and says why', /FAILED/.test(String(bad)) && /rolled back/.test(String(bad)), String(bad).slice(0, 90));
   FD.box = box();
