@@ -2476,8 +2476,12 @@
       else line = 'IN PROGRESS — ' + detail.filter(function (d) { return d.state === 'working'; }).map(function (d) { return d.n + ' ' + d.why; }).join(', ');
       return { state: state, line: line, detail: detail, target: target };
     }
-    var OUT_COLOR = { done: '#39ff7f', working: '#ff8c00', failed: '#ff5566', waiting: 'var(--text-mid)', idle: 'var(--text-mid)' };
-    var OUT_MARK = { done: '✓', working: '⧗', failed: '✗', waiting: '·', idle: '·' };
+    // A box's own verdict is ok/working/failed — the panel's is
+    // done/working/failed — so both maps carry both vocabularies (a missing
+    // key rendered the literal word "undefined" next to a healthy box,
+    // 2026-09-28).
+    var OUT_COLOR = { done: '#39ff7f', ok: '#39ff7f', working: '#ff8c00', failed: '#ff5566', waiting: 'var(--text-mid)', idle: 'var(--text-mid)' };
+    var OUT_MARK = { done: '✓', ok: '✓', working: '⧗', failed: '✗', waiting: '·', idle: '·' };
     function renderOutcome(s) {
       var o = outcome(s);
       lastOutcome = o.state;

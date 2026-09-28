@@ -35,6 +35,7 @@ const ck = (r) => (typeof r.headers.getSetCookie === 'function' ? r.headers.getS
   await h.page.click('#pubDeployItem');
   await h.waitUntil('the panel is up', () => { const b = document.getElementById('relDeploy'); return !!b && b.offsetParent !== null; });
   console.log('ASSET URLS:', JSON.stringify(assetUrls.slice(0, 3)));
+  console.log('RESULT BLOCK:', await h.page.evaluate(() => document.getElementById('relResult').innerText.replace(/\s+/g, ' ')));
   console.log('BUTTON:', await h.page.evaluate(() => document.getElementById('relDeploy').textContent.trim()));
   console.log('HINT:', await h.page.evaluate(() => document.getElementById('relDeployHint').innerText));
   console.log('platform.ui:', await h.page.evaluate(() => Object.keys((window.platform && window.platform.ui) || {}).join(',')));
@@ -50,7 +51,7 @@ const ck = (r) => (typeof r.headers.getSetCookie === 'function' ? r.headers.getS
   // really there, then CANCEL. (Pressing Confirm here DEPLOYS: the earlier
   // versions of this probe cut v34 and v35 and moved prod both times. Read the
   // panel, do not fire the gun.)
-  await h.page.click('.pui-confirm-actions .pui-btn:not(.pui-btn-primary)');
+  await h.page.click('text="Cancel"');
   await h.page.waitForTimeout(1500);
   return h.page.click('.pui-confirm-actions .pui-btn:not(.pui-btn-primary)').then(() => console.log('CANCELLED confirm (no version burned)'));
   console.log('CONFIRMED — button:', await h.page.evaluate(() => document.getElementById('relDeploy').textContent.trim()));
