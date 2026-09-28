@@ -2415,6 +2415,7 @@
     var nav = document.getElementById('stgDeployNav');
     var manEl = document.getElementById('relManifest');
     var boxesEl = document.getElementById('relBoxes');
+    var resultEl = document.getElementById('relResult');
     var histEl = document.getElementById('relHistory');
     var logEl = document.getElementById('relLog');
     var refreshBtn = document.getElementById('relRefresh');
@@ -2430,6 +2431,8 @@
       } catch (e) { return null; }
     }
     var pendingMsg = null;
+    var pollTimer = null;
+    var lastOutcome = 'idle';
     var first = await loadStatus();
     if (!first) return;  // not owner, OR worker mode → keep hidden
     nav.style.display = '';
@@ -2441,6 +2444,64 @@
       if (s < 90) return s + 's ago';
       if (s < 5400) return Math.round(s / 60) + 'm ago';
       return Math.round(s / 3600) + 'h ago';
+    }
+    // ── THE CLOSING OF THE LOOP (Damon 2026-09-28: "pressed Deploy, zero
+    // feedback — he should never have to ask what happened"). The outcome is
+    // derived from the FEED, not from the click, so it survives a reload and
+    // is just as true for a deploy someone else started.
+    function outcome(s) {
+      var target = s.stable || 0;
+      var names = Object.keys(s.boxes || {}).filter(function (n) { return s.boxes[n] && s.boxes[n].site; });
+      if (!target) return { state: 'idle', line: 'nothing deployed yet — click Deploy to ship the current commits', detail: [] };
+      if (!names.length) return { state: 'waiting', line: 'v' + target + ' is the stable version — no box has checked in yet', detail: [] };
+      var detail = [], working = 0, failed = 0, ok = 0;
+      names.forEach(function (n) {
+        var b = s.boxes[n];
+        var healthy = String(b.health) === '200' || b.health === 200;
+        var stale = (Date.now() - new Date(b.lastSeen).getTime()) > 15 * 60 * 1000;
+        var state, why;
+        if (b.rolledBack) { state = 'failed'; why = 'rolled back to v' + b.version; }
+        else if (stale) { state = 'failed'; why = 'no check-in for ' + fmtAgo(b.lastSeen).replace(' ago', ''); }
+        else if (b.version === target && healthy) { state = 'ok'; why = 'health 200'; }
+        else if (b.phase && b.phase !== 'idle') { state = 'working'; why = b.phase + ' v' + target; }
+        else if (b.version !== target) { state = 'working'; why = 'waiting to pick up v' + target; }
+        else { state = 'failed'; why = 'health ' + b.health; }
+        if (state === 'ok') ok++; else if (state === 'failed') failed++; else working++;
+        detail.push({ n: n, state: state, why: why, b: b });
+      });
+      var state = failed ? 'failed' : (working ? 'working' : 'done');
+      var line;
+      if (state === 'done') line = 'DONE — v' + target + ' is live on ' + (names.length === 1 ? names[0] : 'every box');
+      else if (state === 'failed') line = 'FAILED — ' + detail.filter(function (d) { return d.state === 'failed'; }).map(function (d) { return d.n + ' (' + d.why + ')'; }).join(', ');
+      else line = 'IN PROGRESS — ' + detail.filter(function (d) { return d.state === 'working'; }).map(function (d) { return d.n + ' ' + d.why; }).join(', ');
+      return { state: state, line: line, detail: detail, target: target };
+    }
+    var OUT_COLOR = { done: '#39ff7f', working: '#ff8c00', failed: '#ff5566', waiting: 'var(--text-mid)', idle: 'var(--text-mid)' };
+    var OUT_MARK = { done: '✓', working: '⧗', failed: '✗', waiting: '·', idle: '·' };
+    function renderOutcome(s) {
+      var o = outcome(s);
+      lastOutcome = o.state;
+      var head = '<div style="font-weight:600;color:' + OUT_COLOR[o.state] + '">' + OUT_MARK[o.state] + ' ' + esc(o.line) + '</div>';
+      var rows = o.detail.map(function (d) {
+        var b = d.b;
+        return '<div style="margin-top:4px;color:var(--text-mid);font-family:ui-monospace,Menlo,monospace;font-size:13px">' +
+          OUT_MARK[d.state] + ' ' + esc(d.n) + ' · ' + esc(b.site || '—') + ' · v' + (b.version || 0) +
+          (o.target && b.version !== o.target ? ' → v' + o.target : '') +
+          ' · <span style="color:' + OUT_COLOR[d.state] + '">' + esc(d.why) + '</span>' +
+          ' · ' + fmtAgo(b.lastSeen) + '</div>';
+      }).join('');
+      resultEl.innerHTML = head + rows;
+      // While a deploy is in flight the panel keeps asking, so the state lands
+      // on DONE/FAILED without anyone pressing Refresh.
+      if (o.state === 'working') pollFeed();
+    }
+    function pollFeed() {
+      if (pollTimer || !document.body.contains(resultEl)) return;
+      pollTimer = setTimeout(async function () {
+        pollTimer = null;
+        if (document.hidden) return;
+        var s = await loadStatus(); if (s) render(s);
+      }, 3000);
     }
     var td = 'padding:6px 10px;border-top:1px solid var(--border)';
     var th = 'text-align:left;padding:6px 10px;color:var(--text-mid);font-size:14px;letter-spacing:.08em;text-transform:uppercase';
@@ -2498,6 +2559,7 @@
           '</div><div><button class="stg-seg-btn rel-promote" data-v="' + a.version + '"' +
           (a.version === s.stable ? ' disabled' : '') + '>' + (back ? 'Roll back' : 'Promote') + '</button></div></div>';
       }).join('') || '—';
+      renderOutcome(s);
       logEl.textContent = s.buildLog || '(empty)';
       // The hint states what the next click will do, in numbers — unless an
       // action is in flight, whose own line wins until it settles.
@@ -2547,7 +2609,7 @@
       var st = okDeploy ? await settle(next, 'Deploying…') : null;
       delete deployBtn.dataset.busy;
       deployBtn.disabled = false; deployBtn.textContent = 'Deploy';
-      pendingMsg = st ? null : (okDeploy ? 'deploy sent — refreshing…' : 'deploy failed — stable unchanged at v' + s.stable);
+      pendingMsg = st ? null : (okDeploy ? 'deploy sent — refreshing…' : 'DEPLOY FAILED — stable unchanged at v' + s.stable);
       var s2 = await loadStatus(); if (s2) render(s2);
       if (st) deployHint.textContent = 'stable is v' + st.stable + ' — boxes are fetching and applying (Doing column)';
     });

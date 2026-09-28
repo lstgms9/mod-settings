@@ -112,14 +112,16 @@ function setCookies(res) {
   // commits, so the work a person watches is the BOX's — the feed carries a
   // phase per box and the table says what it is doing. Asserted against a
   // stubbed payload so a box mid-apply is seen, not assumed.
+  const FD = { version: 99, stable: 99 };
+  const box = (over) => Object.assign({ version: FD.version, site: 'hashoid', health: '200', phase: 'applying', uptime: 10, rolledBack: false, lastSeen: new Date().toISOString() }, over || {});
   const statusBody = () => ({
     version: FD.version, stable: FD.stable, createdAt: new Date().toISOString(),
     versions: [{ version: FD.version, createdAt: new Date().toISOString(), sites: ['hashoid'] },
                { version: FD.version - 1, createdAt: new Date(Date.now() - 3600000).toISOString(), sites: ['hashoid'] }],
-    boxes: { w1: { version: FD.version, site: 'hashoid', health: '200', phase: 'applying', uptime: 10, rolledBack: false, lastSeen: new Date().toISOString() } },
+    boxes: { w1: FD.box },
     buildLog: '',
   });
-  const FD = { version: 99, stable: 99 };
+  FD.box = box();
   await h.page.route('**/api/settings/release/status', (route) => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify(statusBody()),
   }));
@@ -174,6 +176,33 @@ function setCookies(res) {
     (/stable is v100/.test(document.getElementById('relDeployHint').innerText) ? document.getElementById('relDeployHint').innerText : false));
   h.assert('Deploy cuts AND moves in one action (POST /release/deploy)', deployed === 'POST', deployed);
   h.assert('the hint reports the live version after the click', /v100/.test(String(said)), String(said).slice(0, 80));
+
+  // ── THE LOOP CLOSES ON SCREEN (Damon 2026-09-28: "pressed Deploy, zero
+  // feedback — he should never have to ask what happened"). Three feeds, three
+  // verdicts: a box mid-apply, a box that landed, a box that rolled back.
+  const resultText = () => document.getElementById('relResult').innerText.replace(/\s+/g, ' ');
+  const inProg = await h.waitUntil('a box mid-apply reads as IN PROGRESS', () => {
+    const t = resultText();
+    return /^⧗ IN PROGRESS/.test(t) && /w1/.test(t) && /applying/.test(t) ? t : false;
+  });
+  h.assert('mid-apply says IN PROGRESS, names the box and what it is doing', /IN PROGRESS/.test(String(inProg)), String(inProg).slice(0, 90));
+
+  FD.box = box({ phase: 'idle' });
+  await h.page.click('#relRefresh');
+  const done = await h.waitUntil('a landed box reads as DONE', () => {
+    const t = resultText();
+    return /^✓ DONE/.test(t) ? t : false;
+  });
+  h.assert('landed says DONE with the version and the health', /DONE — v99/.test(String(done)) && /health 200/.test(String(done)), String(done).slice(0, 90));
+
+  FD.box = box({ version: 98, phase: 'idle', rolledBack: true });
+  await h.page.click('#relRefresh');
+  const bad = await h.waitUntil('a rolled-back box reads as FAILED', () => {
+    const t = resultText();
+    return /^✗ FAILED/.test(t) ? t : false;
+  });
+  h.assert('a rollback says FAILED and says why', /FAILED/.test(String(bad)) && /rolled back/.test(String(bad)), String(bad).slice(0, 90));
+  FD.box = box();
 
   await h.page.unroute('**/api/settings/release/status');
   await h.page.unroute('**/api/settings/release/promote');
