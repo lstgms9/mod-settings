@@ -45,9 +45,13 @@ const ck = (r) => (typeof r.headers.getSetCookie === 'function' ? r.headers.getS
   console.log('AFTER CLICK — hint:', await h.page.evaluate(() => document.getElementById('relDeployHint').innerText));
   console.log('AFTER CLICK — overlays:', await h.page.evaluate(() => Array.from(document.querySelectorAll('[class*=pui-]')).map(e => e.className + '|' + (e.offsetParent ? 'visible' : 'hidden') + '|' + (e.innerText || '').replace(/\s+/g, ' ').slice(0, 60)).join(' || ') || 'none'));
   console.log('CALLS:', JSON.stringify(calls));
-  // The real thing: press Confirm the way Damon would.
-  await h.page.click('.pui-confirm-actions .pui-btn-primary');
-  await h.page.waitForTimeout(6000);
+  console.log('CONFIRM-CANCELLED — no version burned');
+  // The confirm is where Damon's click was supposed to land — assert it is
+  // really there, then CANCEL. (Pressing Confirm here DEPLOYS: the earlier
+  // versions of this probe cut v34 and v35 and moved prod both times. Read the
+  // panel, do not fire the gun.)
+  await h.page.click('.pui-confirm-actions .pui-btn:not(.pui-btn-primary)');
+  await h.page.waitForTimeout(1500);
   return h.page.click('.pui-confirm-actions .pui-btn:not(.pui-btn-primary)').then(() => console.log('CANCELLED confirm (no version burned)'));
   console.log('CONFIRMED — button:', await h.page.evaluate(() => document.getElementById('relDeploy').textContent.trim()));
   console.log('CONFIRMED — hint:', await h.page.evaluate(() => document.getElementById('relDeployHint').innerText));
