@@ -992,7 +992,7 @@
       var stNameRow = document.getElementById('accountStudioNameRow');
       var sesObj3 = await platform.user.current();
       var isStudioTier3 = sesObj3 && (sesObj3.tier === 'studio' || sesObj3.tier === 'studio_pro' || sesObj3.plan === 'studio' || sesObj3.plan === 'studio_pro');
-      if (stRow && isStudioTier3 && sesObj3.studioSlug) {
+      if (stRow && isStudioTier3 && sesObj3.studioSlug && studioSlugAsked()) {
         stRow.style.display = '';
         if (stNameRow) stNameRow.style.display = '';
         var slugEl = document.getElementById('accountStudioSlug');
@@ -1616,7 +1616,7 @@
               // If session reveals an existing studio thing slug, skip
               // the picker. Otherwise show it.
               var hasLockedSlug = !!(ses && ses.studioSlug);
-              if (!hasLockedSlug) {
+              if (!hasLockedSlug && studioSlugAsked()) {
                 openStudioSlugPicker(tierId, t, b);
                 return;
               }
@@ -1626,6 +1626,12 @@
         });
       });
     });
+  }
+  // Does this site ask a studio for a slug? Only if its studio plan's form lists 'studioSlug' — gamoid dropped it
+  // (Damon 2026-10-12: no subdomains); then the server makes the slug from the studio's name and nobody sees it.
+  function studioSlugAsked() {
+    var tiers = (window.SIGNUP_CONFIG && window.SIGNUP_CONFIG.tiers) || [];
+    return tiers.some(function (t) { return t.userTier === 'studio' && (t.form || []).indexOf('studioSlug') !== -1; });
   }
   function initPlanManage() {
     var btn = document.getElementById('planManageBtn');
