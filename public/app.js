@@ -972,7 +972,8 @@
       var sesObj = null;
       try { sesObj = await platform.user.current(); } catch (_) {}
       var studioSlug = sesObj && sesObj.studioSlug;
-      if (studioSlug) {
+      // mail is staff-only (config.mail.staffOnly): a studio has no mailbox, so show the signup email
+      if (studioSlug && !(window.INSTANCE_MAIL && window.INSTANCE_MAIL.staffOnly)) {
         var mailParent = (window.INSTANCE_MAIL && window.INSTANCE_MAIL.studioMailDomain) || 'gamoids.com';
         emailEl.textContent = studioSlug + '@' + mailParent;
       } else if (idEmail) {
@@ -1785,6 +1786,8 @@
     var tenantSlug = window.INSTANCE_SLUG || null;
     var isTenantOwner = !!(ses && tenantSlug && ses.slug === tenantSlug);
     var isCompany = isTenantOwner || !!(ses && (ses.superOwner || ses.role === 'super_owner' || ses.gamoidEmployee));
+    // where mail is staff-only (config.mail.staffOnly, Damon 2026-10-12) studios get no mailboxes — company only
+    if (window.INSTANCE_MAIL && window.INSTANCE_MAIL.staffOnly) isStudio = false;
     var nav = document.getElementById('stgMailboxesNav');
     if (nav) nav.style.display = (isStudio || isCompany) ? '' : 'none';
     if (!isStudio && !isCompany) return;
