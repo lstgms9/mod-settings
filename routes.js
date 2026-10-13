@@ -739,7 +739,8 @@ module.exports = function(router, ctx) {
   // admin/DEV_DEPLOY_DELTA_PLAN.md), and PROMOTE is the only thing that moves
   // a prod box. Rollback is promoting an older number: deltas are
   // direction-free, so a box asks for the diff from ITS version and applies it.
-  const deployLib = require('/home/damon/platform/scripts/deploy-lib.js');
+  // required on first use: release copies on the prods have no scripts/, and a top-level require killed every settings route there
+  const deployLib = new Proxy({}, { get: (_, k) => require('/home/damon/platform/scripts/deploy-lib.js')[k] });
   const DELTA_DIR = path.join(REL_DIR, 'deltas');
   const CUT_LOG = '/home/damon/platform/.runtime/deploy-cut.log';
 
