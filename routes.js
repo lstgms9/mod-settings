@@ -833,6 +833,27 @@ module.exports = function(router, ctx) {
     res.json({ ok: true, box, stable: deployLib.readManifest().stable || 0 });
   });
 
+  // POST /keyop — the brokered keyed call (admin/PROD-KEYS-REMOVAL.md, Damon GO
+  // 2026-10-13). A prod holds no third-party keys; it asks here with its box
+  // token, this walled process runs the fixed op (lib/keyop-ops.js) with the
+  // pocket's keys and answers with the result only. A keyop CLIENT never serves
+  // (no relaying a relay), and workers 404 like every release route.
+  router.post('/keyop', async (req, res) => {
+    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
+    if (process.env.KEYOP_URL) return res.error(404, 'Not a keyop server');
+    const box = boxFromToken(req);
+    if (!box) return res.error(403, 'Box token required');
+    const op = String((req.body || {}).op || '');
+    try {
+      const result = await require('./lib/keyop-ops.js').run(box, op, (req.body || {}).args);
+      console.log('[keyop] ' + box + ' ' + op + ' ok');
+      res.json({ ok: true, result: result === undefined ? null : result });
+    } catch (e) {
+      console.log('[keyop] ' + box + ' ' + op + ' FAIL ' + String(e.message || e).slice(0, 160));
+      res.json({ error: { message: String(e.message || e).slice(0, 300), type: e.type, code: e.code, statusCode: e.statusCode || e.status } });
+    }
+  });
+
   // POST /release/cut — a number over the current commit set. No bundling, no
   // 11-minute build: it records what GitHub already holds. (Deltas are built
   // when a box asks for one.)
