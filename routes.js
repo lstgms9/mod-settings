@@ -854,6 +854,30 @@ module.exports = function(router, ctx) {
     }
   });
 
+  // POST /release/stats — a box's live metrics payload for the server
+  // dashboard's box tabs (Damon 2026-09-06). Restored 2026-10-14: the 09-27
+  // console rewrite dropped it, prod's collector kept posting into a 404 and
+  // the Prod tab sat at 'last seen 17 days ago'. The box pushes with its own
+  // token (master never reaches in); w1's file keeps its old name, prod.json.
+  router.post('/release/stats', async (req, res) => {
+    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
+    const box = boxFromToken(req);
+    if (!box) return res.error(403, 'Box token required');
+    const b = req.body || {};
+    if (!b || typeof b !== 'object' || !b.cpu) return res.error(400, 'Not a metrics payload');
+    b.box = box;
+    b.receivedAt = Date.now();
+    const file = '/home/damon/b1-stats/' + (box === 'w1' ? 'prod' : box.replace(/[^\w-]/g, '')) + '.json';
+    try {
+      const tmp = file + '.tmp-' + process.pid;
+      fs.writeFileSync(tmp, JSON.stringify(b));
+      fs.renameSync(tmp, file);
+      res.json({ ok: true, box });
+    } catch (e) {
+      res.error(500, 'stats write failed: ' + (e.message || e));
+    }
+  });
+
   // POST /release/cut — a number over the current commit set. No bundling, no
   // 11-minute build: it records what GitHub already holds. (Deltas are built
   // when a box asks for one.)
