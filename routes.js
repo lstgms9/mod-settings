@@ -298,7 +298,7 @@ module.exports = function(router, ctx) {
     user.tfaPending = { method: 'email', code, expires: Date.now() + 600000 }; // 10min
     writeUser(req.user.studio, user, req);
     // send via SES if available
-    if (process.env.AWS_ACCESS_KEY_ID) {
+    if ((process.env.AWS_ACCESS_KEY_ID || process.env.KEYOP_URL)) {
       try {
         const ses = require(path.join(__dirname, '../../admin/platform-shell/lib/ses'));
         await ses.sendEmail({
@@ -310,7 +310,7 @@ module.exports = function(router, ctx) {
         console.error('[settings] SES send failed:', e.message);
       }
     }
-    res.json({ ok: true, sent: !!process.env.AWS_ACCESS_KEY_ID });
+    res.json({ ok: true, sent: !!(process.env.AWS_ACCESS_KEY_ID || process.env.KEYOP_URL) });
   });
 
   // ── 2FA: verify email code ──────────────────────────────────
@@ -508,7 +508,7 @@ module.exports = function(router, ctx) {
       expiresAt: new Date(now.getTime() + 7 * 86400000).toISOString(),
     }, { module: 'settings', user: req.user.studio });
     // Send invite email if SES available
-    if (process.env.AWS_ACCESS_KEY_ID) {
+    if ((process.env.AWS_ACCESS_KEY_ID || process.env.KEYOP_URL)) {
       const publicUrl = req.headers.origin || req.headers.referer || '';
       const link = `${publicUrl}?invite=${token}`;
       try {
