@@ -56,7 +56,10 @@
   var SIZES = { small: '14px', medium: '16px', large: '19px' };
   var WEIGHTS = { small: '400', medium: '500', large: '600' };
 
+  // Appearance switched off for this tenant (PUB_CONFIG.settingsHide 'appearance'): saved theme/accent/font are not applied
+  function appearanceOff() { try { return ((window.PUB_CONFIG || {}).settingsHide || []).indexOf('appearance') !== -1; } catch (e) { return false; } }
   function applyVisual() {
+    if (appearanceOff()) return;
     var r = document.documentElement.style;
     // theme
     var t = THEMES[prefs.theme];
@@ -2728,7 +2731,7 @@
   // ── Early apply from localStorage (before module loads) ─────
   try {
     var saved = JSON.parse(localStorage.getItem('okdun-user-prefs'));
-    if (saved) {
+    if (saved && !appearanceOff()) {
       var r = document.documentElement.style;
       // Feed the accent ENGINE (base + per-theme darken); CSS derives
       // --accent/--pub-brand. Never set --accent/--primary raw here — that
