@@ -701,7 +701,9 @@ module.exports = function(router, ctx) {
     if (!tok) return null;
     for (const [name, t] of Object.entries(releaseTokens())) {
       try {
-        const a = Buffer.from(tok), b = Buffer.from(t);
+        // an entry may hold the token's sha256 instead of the token (dev keeps only hashes — PROD-PRIVACY-PLAN)
+        const hashed = /^sha256=[0-9a-f]{64}$/.test(t);
+        const a = Buffer.from(hashed ? 'sha256=' + crypto.createHash('sha256').update(tok).digest('hex') : tok), b = Buffer.from(t);
         if (a.length === b.length && crypto.timingSafeEqual(a, b)) return name;
       } catch {}
     }
