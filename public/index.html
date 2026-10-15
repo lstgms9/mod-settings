@@ -360,7 +360,7 @@
         </div>
       </div>
 
-      <div class="stg-group">
+      <div class="stg-group" data-hide-key="privacy-session">
         <div class="stg-group-label">SESSION</div>
         <div class="stg-row">
           <div><div class="stg-label">Session timeout</div><div class="stg-sublabel">Auto-logout after inactivity</div></div>
@@ -370,7 +370,7 @@
         </div>
       </div>
 
-      <div class="stg-group">
+      <div class="stg-group" data-hide-key="privacy-visibility">
         <div class="stg-group-label">VISIBILITY</div>
         <div class="stg-row"><div><div class="stg-label">Public profile</div><div class="stg-sublabel">Show your business on the <span data-tenant-brand>this site</span> directory</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="publicProfile"></div><span class="stg-toggle-label">ON</span></div></div>
         <div class="stg-row"><div><div class="stg-label">Online status</div><div class="stg-sublabel">Let others see when you're active</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="onlineStatus"></div><span class="stg-toggle-label">ON</span></div></div>
@@ -551,14 +551,24 @@
             <span class="stg-acct-arrow">→</span>
             <label>Region<select class="stg-input" id="profileTimezone"></select></label>
           </div>
+          <!-- password belongs with the account details, not at the bottom of the page (Damon 2026-10-15) -->
+          <div class="stg-acct-pair stg-acct-pair-full" id="passwordChangeForm">
+            <label>Password
+              <div class="stg-acct-pwrow">
+                <input type="password" class="stg-input" id="currentPwInput" placeholder="Current password" autocomplete="current-password">
+                <input type="password" class="stg-input" id="newPwInput" placeholder="New password (8+ chars)" autocomplete="new-password">
+                <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="changePwBtn">Update</button>
+              </div>
+            </label>
+          </div>
+          <div class="stg-acct-save"><button class="stg-ai-btn stg-ai-connect" id="profileSaveBtn" style="width:auto;padding:8px 20px;">Save</button></div>
         </div>
       </div>
 
       <!-- INFO BOX — public-facing profile content -->
-      <div class="stg-acct-box stg-acct-info">
+      <div class="stg-acct-box stg-acct-info" data-hide-key="account-info">
         <div class="stg-acct-info-head">
           <div class="stg-group-label" style="margin:0;">INFO</div>
-          <button class="stg-ai-btn stg-ai-connect" id="profileSaveBtn" style="width:auto;padding:6px 16px;">Save profile</button>
         </div>
         <label class="stg-info-field">
           <span class="stg-info-label">Bio</span>
@@ -585,21 +595,6 @@
       </div>
 
       <!-- EMAIL ADDRESSES removed — covered by the Mailboxes sidebar entry. -->
-
-      <div class="stg-group">
-        <div class="stg-group-label">PASSWORD</div>
-        <div class="stg-row" style="flex-wrap:wrap;gap:8px;">
-          <div style="flex:1;min-width:200px;">
-            <div class="stg-label">Change password</div>
-            <div class="stg-sublabel">Update your login password</div>
-          </div>
-          <div id="passwordChangeForm" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input type="password" class="stg-input" id="currentPwInput" placeholder="Current password" style="width:160px;">
-            <input type="password" class="stg-input" id="newPwInput" placeholder="New password (8+ chars)" style="width:180px;">
-            <button class="stg-ai-btn stg-ai-connect" id="changePwBtn" style="width:auto;padding:8px 16px;">Update</button>
-          </div>
-        </div>
-      </div>
 
       <div class="stg-group stg-danger-group">
         <div class="stg-group-label">DANGER ZONE</div>

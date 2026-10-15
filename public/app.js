@@ -983,6 +983,9 @@
     // RECOVERY EMAIL = the original signup address (read-only).
     var recEl = document.getElementById('accountRecoveryEmail');
     if (recEl && idEmail) recEl.value = idEmail;
+    // A recovery address that IS the email above says nothing — only show it when the Email row is a different
+    // address (a studio mailbox); otherwise the page showed the same address twice (Damon 2026-10-15)
+    try { if (recEl && emailEl && recEl.value && recEl.value.toLowerCase() === String(emailEl.textContent || '').trim().toLowerCase()) recEl.closest('label').style.display = 'none'; } catch (_) {}
 
     // STUDIO row — only rendered for studio-tier viewers. Slug is locked
     // (website subdomain + mailbox local-part keyed off it); name is the
@@ -2201,7 +2204,9 @@
       var _sh = ((window.PUB_CONFIG || {}).settingsHide || []).filter(function(x) { return /^[a-z-]+$/.test(x); });
       var _shEl = document.getElementById('stg-hide-css');
       if (_sh.length && !_shEl) { _shEl = document.createElement('style'); _shEl.id = 'stg-hide-css'; document.head.appendChild(_shEl); }
-      if (_shEl) _shEl.textContent = _sh.map(function(x) { return '.stg-nav-item[data-section="' + x + '"]'; }).join(',') + (_sh.length ? '{display:none!important}' : '');
+      // a name is a pane (its nav item) or a part of one tagged data-hide-key (account-info = bio/social/press,
+      // privacy-session = session timeout, privacy-visibility = public profile/online status)
+      if (_shEl) _shEl.textContent = _sh.map(function(x) { return '.stg-nav-item[data-section="' + x + '"],[data-hide-key="' + x + '"]'; }).join(',') + (_sh.length ? '{display:none!important}' : '');
     } catch (_) {}
     // Fill any [data-tenant-brand] placeholders with the current
     // tenant's display name. mod-settings is multi-tenant, so we read

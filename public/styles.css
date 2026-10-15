@@ -781,3 +781,8 @@
 #bkSimple .stg-toggle { width: 52px; height: 28px; border-radius: 14px; }
 #bkSimple .stg-toggle::after { width: 22px; height: 22px; }
 #bkSimple .stg-toggle.on::after { left: 26px; }
+
+/* Account → Details: the password row and the one Save for the details */
+.stg-acct-pwrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.stg-acct-pwrow .stg-input { flex: 1 1 150px; min-width: 0; }
+.stg-acct-save { display: flex; justify-content: flex-end; margin-top: 12px; }
