@@ -519,7 +519,7 @@
   display: grid;
   /* Picker iframe needs ~440px to fit Back/Change/Save in a row;
      narrower clips the Save button. */
-  grid-template-columns: minmax(440px, 480px) 1fr;
+  grid-template-columns: minmax(440px, 480px) minmax(0, 1fr);
   gap: 18px;
   align-items: stretch;
   margin-bottom: 18px;
@@ -793,7 +793,7 @@
 .stg-pw-form input:focus { border-color: var(--primary); }
 .pui-modal-actions .stg-ai-btn { width: auto; padding: 8px 22px; }
 /* Username | Display name side by side, each with its own small Save (stacked on a phone) */
-.stg-acct-names { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.stg-acct-names { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
 .stg-acct-names > label { min-width: 0; }
 .stg-acct-names .stg-acct-userrow { display: flex; gap: 8px; align-items: center; }
 .stg-acct-names .stg-acct-userrow .stg-input { flex: 1; min-width: 0; }
@@ -801,3 +801,10 @@
 @media (max-width: 760px) { .stg-acct-names { grid-template-columns: 1fr; } }
 .stg-acct-names .stg-acct-userrow { flex-wrap: nowrap; } .stg-acct-names .stg-acct-username-input { min-width: 0; }
 .stg-acct-planrow .stg-acct-email { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.stg-acct-details { min-width: 0; }
+/* the Details box never pushes past its column (Settings also opens as a pop-up — narrower than the page) */
+.stg-acct-details .stg-acct-pair > label { min-width: 0; }
+.stg-acct-details select.stg-input, .stg-acct-details .stg-input { min-width: 0; max-width: 100%; }
+.stg-acct-details .stg-acct-planrow { flex-wrap: wrap; }
+.stg-acct-details .stg-acct-planrow .stg-acct-email { flex: 1 1 160px; }
