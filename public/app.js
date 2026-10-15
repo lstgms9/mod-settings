@@ -2195,6 +2195,14 @@
   window._stgConfirm = showConfirmModal;
 
   window.platform.module.init = async function() {
+    // Panes this tenant switched off (config.settings.hideSections → PUB_CONFIG.settingsHide; gamoid v1, Damon 2026-10-15:
+    // appearance, notifications, AI accounts, publish). A stylesheet, so the nav items other code reveals later stay hidden.
+    try {
+      var _sh = ((window.PUB_CONFIG || {}).settingsHide || []).filter(function(x) { return /^[a-z-]+$/.test(x); });
+      var _shEl = document.getElementById('stg-hide-css');
+      if (_sh.length && !_shEl) { _shEl = document.createElement('style'); _shEl.id = 'stg-hide-css'; document.head.appendChild(_shEl); }
+      if (_shEl) _shEl.textContent = _sh.map(function(x) { return '.stg-nav-item[data-section="' + x + '"]'; }).join(',') + (_sh.length ? '{display:none!important}' : '');
+    } catch (_) {}
     // Fill any [data-tenant-brand] placeholders with the current
     // tenant's display name. mod-settings is multi-tenant, so we read
     // from window.SIGNUP_CONFIG.heroTitle when present, otherwise
