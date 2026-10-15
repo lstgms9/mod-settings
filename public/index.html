@@ -507,19 +507,21 @@
         </div>
         <div class="stg-acct-box stg-acct-details">
           <div class="stg-group-label">DETAILS</div>
-          <div class="stg-acct-pair stg-acct-pair-full">
-            <label>Display name<input type="text" class="stg-input" id="profileDisplayName" placeholder="Your name"></label>
-          </div>
-          <div class="stg-acct-pair stg-acct-pair-full stg-acct-pair-username">
-            <label>
-              <div class="stg-acct-username-labelrow">
-                <span>Username</span>
-              </div>
+          <!-- Username first (the handle), Display name beside it — each with its own Save, greyed until edited (Damon 2026-10-15) -->
+          <div class="stg-acct-pair stg-acct-names stg-acct-pair-username">
+            <label>Username
               <div class="stg-acct-userrow">
                 <input type="text" class="stg-input stg-acct-username-input" id="accountUsername" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="—">
                 <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="usernameSaveBtn" disabled>Save</button>
               </div>
               <div class="stg-acct-username-hint" id="usernameHint"></div>
+            </label>
+            <label>Display name
+              <div class="stg-acct-userrow">
+                <input type="text" class="stg-input" id="profileDisplayName" placeholder="Your name" maxlength="40">
+                <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="displayNameSaveBtn" disabled>Save</button>
+              </div>
+              <div class="stg-acct-username-hint" id="displayNameHint"></div>
             </label>
           </div>
           <div class="stg-acct-pair stg-acct-pair-full stg-acct-pair-studio" id="accountStudioNameRow" style="display:none">
@@ -528,7 +530,7 @@
           <div class="stg-acct-pair stg-acct-pair-full stg-acct-pair-studio" id="accountStudioRow" style="display:none">
             <label>Studio slug<div class="stg-acct-static stg-acct-locked" id="accountStudioSlug" title="Permanent — subdomain &amp; mailbox owner">—</div></label>
           </div>
-          <div class="stg-acct-pair">
+          <div class="stg-acct-pair stg-acct-pair-full">
             <label>Email
               <div class="stg-acct-planrow">
                 <div class="stg-acct-email" id="accountEmail" data-fallback="you@example.com">—</div>

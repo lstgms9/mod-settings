@@ -792,3 +792,12 @@
   color: var(--text, #e4e4f0); font: 14px 'DM Sans', system-ui, sans-serif; padding: 10px 12px; outline: none; }
 .stg-pw-form input:focus { border-color: var(--primary); }
 .pui-modal-actions .stg-ai-btn { width: auto; padding: 8px 22px; }
+/* Username | Display name side by side, each with its own small Save (stacked on a phone) */
+.stg-acct-names { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.stg-acct-names > label { min-width: 0; }
+.stg-acct-names .stg-acct-userrow { display: flex; gap: 8px; align-items: center; }
+.stg-acct-names .stg-acct-userrow .stg-input { flex: 1; min-width: 0; }
+.stg-acct-names .stg-acct-cta { flex: none; width: auto; }
+@media (max-width: 760px) { .stg-acct-names { grid-template-columns: 1fr; } }
+.stg-acct-names .stg-acct-userrow { flex-wrap: nowrap; } .stg-acct-names .stg-acct-username-input { min-width: 0; }
+.stg-acct-planrow .stg-acct-email { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

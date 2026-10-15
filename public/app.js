@@ -1174,7 +1174,7 @@
       if (!s || !s.loggedIn) return;
       var dn = document.getElementById('profileDisplayName');
       var bio = document.getElementById('profileBio');
-      if (dn) dn.value = s.displayName || s.username || '';
+      if (dn) { dn.value = s.displayName || s.username || ''; dn.dataset.original = dn.value; }
       if (cSel && s.country) {
         cSel.value = s.country;
         if (flagEl) flagEl.innerHTML = flagImg(s.country) || '\uD83C\uDF0D';
@@ -1187,6 +1187,22 @@
     }).catch(function(){ renderPlatformRows(); refreshAddSelect(); });
     var btn = document.getElementById('profileSaveBtn');
     if (btn) btn.addEventListener('click', saveProfile);
+    // Display name has its own Save beside it — lit only once the name differs from the saved one
+    var dnIn = document.getElementById('profileDisplayName'), dnBtn = document.getElementById('displayNameSaveBtn'), dnHint = document.getElementById('displayNameHint');
+    if (dnIn && dnBtn) {
+      var dnSync = function() { dnBtn.disabled = !dnIn.value.trim() || dnIn.value.trim() === (dnIn.dataset.original || ''); if (dnHint) dnHint.textContent = ''; };
+      dnIn.addEventListener('input', dnSync);
+      dnBtn.addEventListener('click', async function() {
+        var v = dnIn.value.trim(); if (!v) return;
+        dnBtn.disabled = true; dnBtn.textContent = 'Saving…';
+        try {
+          var r = await fetch('/api/auth/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ displayName: v }) });
+          if (r.ok) { dnIn.dataset.original = v; if (dnHint) { dnHint.textContent = 'Saved.'; dnHint.className = 'stg-acct-username-hint ok'; } }
+          else if (dnHint) { dnHint.textContent = 'Save failed'; dnHint.className = 'stg-acct-username-hint bad'; }
+        } catch (e) { if (dnHint) { dnHint.textContent = 'Connection error'; dnHint.className = 'stg-acct-username-hint bad'; } }
+        dnBtn.textContent = 'Save'; dnSync();
+      });
+    }
     var addBtn = document.getElementById('platformAddBtn');
     if (addBtn) addBtn.addEventListener('click', function() {
       var sel = document.getElementById('platformAddSelect');
