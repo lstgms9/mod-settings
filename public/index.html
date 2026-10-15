@@ -514,7 +514,6 @@
             <label>
               <div class="stg-acct-username-labelrow">
                 <span>Username</span>
-                <span class="stg-acct-username-aside" id="usernameAside">(You can change your username once every 30 days. Choose carefully.)</span>
               </div>
               <div class="stg-acct-userrow">
                 <input type="text" class="stg-input stg-acct-username-input" id="accountUsername" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="—">
@@ -530,7 +529,12 @@
             <label>Studio slug<div class="stg-acct-static stg-acct-locked" id="accountStudioSlug" title="Permanent — subdomain &amp; mailbox owner">—</div></label>
           </div>
           <div class="stg-acct-pair">
-            <label>Email<div class="stg-acct-email" id="accountEmail" data-fallback="you@example.com">—</div></label>
+            <label>Email
+              <div class="stg-acct-planrow">
+                <div class="stg-acct-email" id="accountEmail" data-fallback="you@example.com">—</div>
+                <button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="changePwBtn">Change password</button>
+              </div>
+            </label>
             <label>Recovery email<input type="text" class="stg-input stg-mono-cyan" id="accountRecoveryEmail" placeholder="—" readonly></label>
           </div>
           <div class="stg-acct-pair stg-acct-pair-plan" data-hide-key="account-tier">
@@ -550,16 +554,6 @@
             </label>
             <span class="stg-acct-arrow">→</span>
             <label>Region<select class="stg-input" id="profileTimezone"></select></label>
-          </div>
-          <!-- password belongs with the account details, not at the bottom of the page (Damon 2026-10-15) -->
-          <div class="stg-acct-pair stg-acct-pair-full" id="passwordChangeForm">
-            <label>Password
-              <div class="stg-acct-pwrow">
-                <input type="password" class="stg-input" id="currentPwInput" placeholder="Current password" autocomplete="current-password">
-                <input type="password" class="stg-input" id="newPwInput" placeholder="New password (8+ chars)" autocomplete="new-password">
-                <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="changePwBtn">Update</button>
-              </div>
-            </label>
           </div>
           <div class="stg-acct-save"><button class="stg-ai-btn stg-ai-connect" id="profileSaveBtn" style="width:auto;padding:8px 20px;">Save</button></div>
         </div>
@@ -596,7 +590,7 @@
 
       <!-- EMAIL ADDRESSES removed — covered by the Mailboxes sidebar entry. -->
 
-      <div class="stg-group stg-danger-group">
+      <div class="stg-group stg-danger-group" data-hide-key="account-delete">
         <div class="stg-group-label">DANGER ZONE</div>
         <div class="stg-row">
           <div><div class="stg-label">Delete account</div><div class="stg-sublabel">Permanently remove your account and studio — cannot be undone.</div></div>

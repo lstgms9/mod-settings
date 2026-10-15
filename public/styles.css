@@ -786,3 +786,9 @@
 .stg-acct-pwrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .stg-acct-pwrow .stg-input { flex: 1 1 150px; min-width: 0; }
 .stg-acct-save { display: flex; justify-content: flex-end; margin-top: 12px; }
+.stg-pw-form { display: flex; flex-direction: column; gap: 10px; min-width: min(360px, 80vw); }
+.stg-pw-msg { min-height: 18px; font-size: 13px; color: var(--red, #ff5a6a); }
+.stg-pw-form input { width: 100%; box-sizing: border-box; background: var(--bg, #0b0b14); border: 1px solid var(--border, #2a2a40); border-radius: 8px;
+  color: var(--text, #e4e4f0); font: 14px 'DM Sans', system-ui, sans-serif; padding: 10px 12px; outline: none; }
+.stg-pw-form input:focus { border-color: var(--primary); }
+.pui-modal-actions .stg-ai-btn { width: auto; padding: 8px 22px; }

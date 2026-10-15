@@ -147,7 +147,7 @@
     // Tier-gate sidebar items via data-min-tier. Hide entries whose
     // required tier exceeds the viewer's. Player=0, Dev=1, Studio=2,
     // Studio_Pro=3. Tenant owner / super_owner sees everything.
-    (async function() {
+    _tierGate = (async function() {
       try {
         var s = await platform.user.current();
         if (!s) return;
@@ -719,28 +719,36 @@
   }
 
   // ── Password Change ──────────────────────────────────────
+  // Change password (Damon 2026-10-15): a button beside Email opens a small pop-up — current password, new password,
+  // Update — and says when it's done.
   function initPasswordChange() {
     var btn = document.getElementById('changePwBtn');
     if (!btn) return;
-    btn.addEventListener('click', async function() {
-      var cur = document.getElementById('currentPwInput');
-      var nw = document.getElementById('newPwInput');
-      if (!cur || !nw) return;
-      var currentPw = cur.value.trim();
-      var newPw = nw.value.trim();
-      if (!currentPw) { cur.style.borderColor = 'var(--red)'; cur.focus(); setTimeout(function() { cur.style.borderColor = ''; }, 1500); return; }
-      if (newPw.length < 8) { nw.style.borderColor = 'var(--red)'; nw.focus(); toast('Password must be 8+ characters'); setTimeout(function() { nw.style.borderColor = ''; }, 1500); return; }
-      var basePath = platform.basePath || '';
-      try {
-        var r = await fetch(basePath + '/api/auth/change-password', {
-          method: 'POST', credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw })
-        });
-        var data = await r.json();
-        if (data.ok) { toast('Password updated'); cur.value = ''; nw.value = ''; }
-        else toast(data.error || 'Failed to update password');
-      } catch(e) { toast('Connection error'); }
+    btn.addEventListener('click', function() {
+      var m = platform.ui.modal({ title: 'Change password' });
+      m.content.innerHTML = '<div class="stg-pw-form">' +
+        '<input type="password" class="stg-input" id="pwCur" placeholder="Current password" autocomplete="current-password">' +
+        '<input type="password" class="stg-input" id="pwNew" placeholder="New password (8+ characters)" autocomplete="new-password">' +
+        '<div class="stg-pw-msg" id="pwMsg"></div></div>';
+      var go = document.createElement('button'); go.type = 'button'; go.className = 'stg-ai-btn stg-ai-connect'; go.textContent = 'Update';
+      m.actions.appendChild(go);
+      var cur = m.content.querySelector('#pwCur'), nw = m.content.querySelector('#pwNew'), msg = m.content.querySelector('#pwMsg');
+      function say(t) { msg.textContent = t; }
+      async function submit() {
+        if (!cur.value) { say('Enter your current password.'); cur.focus(); return; }
+        if (nw.value.length < 8) { say('The new password needs 8 or more characters.'); nw.focus(); return; }
+        go.disabled = true; go.textContent = 'Updating…'; say('');
+        try {
+          var r = await fetch((platform.basePath || '') + '/api/auth/change-password', { method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: cur.value, newPassword: nw.value }) });
+          var d = await r.json().catch(function() { return {}; });
+          if (d.ok) { m.close(); toast('Password changed'); return; }
+          say(d.error || 'Could not change the password.');
+        } catch (e) { say('Connection error — try again.'); }
+        go.disabled = false; go.textContent = 'Update';
+      }
+      go.onclick = submit;
+      nw.addEventListener('keydown', function(e) { if (e.key === 'Enter') submit(); });
     });
   }
 
@@ -941,30 +949,11 @@
         try { var s = await platform.user.current(); return s && (s.username || s.handle); } catch(_) { return null; }
       })());
       if (unVal) {
-        // Username is mutable (1 rename / 30 days). The input is the
+        // Username is mutable (any time). The input is the
         // canonical editor; the Save button + hint live next to it.
         if (unEl.tagName === 'INPUT') unEl.value = unVal;
         else unEl.textContent = unVal;
         unEl.dataset.original = unVal;
-      }
-      // Pre-load cooldown state from prefs.usernameChangedAt (if any)
-      // so the hint shows "next eligible: <date>" before the user even
-      // touches the field.
-      var changedAt = prefs.usernameChangedAt;
-      var hintEl = document.getElementById('usernameHint');
-      var saveBtn = document.getElementById('usernameSaveBtn');
-      var asideEl = document.getElementById('usernameAside');
-      if (hintEl && changedAt) {
-        var ms = Date.parse(changedAt) + 30 * 24 * 60 * 60 * 1000 - Date.now();
-        if (ms > 0) {
-          var days = Math.ceil(ms / (24 * 60 * 60 * 1000));
-          hintEl.textContent = 'Next change in ' + days + ' day' + (days === 1 ? '' : 's');
-          hintEl.className = 'stg-acct-username-hint bad';
-          if (unEl && unEl.tagName === 'INPUT') unEl.readOnly = true;
-          if (saveBtn) saveBtn.disabled = true;
-          // The cooldown message replaces the standing aside copy.
-          if (asideEl) asideEl.style.display = 'none';
-        }
       }
     }
     // EMAIL = the studio's primary apex mailbox <slug>@<studioMailDomain>
@@ -1692,17 +1681,6 @@
       });
       unSave.addEventListener('click', async function() {
         var v = unInp.value.trim().toLowerCase();
-        // Confirm the 30-day lock BEFORE firing the rename. In-app
-        // modal — no native window.confirm chrome.
-        var ok = await showConfirmModal({
-          title: 'Change username?',
-          bodyHtml:
-            'New username: <strong>@' + v.replace(/[<>&]/g, function(c) { return ({ '<':'&lt;', '>':'&gt;', '&':'&amp;' })[c]; }) + '</strong><br><br>' +
-            'You can only change your username <strong>once every 30 days</strong>. After saving, you won\'t be able to change it again until then.',
-          confirmText: 'Change',
-          cancelText: 'Cancel',
-        });
-        if (!ok) return;
         unSave.disabled = true;
         unSave.textContent = 'Saving…';
         try {
@@ -1715,8 +1693,7 @@
           if (r.ok && d.ok) {
             unInp.dataset.original = d.username;
             unInp.value = d.username;
-            unInp.readOnly = true;
-            unHint.textContent = 'Saved. Next change in 30 days.';
+            unHint.textContent = 'Saved.';
             unHint.className = 'stg-acct-username-hint ok';
             var aside1 = document.getElementById('usernameAside');
             if (aside1) aside1.style.display = 'none';
@@ -2200,6 +2177,7 @@
   }
   window._stgConfirm = showConfirmModal;
 
+  var _tierGate = null;
   window.platform.module.init = async function() {
     // Panes this tenant switched off (config.settings.hideSections → PUB_CONFIG.settingsHide; gamoid v1, Damon 2026-10-15:
     // appearance, notifications, AI accounts, publish). A stylesheet, so the nav items other code reveals later stay hidden.
@@ -2281,7 +2259,8 @@
     initDeployPanel();
     initSecureBox();
     initPublishPanel();
-    initBackupsPanel();
+    // init resolves once the menu is final (tier gates applied, Backups found) — the shell shows a module only then
+    await Promise.all([_tierGate, initBackupsPanel()].map(function(p) { return Promise.resolve(p).catch(function() {}); }));
   };
 
   // ── Publish panel (flagged dev studios only) — feature-detected via
@@ -2351,6 +2330,8 @@
   async function initBackupsPanel() {
     var nav = document.getElementById('stgBackupsNav');
     if (!nav) return;
+    // a tenant whose config says it has backups shows the item at once; elsewhere the probe below decides
+    if ((window.PUB_CONFIG || {}).backupsSimple) nav.style.display = '';
     var list;
     try {
       var r = await fetch('/api/files/backup', { credentials: 'same-origin', cache: 'no-store' });
