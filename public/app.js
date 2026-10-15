@@ -2402,6 +2402,15 @@
     mOn.onclick = function() { setMedia(true); };
     mOff.onclick = function() { setMedia(false); };
     mNow.onclick = function() { location.href = '/api/files/export?mine=1'; };
+    // The simple view: ONE switch (the same mediaAuto setting the On/Off pair writes) and Download now (the latest
+    // nightly archive when there is one, else a fresh export of your files). config.settings.backupsSimple hides the rest.
+    var sw = document.getElementById('bkSwitch'), sNow = document.getElementById('bkSimpleNow');
+    if ((window.PUB_CONFIG || {}).backupsSimple) { var det = document.getElementById('bkDetail'); if (det) det.style.display = 'none'; }
+    else { var simp = document.getElementById('bkSimple'); if (simp) simp.style.display = 'none'; }
+    var _paintMedia = paintMedia;
+    paintMedia = function(on) { _paintMedia(on); if (sw) { sw.classList.toggle('on', !!on); sw.setAttribute('aria-checked', on ? 'true' : 'false'); } };
+    if (sw) { sw.onclick = function() { setMedia(!sw.classList.contains('on')); }; sw.onkeydown = function(e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); sw.onclick(); } }; }
+    if (sNow) sNow.onclick = function() { location.href = arc ? '/api/files/backup/latest' : '/api/files/export?mine=1'; };
     fetch('/api/files/media-export/status', { credentials: 'same-origin', cache: 'no-store' })
       .then(function(r){ return r.json(); })
       .then(function(st) {

@@ -628,6 +628,19 @@
 
     <div class="stg-section" id="sec-backups">
       <div class="stg-section-header">Backups</div>
+      <!-- SIMPLE BACKUPS (Damon 2026-10-15: "one little switch to turn your backup on or off" + download now). The detailed
+           groups below stay in the page; config.settings.backupsSimple hides them (a switch, nothing removed). -->
+      <div class="stg-group" id="bkSimple">
+        <div class="stg-row bk-simple-row">
+          <div class="stg-label bk-simple-label">Back up my work</div>
+          <div class="stg-toggle-wrap"><div class="stg-toggle" id="bkSwitch" role="switch" aria-checked="false" aria-label="Back up my work" tabindex="0"></div></div>
+        </div>
+        <div class="stg-row bk-simple-row">
+          <div class="stg-label bk-simple-label">Download a copy</div>
+          <button class="stg-ai-btn stg-ai-connect bk-simple-btn" id="bkSimpleNow">Download now</button>
+        </div>
+      </div>
+      <div id="bkDetail">
       <div class="stg-section-desc">Your workspace (game repos, builds, media) is archived nightly on the server when it changed that day. Pull a copy to your own machine here.</div>
       <div class="stg-group">
         <div class="stg-group-label">LATEST ARCHIVE</div>
@@ -664,6 +677,7 @@
           </div>
         </div>
         <pre id="bkScriptOut" style="display:none;white-space:pre-wrap;word-break:break-all;background:var(--bg2,#111);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:14px;margin:10px 0 0;"></pre>
+      </div>
       </div>
     </div>
 

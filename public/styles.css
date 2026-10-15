@@ -773,3 +773,11 @@
    specificity: any explicit class rule (all >=14 now) still wins. */
 :where(#settings-app) button, :where(#settings-app) input,
 :where(#settings-app) select, :where(#settings-app) textarea { font-size: 14px; }
+
+/* simple Backups (gamoid v1): two big rows — a switch and Download now */
+#bkSimple .bk-simple-row { padding: 16px 0; }
+#bkSimple .bk-simple-label { font-size: 17px; }
+#bkSimple .bk-simple-btn { width: auto; padding: 10px 22px; font-size: 15px; }
+#bkSimple .stg-toggle { width: 52px; height: 28px; border-radius: 14px; }
+#bkSimple .stg-toggle::after { width: 22px; height: 22px; }
+#bkSimple .stg-toggle.on::after { left: 26px; }
