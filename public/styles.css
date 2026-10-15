@@ -436,7 +436,7 @@
     display: flex; flex-wrap: wrap; gap: 0;
   }
   .stg-sidebar-title { width: 100%; padding: 0 12px; margin-bottom: 10px; font-size: 14px; }
-  .stg-nav-item { padding: 8px 12px; border-left: none; border-bottom: 2px solid transparent; font-size: var(--m-text, 16px); gap: 6px; }
+  .stg-nav-item { padding: 8px 8px; border-left: none; border-bottom: 2px solid transparent; font-size: var(--m-text, 16px); gap: 6px; }
   .stg-nav-item.active { border-left-color: transparent; border-bottom-color: var(--primary); }
   .stg-nav-icon { font-size: var(--m-text, 16px); }
   .stg-main { padding: 20px 14px; }
