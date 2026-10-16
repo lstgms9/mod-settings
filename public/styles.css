@@ -808,3 +808,9 @@
 .stg-acct-details select.stg-input, .stg-acct-details .stg-input { min-width: 0; max-width: 100%; }
 .stg-acct-details .stg-acct-planrow { flex-wrap: wrap; }
 .stg-acct-details .stg-acct-planrow .stg-acct-email { flex: 1 1 160px; }
+
+/* Phone: every word in Settings ~2px bigger — tabs, labels, fields (Damon 2026-10-16). One scale on the root, so the
+   whole page grows together (14px → 16px) instead of a hundred size overrides. */
+@media (max-width: 760px) {
+  #settings-app { zoom: 1.14; }
+}
