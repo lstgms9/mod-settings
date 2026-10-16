@@ -1739,8 +1739,8 @@
       var ok = await showConfirmModal({
         title: 'Delete account?',
         bodyHtml:
-          'This removes your <strong>client record</strong> and <strong>studio thing</strong> from the server. ' +
-          'The action <strong>cannot be undone</strong>.',
+          'This removes your <strong>account</strong>, your <strong>profile</strong>, your <strong>games</strong> and what you posted. ' +
+          'It <strong>cannot be undone</strong>.',
         confirmText: 'Delete',
         cancelText: 'Cancel',
         danger: true,
