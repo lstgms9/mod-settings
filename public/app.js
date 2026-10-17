@@ -57,7 +57,7 @@
   var WEIGHTS = { small: '400', medium: '500', large: '600' };
 
   // Appearance switched off for this tenant (PUB_CONFIG.settingsHide 'appearance'): saved theme/accent/font are not applied
-  function appearanceOff() { try { return ((window.PUB_CONFIG || {}).settingsHide || []).indexOf('appearance') !== -1; } catch (e) { return false; } }
+  function appearanceOff() { try { var h = (window.PUB_CONFIG || {}).settingsHide; if (!h || !h.length) { try { h = window.top.PUB_CONFIG.settingsHide; } catch (e) {} } return (h || []).indexOf('appearance') !== -1; } catch (e) { return false; } }
   function applyVisual() {
     if (appearanceOff()) return;
     var r = document.documentElement.style;
@@ -675,6 +675,20 @@
     player: 'Player', dev: 'Dev', studio: 'Studio', studio_pro: 'Studio Pro',
   };
   var TIER_PRICES = { free: '$0', lite: '$3/mo', standard: '$7/mo', pro: '$10/mo' };
+  // plan names from the tenant's sign-up tiers (planStyle 'two' only): the tier whose userTier matches → its name;
+  // a tier with no paid plan of its own (player/dev) → the free plan's name. null → use the generic names.
+  var _planCfg = null;
+  async function tenantPlanName(tier) {
+    try {
+      if (!_planCfg) { var r = await fetch((platform.basePath || '') + '/api/signup/config'); _planCfg = r.ok ? await r.json() : {}; }
+      if (!_planCfg || _planCfg.planStyle !== 'two' || !Array.isArray(_planCfg.tiers)) return null;
+      function nice(n) { return String(n || '').toLowerCase().replace(/\b(ai)\b/g, 'AI').replace(/(^|\s)([a-z])/g, function(m, a, b) { return a + b.toUpperCase(); }); }
+      var hit = _planCfg.tiers.find(function(t) { return t.userTier === tier || t.id === tier; });
+      if (hit && hit.monthly > 0) return nice(hit.name);
+      var free = _planCfg.tiers.find(function(t) { return !(t.monthly > 0); });
+      return free ? nice(free.name) : null;
+    } catch (e) { return null; }
+  }
 
   async function loadConnectStatus() {
     var el = document.getElementById('connectStatus');
@@ -929,13 +943,16 @@
       } catch (_) {}
     }
     if (planVal) {
+      // the tenant's OWN plan names when its sign-up names them (gamoid two plans: studio → 'Studio AI', anything
+      // without a paid plan → 'Free'), else the generic names (uniMaster v237: Account still said 'Studio plan')
+      var _pn = await tenantPlanName(planVal);
       var planEl = document.getElementById('planInfo');
-      var label = (TIER_NAMES[planVal] || (planVal.charAt(0).toUpperCase() + planVal.slice(1))) + ' plan';
+      var label = _pn || ((TIER_NAMES[planVal] || (planVal.charAt(0).toUpperCase() + planVal.slice(1))) + ' plan');
       if (planEl) planEl.textContent = label;
       var badge = document.getElementById('accountTierBadge');
       if (badge) {
         badge.setAttribute('data-tier', planVal);
-        badge.textContent = (TIER_NAMES[planVal] || planVal).toUpperCase();
+        badge.textContent = (_pn || TIER_NAMES[planVal] || planVal).toUpperCase();
       }
     }
     // Studio identity chip — icon square + logo wordmark. Renders to the
@@ -2116,7 +2133,10 @@
   // Applied as soon as this file runs as well as in init: the standalone /settings page (the pop-up) never calls init.
   function applyHide() {
     try {
-      var _sh = ((window.PUB_CONFIG || {}).settingsHide || []).filter(function(x) { return /^[a-z-]+$/.test(x); });
+      // the pop-up shows /settings?bare=1 in a frame whose own PUB_CONFIG has no settingsHide — read the page's (uniMaster v237)
+      var _own = (window.PUB_CONFIG || {}).settingsHide, _top = null;
+      try { _top = window.top && window.top !== window && window.top.PUB_CONFIG && window.top.PUB_CONFIG.settingsHide; } catch (e) {}
+      var _sh = ((_own && _own.length ? _own : _top) || []).filter(function(x) { return /^[a-z-]+$/.test(x); });
       var _shEl = document.getElementById('stg-hide-css');
       if (_sh.length && !_shEl) { _shEl = document.createElement('style'); _shEl.id = 'stg-hide-css'; document.head.appendChild(_shEl); }
       // a name is a pane (its nav item) or a part of one tagged data-hide-key (account-info = bio/social/press,
