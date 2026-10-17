@@ -634,7 +634,7 @@
 
 /* ── Confirm modal (replaces window.confirm) ─────────────── */
 .stg-modal-bg {
-  position: fixed; inset: 0; z-index: 9000;
+  position: fixed; inset: 0; z-index: var(--z-popup, 1000);
   display: none; align-items: center; justify-content: center;
   background: rgba(0,0,0,0.7);
 }

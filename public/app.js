@@ -1527,7 +1527,7 @@
         '</div>';
       }).join('');
       var html =
-        '<div id="stgPlanModalBg" style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px">' +
+        '<div id="stgPlanModalBg" style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:var(--z-popup, 1000);display:flex;align-items:center;justify-content:center;padding:20px">' +
           '<div style="background:var(--bg,#0b0b14);border:1px solid var(--border,#252540);border-radius:14px;padding:28px;width:520px;max-width:90vw;max-height:85vh;overflow:auto;position:relative">' +
             '<button id="stgPlanClose" style="position:absolute;top:10px;right:14px;background:none;border:0;color:var(--text-mid,#a0aab0);font-size:22px;cursor:pointer">&times;</button>' +
             '<h2 style="font-family:var(--font-head,Bungee);margin:0 0 6px;color:var(--text,#e4e4f0);font-size:20px">Manage Plan</h2>' +
@@ -1991,7 +1991,7 @@
     // fall back to gamoid.io.
     var mailDomain = (window.INSTANCE_MAIL_DOMAIN || 'gamoids.com');
     var html =
-      '<div id="stgSlugModalBg" style="position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px">' +
+      '<div id="stgSlugModalBg" style="position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:calc(var(--z-popup, 1000) + 1);display:flex;align-items:center;justify-content:center;padding:20px">' +
         '<div style="background:var(--bg,#0b0b14);border:1px solid var(--border,#252540);border-radius:14px;padding:28px;width:500px;max-width:90vw;position:relative">' +
           '<button id="stgSlugClose" style="position:absolute;top:10px;right:14px;background:none;border:0;color:var(--text-mid,#a0aab0);font-size:22px;cursor:pointer">&times;</button>' +
           '<h2 style="font-family:var(--font-head,Bungee);margin:0 0 6px;color:var(--text,#e4e4f0);font-size:20px">Choose your studio URL</h2>' +
