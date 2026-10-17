@@ -814,3 +814,27 @@
 @media (max-width: 760px) {
   #settings-app { zoom: 1.14; }
 }
+
+/* Bring your own AI — the 3x3 grid (Damon 2026-10-17): one phone screen, 16px+ (phone text law) */
+.stg-ai-grid.stg-ai-nine { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stg-ai9 { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 6px 12px; min-width: 0;
+  background: var(--bg2, #12121c); border: 1px solid var(--border, #252540); border-radius: 14px; text-align: center; }
+.stg-ai9.on { border-color: #39ff7f; }
+.stg-ai9-mark { width: 44px; height: 44px; border-radius: 12px; border: 1px solid; display: flex; align-items: center; justify-content: center;
+  font: 800 20px/1 system-ui, sans-serif; }
+.stg-ai9-name { font-size: 17px; font-weight: 700; color: var(--text, #e8e8f0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.stg-ai9-btn { width: 100%; min-height: 40px; padding: 6px 4px; border-radius: 10px; border: 1px solid var(--border2, #353555);
+  background: transparent; color: var(--text-mid, #b8b8cc); font: 600 16px/1.1 system-ui, sans-serif; cursor: pointer; }
+.stg-ai9-btn:disabled { opacity: .55; cursor: default; }
+.stg-ai9-go { background: #f5891f; border-color: #f5891f; color: #0b0b14; }
+.stg-ai9-off { font-size: 16px; }
+.stg-ai9-ok { color: #39ff7f; font-size: 16px; font-weight: 700; }
+.stg-ai9-soon { color: var(--text-dim, #8a8aa0); font-size: 16px; }
+.stg-ai9-pop p { font-size: 17px; line-height: 1.5; margin: 0 0 12px; }
+.stg-ai9-pop input { width: 100%; box-sizing: border-box; font-size: 17px; padding: 12px; margin-bottom: 8px; }
+.stg-ai9-err { color: #ff3997; font-size: 16px; min-height: 20px; margin-bottom: 8px; }
+@media (max-width: 760px) {
+  .stg-ai-grid.stg-ai-nine { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stg-ai9 { padding: 12px 4px 10px; gap: 6px; }
+  .stg-ai9-name { font-size: 16px; }
+}

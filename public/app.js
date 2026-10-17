@@ -246,154 +246,70 @@
     });
   }
 
-  // ── AI subscription connections (phase A) ───────────────────
-  // The studio's own provider accounts (Claude first): Connect starts a
-  // server-side device-code login; we show the sign-in URL, the user approves
-  // it in any logged-in browser and pastes the code back; the server stores
-  // the credential encrypted. Game-build pickers fill from these connections.
-  // mode: 'paste' = OAuth url out, code pasted back here (claude).
-  //       'device' = url + one-time code out, user enters it ON the provider
-  //                  site and the CLI completes by itself (gpt/codex).
-  //       'key'    = paste an API key, validated with a live ping (grok/xAI).
-  var SUB_PROVIDERS = [
-    { id: 'claude', name: 'Claude', provider: 'Anthropic — your Claude subscription', icon: 'C', color: '#d97757', mode: 'paste' },
-    { id: 'gpt', name: 'ChatGPT', provider: 'OpenAI — your ChatGPT subscription (Codex)', icon: 'G', color: '#10a37f', mode: 'device' },
-    { id: 'grok', name: 'Grok', provider: 'xAI — your API key (console.x.ai)', icon: 'X', color: '#8b5cf6', mode: 'key' },
-  ];
-  var aiSub = { conns: [], canManage: false, ready: true, flow: null };
-
-  function aiSubConn(id) {
-    for (var i = 0; i < aiSub.conns.length; i++) if (aiSub.conns[i].provider === id) return aiSub.conns[i];
-    return null;
-  }
-  function renderAISubs() {
+  // ── BRING YOUR OWN AI (Damon 2026-10-17) ──────────────────
+  // A 3x3 grid of the top nine. Each tile: its mark, then LOG IN where that company allows it (OpenRouter now;
+  // ChatGPT + Gemini 'Coming soon' until they approve us) or ADD KEY. A key goes straight to the vault, bound to that
+  // company, and is never shown back; once linked the tile says Connected ✓ with Disconnect. The maker, art and
+  // Meshy tools use your own account first, gamoid credit second.
+  var AI_MARK = { openai: ['#10a37f', 'G'], gemini: ['#4285f4', '✦'], anthropic: ['#d97757', 'C'], xai: ['#e8e8f0', 'X'],
+    deepseek: ['#4d6bfe', 'D'], qwen: ['#7b6cff', 'Q'], moonshot: ['#3a8bff', 'K'], openrouter: ['#8b8ff7', 'OR'], meshy: ['#c5f955', 'M'] };
+  var aiLinks = { tiles: [], available: true };
+  function renderAILinks() {
     var grid = document.getElementById('aiSubGrid');
     if (!grid) return;
-    grid.innerHTML = SUB_PROVIDERS.map(function(p) {
-      var c = aiSubConn(p.id);
-      var f = aiSub.flow && aiSub.flow.provider === p.id ? aiSub.flow : null;
-      var html = '<div class="stg-ai-card ' + (c ? 'connected' : '') + '" data-sub="' + p.id + '">';
-      html += '<div class="stg-ai-card-head">' +
-        '<div class="stg-ai-logo" style="background:' + p.color + '22;color:' + p.color + ';border:1px solid ' + p.color + '33;">' + p.icon + '</div>' +
-        '<div><div class="stg-ai-name">' + esc(p.name) + '</div><div class="stg-ai-provider">' + esc(p.provider) + '</div></div></div>';
-      html += '<div class="stg-ai-status"><span class="stg-ai-dot"></span>' +
-        (c ? 'Connected — builds run on this account' : f ? 'Connecting…' : 'Not connected') + '</div>';
-      if (c) {
-        html += '<div class="stg-ai-masked">' + esc(c.identity || 'Claude subscription') +
-          (c.connectedAt ? ' · since ' + esc(String(c.connectedAt).slice(0, 10)) : '') + '</div>';
-        if (aiSub.canManage) html += '<button class="stg-ai-btn stg-ai-disconnect" data-subact="disconnect" data-sub="' + p.id + '">Disconnect</button>';
-      } else if (f) {
-        if (f.status === 'error') {
-          html += '<div class="stg-sublabel" style="color:var(--red,#ff3997);">' + esc(f.error || 'Sign-in failed') + '</div>' +
-            '<button class="stg-ai-btn stg-ai-connect" data-subact="connect" data-sub="' + p.id + '">Try again</button>';
-        } else if (!f.url || (p.mode === 'device' && !f.userCode)) {
-          html += '<div class="stg-sublabel">Starting sign-in…</div>' +
-            '<button class="stg-ai-btn" data-subact="cancel" data-sub="' + p.id + '">Cancel</button>';
-        } else if (p.mode === 'device') {
-          // One-time code entered ON the provider's site — nothing pasted back.
-          html += '<div class="stg-sublabel" style="margin-bottom:6px;"><strong>1.</strong> <a href="' + esc(f.url) + '" target="_blank" rel="noopener" style="color:' + p.color + ';">Open the sign-in page</a> and log in (Google sign-in works there).<br><strong>2.</strong> Enter this one-time code on that page:</div>';
-          html += '<div style="font-size:20px;font-weight:700;letter-spacing:2px;color:' + p.color + ';margin:2px 0 8px;">' + esc(f.userCode) + '</div>';
-          html += '<div class="stg-sublabel">Waiting for the approval — this updates by itself…</div>';
-          html += '<button class="stg-ai-btn" data-subact="cancel" data-sub="' + p.id + '">Cancel</button>';
-        } else {
-          html += '<div class="stg-sublabel" style="margin-bottom:6px;"><strong>1.</strong> <a href="' + esc(f.url) + '" target="_blank" rel="noopener" style="color:' + p.color + ';">Open the sign-in link</a> and approve (any browser where you\'re logged in — Google sign-in works).<br><strong>2.</strong> Copy the code it shows and paste it here:</div>';
-          if (f.error) html += '<div class="stg-sublabel" style="color:var(--red,#ff3997);margin-bottom:4px;">' + esc(f.error) + '</div>';
-          html += '<input type="text" class="stg-ai-key-input" id="aiSubCode-' + p.id + '" placeholder="Paste code" ' + (f.status === 'exchanging' ? 'disabled' : '') + '>';
-          html += '<button class="stg-ai-btn stg-ai-connect" data-subact="code" data-sub="' + p.id + '" ' + (f.status === 'exchanging' ? 'disabled' : '') + '>' +
-            (f.status === 'exchanging' ? 'Verifying…' : 'Submit code') + '</button>';
-          html += '<button class="stg-ai-btn" data-subact="cancel" data-sub="' + p.id + '">Cancel</button>';
-        }
-      } else if (!aiSub.ready) {
-        html += '<div class="stg-sublabel">Not available on this instance yet.</div>';
-      } else if (aiSub.canManage) {
-        if (p.mode === 'key') {
-          html += '<input type="password" class="stg-ai-key-input" id="aiSubKey-' + p.id + '" placeholder="xai-…">';
-          html += '<button class="stg-ai-btn stg-ai-connect" data-subact="key" data-sub="' + p.id + '">Connect</button>';
-        } else {
-          html += '<button class="stg-ai-btn stg-ai-connect" data-subact="connect" data-sub="' + p.id + '">Connect</button>';
-        }
-      } else {
-        html += '<div class="stg-sublabel">Ask the studio owner to connect.</div>';
-      }
-      html += '</div>';
-      return html;
+    grid.classList.add('stg-ai-nine');
+    grid.innerHTML = aiLinks.tiles.map(function(t) {
+      var m = AI_MARK[t.id] || ['#888', '?'], act;
+      if (t.linked) act = '<div class="stg-ai9-ok">Connected ✓</div><button class="stg-ai9-btn stg-ai9-off" data-ai="off" data-id="' + t.id + '">Disconnect</button>';
+      else if (!aiLinks.available) act = '<button class="stg-ai9-btn" disabled>Coming soon</button>';
+      else if (t.login === 'now') act = '<button class="stg-ai9-btn stg-ai9-go" data-ai="login" data-id="' + t.id + '">Log in</button>';
+      else if (t.login === 'soon' && !t.key) act = '<button class="stg-ai9-btn" disabled>Coming soon</button>';
+      else act = '<button class="stg-ai9-btn stg-ai9-go" data-ai="key" data-id="' + t.id + '">Add key</button>' +
+        (t.login === 'soon' ? '<div class="stg-ai9-soon">Log in: soon</div>' : '');
+      return '<div class="stg-ai9' + (t.linked ? ' on' : '') + '" data-id="' + t.id + '">' +
+        '<div class="stg-ai9-mark" style="color:' + m[0] + ';background:' + m[0] + '1f;border-color:' + m[0] + '55">' + m[1] + '</div>' +
+        '<div class="stg-ai9-name">' + esc(t.name) + '</div>' + act + '</div>';
     }).join('');
   }
-  async function loadAISubs() {
-    try {
-      var r = await API.get('/ai-accounts');
-      aiSub.conns = (r && r.connections) || [];
-      aiSub.canManage = !!(r && r.canManage);
-      aiSub.ready = !r || r.ready !== false;
-    } catch (e) { aiSub.conns = []; }
-    renderAISubs();
+  async function loadAILinks() {
+    try { var r = await API.get('/ai-links'); if (r && r.tiles) { aiLinks.tiles = r.tiles; aiLinks.available = r.available !== false; } } catch (e) {}
+    renderAILinks();
   }
-  function aiSubPoll() {
-    if (!aiSub.flow || !aiSub.flow.sid) return;
-    var f = aiSub.flow;
-    f.timer = setInterval(async function() {
-      try {
-        var s = await API.get('/ai-accounts/connect/' + f.sid);
-        if (!s || !s.status) throw new Error('gone');   // res.error → {error} only
-        var changed = s.status !== f.status || s.url !== f.url || s.error !== f.error || s.userCode !== f.userCode;
-        f.status = s.status; f.url = s.url; f.error = s.error; f.userCode = s.userCode;
-        if (s.status === 'connected') {
-          clearInterval(f.timer); aiSub.flow = null;
-          toast('Claude connected — builds now run on your account');
-          loadAISubs(); return;
-        }
-        if (s.status === 'error') clearInterval(f.timer);
-        // Never re-render while the user is typing the code.
-        var typing = document.activeElement && /^aiSubCode-/.test(document.activeElement.id || '');
-        if (changed && !typing) renderAISubs();
-      } catch (e) { clearInterval(f.timer); aiSub.flow = null; renderAISubs(); }
-    }, 1500);
+  function aiKeyPop(t) {
+    var ui = window.platform.ui, m = ui.modal({ title: 'Add your ' + t.name + ' key' });
+    m.content.innerHTML = '<div class="stg-ai9-pop"><p>Paste your ' + esc(t.name) + ' API key. It goes straight to our vault, only ever ' +
+      'used with ' + esc(t.sub || t.name) + ', and is never shown again.</p>' +
+      '<input type="password" class="stg-ai-key-input" autocomplete="off" spellcheck="false" placeholder="API key">' +
+      '<div class="stg-ai9-err"></div><button type="button" class="stg-ai9-btn stg-ai9-go stg-ai9-save">Save key</button></div>';
+    var inp = m.content.querySelector('input'), err = m.content.querySelector('.stg-ai9-err'), go = m.content.querySelector('.stg-ai9-save');
+    setTimeout(function() { inp.focus(); }, 50);
+    go.onclick = async function() {
+      var k = inp.value.trim(); if (!k) { inp.focus(); return; }
+      go.disabled = true; go.textContent = 'Saving…'; err.textContent = '';
+      var r = null; try { r = await API.post('/ai-links/' + t.id + '/key', { key: k }); } catch (e) { r = { error: e.message }; }
+      inp.value = '';
+      if (r && r.ok) { (m.close || function() {})(); document.querySelectorAll('.pui-modal-overlay').forEach(function(o) { if (o.contains(go)) o.remove(); }); toast(t.name + ' connected'); loadAILinks(); }
+      else { go.disabled = false; go.textContent = 'Save key'; err.textContent = (r && r.error) || 'Could not save the key'; }
+    };
   }
   function initAISubs() {
     var grid = document.getElementById('aiSubGrid');
     if (!grid) return;
     grid.addEventListener('click', async function(e) {
-      var btn = e.target.closest('[data-subact]');
-      if (!btn) return;
-      var act = btn.dataset.subact, p = btn.dataset.sub;
-      if (act === 'connect') {
-        try {
-          var r = await API.post('/ai-accounts/' + p + '/connect', {});
-          if (!r || !r.sid) throw new Error((r && r.error) || 'could not start');
-          aiSub.flow = { provider: p, sid: r.sid, status: 'starting', url: null, error: null };
-          renderAISubs(); aiSubPoll();
-        } catch (err) { toast('Connect failed: ' + err.message); }
-      } else if (act === 'code') {
-        var inp = document.getElementById('aiSubCode-' + p);
-        var code = inp ? inp.value.trim() : '';
-        if (!code) { if (inp) { inp.style.borderColor = 'var(--red)'; inp.focus(); setTimeout(function() { inp.style.borderColor = ''; }, 1500); } return; }
-        var r2 = await API.post('/ai-accounts/connect/' + aiSub.flow.sid + '/code', { code: code });
-        if (r2 && r2.ok) { aiSub.flow.status = 'exchanging'; renderAISubs(); }
-        else toast((r2 && r2.error) || 'Code rejected');
-      } else if (act === 'key') {
-        // API-key connect (grok): server pings the provider before storing.
-        var kinp = document.getElementById('aiSubKey-' + p);
-        var kval = kinp ? kinp.value.trim() : '';
-        if (!kval) { if (kinp) { kinp.style.borderColor = 'var(--red)'; kinp.focus(); setTimeout(function() { kinp.style.borderColor = ''; }, 1500); } return; }
-        btn.disabled = true; btn.textContent = 'Checking key…';
-        var kr = await API.post('/ai-accounts/' + p + '/key', { key: kval });
-        btn.disabled = false; btn.textContent = 'Connect';
-        if (kr && kr.ok) { toast('Grok connected — key verified'); loadAISubs(); }
-        else toast((kr && kr.error) || 'Key rejected');
-      } else if (act === 'cancel') {
-        if (aiSub.flow) {
-          clearInterval(aiSub.flow.timer);
-          try { await API.post('/ai-accounts/connect/' + aiSub.flow.sid + '/cancel', {}); } catch (err) {}
-          aiSub.flow = null;
-        }
-        renderAISubs();
-      } else if (act === 'disconnect') {
-        if (!confirm('Disconnect this account? Builds will need another connected AI (or ask in Settings again).')) return;
-        var r3 = await API.delete('/ai-accounts/' + p);
-        if (r3 && r3.ok) { toast('Disconnected'); loadAISubs(); }
+      var b = e.target.closest('[data-ai]'); if (!b) return;
+      var t = aiLinks.tiles.filter(function(x) { return x.id === b.dataset.id; })[0]; if (!t) return;
+      if (b.dataset.ai === 'login') location.href = '/api/settings/ai-links/' + t.id + '/start';
+      else if (b.dataset.ai === 'key') aiKeyPop(t);
+      else if (b.dataset.ai === 'off') {
+        if (!confirm('Disconnect ' + t.name + '? Its key is removed from the vault.')) return;
+        var r = await API.delete('/ai-links/' + t.id);
+        if (r && r.ok) { toast(t.name + ' disconnected'); loadAILinks(); } else toast((r && r.error) || 'Could not disconnect');
       }
     });
-    loadAISubs();
+    // back from a login (OpenRouter): say how it went, once
+    var q = (location.search.match(/[?&]ai=([a-z-]+)/) || [])[1];
+    if (q) { toast({ 'openrouter-connected': 'OpenRouter connected', 'openrouter-cancelled': 'OpenRouter login cancelled', 'vault-unavailable': 'Could not save to the vault yet' }[q] || 'OpenRouter login did not finish'); try { history.replaceState(null, '', location.pathname); } catch (e) {} }
+    loadAILinks();
   }
 
   // ── 2FA ─────────────────────────────────────────────────────

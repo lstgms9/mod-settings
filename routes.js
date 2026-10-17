@@ -14,6 +14,13 @@ module.exports = function(router, ctx) {
   const fallbackUsersDir = path.join(__dirname, '../../instances/inst-dev/storage/users');
   const storageDir = path.join(__dirname, '../../instances/inst-dev/storage');
   const INSTANCES_DIR = ctx.instancesDir || path.join(__dirname, '../../instances');
+  // bring your own AI — the 3x3 grid's server side (lib/ai-links.js); its flags live in the site config (config.byoAi)
+  const _cfgCache = {};
+  const siteCfg = (req) => { const slug = (req && req.instanceSlug) || 'inst-dev', c = _cfgCache[slug];
+    if (c && Date.now() - c.at < 60000) return c.v;
+    let v = {}; try { v = JSON.parse(fs.readFileSync(path.join(INSTANCES_DIR, slug, 'instance.json'), 'utf8')).config || {}; } catch (e) {}
+    _cfgCache[slug] = { at: Date.now(), v }; return v; };
+  require('./lib/ai-links')(router, { config: siteCfg });
 
   function resolveUsersDir(req) {
     if (req && req.instanceSlug) return path.join(INSTANCES_DIR, req.instanceSlug, 'storage', 'users');
