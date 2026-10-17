@@ -838,3 +838,8 @@
   .stg-ai9 { padding: 12px 4px 10px; gap: 6px; }
   .stg-ai9-name { font-size: 16px; }
 }
+/* phone text law (16px+): the Account pane's labels, fields, plan line and buttons were 14px on a phone (uniMaster v237) */
+@media (max-width: 760px) {
+  .stg-tier-badge, .stg-group-label, .stg-acct-email, .stg-acct-static, .stg-sublabel,
+  .stg-acct-cta, .stg-btn-danger, .stg-input { font-size: 16px !important; }
+}
