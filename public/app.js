@@ -251,8 +251,8 @@
   // ChatGPT + Gemini 'Coming soon' until they approve us) or ADD KEY. A key goes straight to the vault, bound to that
   // company, and is never shown back; once linked the tile says Connected ✓ with Disconnect. The maker, art and
   // Meshy tools use your own account first, gamoid credit second.
-  var AI_MARK = { openai: ['#10a37f', 'G'], gemini: ['#4285f4', '✦'], anthropic: ['#d97757', 'C'], xai: ['#e8e8f0', 'X'],
-    deepseek: ['#4d6bfe', 'D'], qwen: ['#7b6cff', 'Q'], moonshot: ['#3a8bff', 'K'], openrouter: ['#8b8ff7', 'OR'], meshy: ['#c5f955', 'M'] };
+  var AI_MARK = { gamoid: ['#f5891f', 'g'], anthropic: ['#d97757', 'C'], openai: ['#10a37f', 'G'], gemini: ['#4285f4', '✦'], xai: ['#e8e8f0', 'X'],
+    deepseek: ['#4d6bfe', 'D'], openrouter: ['#8b8ff7', 'OR'], fal: ['#ff5ea8', 'f'], meshy: ['#c5f955', 'M'] };
   var aiLinks = { tiles: [], available: true };
   function renderAILinks() {
     var grid = document.getElementById('aiSubGrid');
@@ -260,7 +260,8 @@
     grid.classList.add('stg-ai-nine');
     grid.innerHTML = aiLinks.tiles.map(function(t) {
       var m = AI_MARK[t.id] || ['#888', '?'], act;
-      if (t.linked) act = '<div class="stg-ai9-ok">Connected ✓</div><button class="stg-ai9-btn stg-ai9-off" data-ai="off" data-id="' + t.id + '">Disconnect</button>';
+      if (t.builtin) act = '<div class="stg-ai9-ok">Built in \u2713</div><div class="stg-ai9-soon">' + esc(t.sub || '') + '</div>';
+      else if (t.linked) act = '<div class="stg-ai9-ok">Connected ✓</div><button class="stg-ai9-btn stg-ai9-off" data-ai="off" data-id="' + t.id + '">Disconnect</button>';
       else if (!aiLinks.available) act = '<button class="stg-ai9-btn" disabled>Coming soon</button>';
       else if (t.login === 'now') act = '<button class="stg-ai9-btn stg-ai9-go" data-ai="login" data-id="' + t.id + '">Log in</button>';
       else if (t.login === 'soon' && !t.key) act = '<button class="stg-ai9-btn" disabled>Coming soon</button>';
