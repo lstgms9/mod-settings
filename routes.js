@@ -770,6 +770,14 @@ module.exports = function(router, ctx) {
     res.json({ version: m.version || 0, stable: m.stable || 0, versions });
   });
 
+  // GET /release/notice — the update notice every site shows while a release goes out (Damon 2026-10-17). Public and
+  // plain ({on, text}); b2-deploy.sh notice on|off and ship write it (.runtime/release-notice.json on the master).
+  router.get('/release/notice', async (req, res) => {
+    let n = {}; try { n = JSON.parse(fs.readFileSync('/home/damon/platform/.runtime/release-notice.json', 'utf8')); } catch (e) {}
+    const out = res._res || res; out.setHeader('Cache-Control', 'no-store'); out.setHeader('Access-Control-Allow-Origin', '*');
+    res.json({ on: !!n.on, text: n.on ? String(n.text || '') : '' });
+  });
+
   // GET /release/delta?from=<v>&to=<v> — the changed bytes between two
   // versions, for the box's site, built from git on demand and cached.
   router.get('/release/delta', async (req, res) => {
@@ -835,6 +843,7 @@ module.exports = function(router, ctx) {
       health: String(b.health || 'unknown').slice(0, 32),
       uptime: parseInt(b.uptime, 10) || 0,
       rolledBack: !!b.rolledBack,
+      phase: String(b.phase || '').slice(0, 24),   // idle / fetching / restarting / rolled-back … — ship's notice waits for idle
       lastSeen: new Date().toISOString(),
     };
     all.updated = all.boxes[box].lastSeen;
