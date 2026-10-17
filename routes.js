@@ -770,14 +770,6 @@ module.exports = function(router, ctx) {
     res.json({ version: m.version || 0, stable: m.stable || 0, versions });
   });
 
-  // GET /release/notice — the update notice every site shows while a release goes out (Damon 2026-10-17). Public and
-  // plain ({on, text}); b2-deploy.sh notice on|off and ship write it (.runtime/release-notice.json on the master).
-  router.get('/release/notice', async (req, res) => {
-    let n = {}; try { n = JSON.parse(fs.readFileSync('/home/damon/platform/.runtime/release-notice.json', 'utf8')); } catch (e) {}
-    const out = res._res || res; out.setHeader('Cache-Control', 'no-store'); out.setHeader('Access-Control-Allow-Origin', '*');
-    res.json({ on: !!n.on, text: n.on ? String(n.text || '') : '', version: +n.version || 0 });   // version = the release going out — a box already on it shows no banner
-  });
-
   // GET /release/delta?from=<v>&to=<v> — the changed bytes between two
   // versions, for the box's site, built from git on demand and cached.
   router.get('/release/delta', async (req, res) => {
