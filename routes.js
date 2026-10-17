@@ -775,7 +775,7 @@ module.exports = function(router, ctx) {
   router.get('/release/notice', async (req, res) => {
     let n = {}; try { n = JSON.parse(fs.readFileSync('/home/damon/platform/.runtime/release-notice.json', 'utf8')); } catch (e) {}
     const out = res._res || res; out.setHeader('Cache-Control', 'no-store'); out.setHeader('Access-Control-Allow-Origin', '*');
-    res.json({ on: !!n.on, text: n.on ? String(n.text || '') : '' });
+    res.json({ on: !!n.on, text: n.on ? String(n.text || '') : '', version: +n.version || 0 });   // version = the release going out — a box already on it shows no banner
   });
 
   // GET /release/delta?from=<v>&to=<v> — the changed bytes between two
