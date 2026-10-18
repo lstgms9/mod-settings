@@ -63,16 +63,33 @@ module.exports = function(router, ctx) {
     catch (e) { try { _okAuth = require(path.join(__dirname, '../../okdunio/auth')); } catch (e2) { _okAuth = null; } }
     return _okAuth;
   }
+  // 2FA SECRETS ARE SEALED AT REST (Damon 2026-10-18, security): tfa.secret, tfa.recovery[] and tfaPending.secret are
+  // stored AES-256-GCM-sealed with the vault's key (okdunio lib/authkeys.js). The holder hands out OPENED copies for
+  // checking, and its save() seals before storing — nothing here ever writes a plain secret. The vault key is fetched
+  // up front: if the vault can't be reached the holder throws (status 503) before anything is read or written.
+  function keys() { const a = okAuth(); return a && a.authkeys; }
+  async function sealPatch(patch) {
+    const K = keys(), o = Object.assign({}, patch);
+    if (K) { if (o.tfa) o.tfa = await K.sealTfa(o.tfa); if (o.tfaPending) o.tfaPending = await K.sealTfa(o.tfaPending); }
+    return o;
+  }
   async function tfaHolder(req) {
+    const K = keys();
+    if (K) await K.key('TFA_ENC_KEY');   // fail closed now, not half-way through a save
+    const open = (t) => (K ? K.openTfa(t || null) : t || null);
     const c = await tfaClient(req), user = readUser(req.user.studio, req);
     if (c) {
-      if (!c.data.tfa && user && user.tfa && user.tfa.method === 'totp') { await storage.update('client', c.id, { tfa: user.tfa }); c.data.tfa = user.tfa; }
-      return { client: c, email: c.data.email || (user && user.email) || null, tfa: c.data.tfa || null, pending: c.data.tfaPending || null,
-        save: (patch) => storage.update('client', c.id, patch) };
+      if (!c.data.tfa && user && user.tfa && user.tfa.method === 'totp') { const sealed = await sealPatch({ tfa: await open(user.tfa) }); await storage.update('client', c.id, sealed); c.data.tfa = sealed.tfa; }
+      return { client: c, email: c.data.email || (user && user.email) || null, tfa: await open(c.data.tfa), pending: await open(c.data.tfaPending),
+        save: async (patch) => storage.update('client', c.id, await sealPatch(patch)) };
     }
     if (!user) return null;
-    return { email: user.email || null, tfa: user.tfa || null, pending: user.tfaPending || null,
-      save: async (patch) => { for (const k in patch) { if (patch[k] == null) delete user[k]; else user[k] = patch[k]; } writeUser(req.user.studio, user, req); } };
+    return { email: user.email || null, tfa: await open(user.tfa), pending: await open(user.tfaPending),
+      save: async (patch) => { patch = await sealPatch(patch); for (const k in patch) { if (patch[k] == null) delete user[k]; else user[k] = patch[k]; } writeUser(req.user.studio, user, req); } };
+  }
+  // the holder, or a 503 sent (the vault is down) — a thrown error here would take the whole server down
+  async function holderOr503(req, res) {
+    try { return { th: await tfaHolder(req) }; } catch (e) { res.error(e.status || 503, e.message || 'Unavailable'); return null; }
   }
   function tfaCodeOk(tfa, code) {
     if (!tfa || tfa.method !== 'totp' || !code) return false;
@@ -294,7 +311,7 @@ module.exports = function(router, ctx) {
       return res.error(500, 'QR generation failed');
     }
     // store the pending secret on the account (not active until a code from it is verified)
-    const th = await tfaHolder(req);
+    const _h = await holderOr503(req, res); if (!_h) return; const th = _h.th;
     if (!th) return res.error(404, 'User not found');
     if (th.tfa) return res.error(400, '2FA is already on');
     await th.save({ tfaPending: { method: 'totp', secret: secret.base32 } });
@@ -310,7 +327,7 @@ module.exports = function(router, ctx) {
     if (!req.user) return res.error(401, 'Not logged in');
     const { code } = req.body || {};
     if (!code) return res.error(400, 'Missing code');
-    const th = await tfaHolder(req);
+    const _h = await holderOr503(req, res); if (!_h) return; const th = _h.th;
     if (!th || !th.pending || th.pending.method !== 'totp') {
       return res.error(400, 'No pending TOTP setup');
     }
@@ -330,7 +347,7 @@ module.exports = function(router, ctx) {
   const hash6 = (c) => crypto.createHash('sha256').update(String(c)).digest('hex');
   router.post('/2fa/setup-email', async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');
-    const th = await tfaHolder(req);
+    const _h = await holderOr503(req, res); if (!_h) return; const th = _h.th;
     if (!th) return res.error(404, 'User not found');
     if (th.tfa) return res.error(400, '2FA is already on');
     if (!th.email) return res.error(400, 'Your account has no email address to send a code to');
@@ -345,7 +362,7 @@ module.exports = function(router, ctx) {
     if (!req.user) return res.error(401, 'Not logged in');
     const { code } = req.body || {};
     if (!code) return res.error(400, 'Missing code');
-    const th = await tfaHolder(req);
+    const _h = await holderOr503(req, res); if (!_h) return; const th = _h.th;
     const pd = th && th.pending;
     if (!pd || pd.method !== 'email') return res.error(400, 'No pending email 2FA setup');
     if (pd.expires < Date.now() || (pd.tries || 0) >= 5) { await th.save({ tfaPending: null }); return res.error(400, 'Code expired — send a new one'); }
@@ -357,7 +374,7 @@ module.exports = function(router, ctx) {
   // ── 2FA: a code to turn email 2FA off (the same sign-in code, emailed) ──
   router.post('/2fa/send-code', async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');
-    const th = await tfaHolder(req), a = okAuth();
+    const _h = await holderOr503(req, res); if (!_h) return; const th = _h.th, a = okAuth();
     if (!th || !th.tfa || th.tfa.method !== 'email' || !th.client || !a) return res.error(400, 'No emailed code for this account');
     const sent = await a.tfaSendEmailCode(storage, th.client, req.instanceSlug);
     res.json({ ok: true, sent: !!sent });
@@ -367,7 +384,7 @@ module.exports = function(router, ctx) {
   // turning 2FA off takes a valid code from the authenticator (or a recovery code) — Damon 2026-10-18
   const tfaOff = async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');
-    const th = await tfaHolder(req);
+    const _h = await holderOr503(req, res); if (!_h) return; const th = _h.th;
     if (!th) return res.error(404, 'User not found');
     const code = (req.body || {}).code, a = okAuth();
     const good = !th.tfa ? true : (th.client && a) ? (await a.tfaCheck(storage, th.client, code)) === 'ok' : tfaCodeOk(th.tfa, code);
@@ -1028,8 +1045,9 @@ module.exports = function(router, ctx) {
     if (!/^[a-zA-Z0-9.:_-]+$/.test(ip)) return res.error(400, 'Invalid IP/host');
 
     // Reuse the owner's existing TOTP secret so one code works everywhere.
-    const u = readUser(req.user.studio || req.user.slug, req);
-    const secret = u && u.tfa && u.tfa.secret;
+    // the account's 2FA as sign-in has it (the client record, opened with the vault's key; the old file only as a fallback)
+    const _h = await holderOr503(req, res); if (!_h) return;
+    const secret = _h.th && _h.th.tfa && _h.th.tfa.secret;
     if (!secret) return res.error(400, 'Enable 2FA on your own account first (Settings → 2FA) so there is a code to reuse on the box.');
 
     let scriptText;
