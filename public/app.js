@@ -349,7 +349,10 @@
       if (prefs._tfaEnabled) {
         // disable 2FA
         // turning it off takes a code from the authenticator (or a recovery code) — Damon 2026-10-18
-        var code = prompt('To turn off two-factor authentication, enter the 6-digit code from your authenticator app (or a recovery code).');
+        var byMail = prefs._tfaMethod === 'email';
+        if (byMail) { var sc = await API.post('/2fa/send-code', {}); if (!sc || !sc.ok) { toast((sc && sc.error) || 'Could not send a code'); return; } }
+        var code = prompt(byMail ? 'We emailed you a 6-digit code. Enter it to turn off two-factor authentication.'
+          : 'To turn off two-factor authentication, enter the 6-digit code from your authenticator app (or a recovery code).');
         if (!code) return;
         var off = await API.post('/2fa/disable', { code: code.trim() });
         if (!off || !off.ok) { toast((off && off.error) || 'That code did not work'); return; }
@@ -398,7 +401,7 @@
       if (code.length !== 6) return;
       var r = await API.post('/2fa/verify-totp', { code: code });
       if (r.ok) {
-        prefs._tfaEnabled = true;
+        prefs._tfaEnabled = true; prefs._tfaMethod = 'totp';
         label.textContent = 'ON';
         label.style.color = '#39ff7f';
         var codes = Array.isArray(r.recoveryCodes) ? r.recoveryCodes : [];
@@ -431,6 +434,7 @@
     // Email send code
     document.getElementById('sendEmailCodeBtn').addEventListener('click', async function() {
       var r = await API.post('/2fa/setup-email', {});
+      if (!r.ok) { toast(r.error || 'Could not send a code'); return; }
       if (r.ok) {
         document.getElementById('emailCodeArea').style.display = 'block';
         setTimeout(function() { var first = document.querySelector('#emailCodeRow .stg-tfa-code-digit'); if (first) first.focus(); }, 200);
@@ -443,7 +447,7 @@
       if (code.length !== 6) return;
       var r = await API.post('/2fa/verify-email', { code: code });
       if (r.ok) {
-        prefs._tfaEnabled = true;
+        prefs._tfaEnabled = true; prefs._tfaMethod = 'email';
         label.textContent = 'ON';
         label.style.color = '#39ff7f';
         panel.classList.remove('visible');
@@ -852,7 +856,7 @@
     });
     // 2FA state
     if (prefs.tfa && prefs.tfa.enabled) {
-      prefs._tfaEnabled = true;
+      prefs._tfaEnabled = true; prefs._tfaMethod = prefs.tfa.method;
       var toggle = document.getElementById('tfaToggle');
       var label = document.getElementById('tfaLabel');
       if (toggle) { toggle.classList.add('on'); }

@@ -55,15 +55,23 @@ module.exports = function(router, ctx) {
     } catch (e) {}
     return null;
   }
+  // the server's own auth (okdunio auth.js): THE code check and THE 2FA email — the same ones sign-in uses
+  let _okAuth;
+  function okAuth() {
+    if (_okAuth !== undefined) return _okAuth;
+    try { _okAuth = require.main.require('./auth'); if (!_okAuth.tfaCheck) throw 0; }
+    catch (e) { try { _okAuth = require(path.join(__dirname, '../../okdunio/auth')); } catch (e2) { _okAuth = null; } }
+    return _okAuth;
+  }
   async function tfaHolder(req) {
     const c = await tfaClient(req), user = readUser(req.user.studio, req);
     if (c) {
       if (!c.data.tfa && user && user.tfa && user.tfa.method === 'totp') { await storage.update('client', c.id, { tfa: user.tfa }); c.data.tfa = user.tfa; }
-      return { tfa: c.data.tfa || null, pending: c.data.tfaPending || null,
+      return { client: c, email: c.data.email || (user && user.email) || null, tfa: c.data.tfa || null, pending: c.data.tfaPending || null,
         save: (patch) => storage.update('client', c.id, patch) };
     }
     if (!user) return null;
-    return { tfa: user.tfa || null, pending: user.tfaPending || null,
+    return { email: user.email || null, tfa: user.tfa || null, pending: user.tfaPending || null,
       save: async (patch) => { for (const k in patch) { if (patch[k] == null) delete user[k]; else user[k] = patch[k]; } writeUser(req.user.studio, user, req); } };
   }
   function tfaCodeOk(tfa, code) {
@@ -317,28 +325,19 @@ module.exports = function(router, ctx) {
     res.json({ ok: true, method: 'totp', recoveryCodes });
   });
 
-  // ── 2FA: email setup — send test code ───────────────────────
+  // ── 2FA: email setup — a code to the account's address (Damon 2026-10-18: email 2FA works — same record as
+  // sign-in, the code single use, 10 minutes, 5 tries, stored hashed) ──
+  const hash6 = (c) => crypto.createHash('sha256').update(String(c)).digest('hex');
   router.post('/2fa/setup-email', async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');
-    const user = readUser(req.user.studio, req);
-    if (!user) return res.error(404, 'User not found');
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    user.tfaPending = { method: 'email', code, expires: Date.now() + 600000 }; // 10min
-    writeUser(req.user.studio, user, req);
-    // send via SES if available
-    if ((process.env.AWS_ACCESS_KEY_ID || process.env.KEYOP_URL)) {
-      try {
-        const ses = require(path.join(__dirname, '../../admin/platform-shell/lib/ses'));
-        await ses.sendEmail({
-          to: user.email,
-          subject: 'OkDun — Your 2FA verification code',
-          html: `<p>Your verification code is: <strong>${code}</strong></p><p>It expires in 10 minutes.</p>`,
-        });
-      } catch (e) {
-        console.error('[settings] SES send failed:', e.message);
-      }
-    }
-    res.json({ ok: true, sent: !!(process.env.AWS_ACCESS_KEY_ID || process.env.KEYOP_URL) });
+    const th = await tfaHolder(req);
+    if (!th) return res.error(404, 'User not found');
+    if (th.tfa) return res.error(400, '2FA is already on');
+    if (!th.email) return res.error(400, 'Your account has no email address to send a code to');
+    const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+    await th.save({ tfaPending: { method: 'email', hash: hash6(code), expires: Date.now() + 600000, tries: 0 } });
+    const a = okAuth(), sent = a && a.tfaMailCode ? await a.tfaMailCode(req.instanceSlug, th.email, code, 'Your 2FA set-up code') : false;
+    res.json({ ok: true, sent: !!sent });
   });
 
   // ── 2FA: verify email code ──────────────────────────────────
@@ -346,20 +345,22 @@ module.exports = function(router, ctx) {
     if (!req.user) return res.error(401, 'Not logged in');
     const { code } = req.body || {};
     if (!code) return res.error(400, 'Missing code');
-    const user = readUser(req.user.studio, req);
-    if (!user || !user.tfaPending || user.tfaPending.method !== 'email') {
-      return res.error(400, 'No pending email 2FA setup');
-    }
-    if (user.tfaPending.expires < Date.now()) {
-      delete user.tfaPending;
-      writeUser(req.user.studio, user, req);
-      return res.error(400, 'Code expired');
-    }
-    if (user.tfaPending.code !== code) return res.error(400, 'Invalid code');
-    user.tfa = { method: 'email' };
-    delete user.tfaPending;
-    writeUser(req.user.studio, user, req);
+    const th = await tfaHolder(req);
+    const pd = th && th.pending;
+    if (!pd || pd.method !== 'email') return res.error(400, 'No pending email 2FA setup');
+    if (pd.expires < Date.now() || (pd.tries || 0) >= 5) { await th.save({ tfaPending: null }); return res.error(400, 'Code expired — send a new one'); }
+    if (pd.hash !== hash6(String(code).trim())) { await th.save({ tfaPending: Object.assign({}, pd, { tries: (pd.tries || 0) + 1 }) }); return res.error(400, 'Invalid code'); }
+    await th.save({ tfa: { method: 'email' }, tfaPending: null });   // the inbox is the way back in: no recovery codes
     res.json({ ok: true, method: 'email' });
+  });
+
+  // ── 2FA: a code to turn email 2FA off (the same sign-in code, emailed) ──
+  router.post('/2fa/send-code', async (req, res) => {
+    if (!req.user) return res.error(401, 'Not logged in');
+    const th = await tfaHolder(req), a = okAuth();
+    if (!th || !th.tfa || th.tfa.method !== 'email' || !th.client || !a) return res.error(400, 'No emailed code for this account');
+    const sent = await a.tfaSendEmailCode(storage, th.client, req.instanceSlug);
+    res.json({ ok: true, sent: !!sent });
   });
 
   // ── 2FA: disable ────────────────────────────────────────────
@@ -368,7 +369,9 @@ module.exports = function(router, ctx) {
     if (!req.user) return res.error(401, 'Not logged in');
     const th = await tfaHolder(req);
     if (!th) return res.error(404, 'User not found');
-    if (th.tfa && !tfaCodeOk(th.tfa, (req.body || {}).code)) return res.error(400, 'Enter a valid 2FA code to turn it off');
+    const code = (req.body || {}).code, a = okAuth();
+    const good = !th.tfa ? true : (th.client && a) ? (await a.tfaCheck(storage, th.client, code)) === 'ok' : tfaCodeOk(th.tfa, code);
+    if (!good) return res.error(400, 'Enter a valid 2FA code to turn it off');
     await th.save({ tfa: null, tfaPending: null });
     const user = readUser(req.user.studio, req);
     if (user && (user.tfa || user.tfaPending)) { delete user.tfa; delete user.tfaPending; writeUser(req.user.studio, user, req); }   // the old copy too, or it would come back
