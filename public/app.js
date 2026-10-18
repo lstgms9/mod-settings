@@ -1663,43 +1663,34 @@
       });
     }
 
-    // Delete account — single confirm() prompt then POST to
-    // /api/auth/delete-account (server wipes the client + studio
-    // thing and clears the session). Bare for now; long-term policy
-    // is a 90-day grace period with reminder emails instead of
-    // self-serve delete.
+    // SAFE DELETE ACCOUNT (Damon 2026-10-18): the person types DELETE to confirm. The server marks the account deleted
+    // and hides it (nothing removed); it's wiped for good 30 days later; support can restore it until then.
     var del = document.getElementById('deleteBtn');
-    if (del) del.addEventListener('click', async function() {
-      var ok = await showConfirmModal({
-        title: 'Delete account?',
-        bodyHtml:
-          'This removes your <strong>account</strong>, your <strong>profile</strong>, your <strong>games</strong> and what you posted. ' +
-          'It <strong>cannot be undone</strong>.',
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
-        danger: true,
+    if (del) del.addEventListener('click', function() {
+      var m = platform.ui.modal({ title: 'Delete account?' });
+      m.content.innerHTML =
+        '<p style="font-size:16px;line-height:1.5;margin:0 0 12px">Your account, profile, games and posts disappear now, and are removed for good after 30 days. Until then, support can bring the account back.</p>' +
+        '<p style="font-size:16px;margin:0 0 8px">Type <b>DELETE</b> to confirm:</p>' +
+        '<input type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:100%;box-sizing:border-box;font-size:18px;padding:10px 12px;border-radius:8px;border:1px solid var(--border,#333);background:var(--bg,#0b0b14);color:var(--text,#eee)">' +
+        '<p class="stg-del-msg" style="font-size:16px;color:#ff6b6b;min-height:20px;margin:8px 0 0"></p>';
+      var inp = m.content.querySelector('input'), msg = m.content.querySelector('.stg-del-msg');
+      var go = document.createElement('button'); go.type = 'button'; go.textContent = 'Delete my account'; go.disabled = true;
+      go.className = 'pui-btn pui-btn-danger';
+      m.actions.appendChild(go);
+      inp.addEventListener('input', function() { go.disabled = inp.value.trim() !== 'DELETE'; });
+      go.addEventListener('click', async function() {
+        go.disabled = true; go.textContent = 'Deleting…';
+        try {
+          var r = await fetch('/api/auth/delete-account', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ confirm: true, typed: inp.value.trim() }),
+          });
+          var j = await r.json().catch(function() { return null; });
+          if (r.ok && j && j.ok) { location.href = '/'; return; }   // signed out — back to the front page
+          msg.textContent = (j && j.error) || 'Delete failed';
+        } catch (e) { msg.textContent = 'Network error — try again'; }
+        go.disabled = false; go.textContent = 'Delete my account';
       });
-      if (!ok) return;
-      del.disabled = true; del.textContent = 'Deleting…';
-      try {
-        var r = await fetch('/api/auth/delete-account', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ confirm: true }),
-        });
-        var j = await r.json().catch(function() { return null; });
-        if (r.ok && j && j.ok) {
-          // Account is gone — bounce to /signup so the now-stale
-          // session can't render any more authenticated views.
-          location.href = '/signup';
-        } else {
-          del.disabled = false; del.textContent = 'Delete Account';
-          alert('Delete failed: ' + ((j && j.error) || 'unknown'));
-        }
-      } catch (e) {
-        del.disabled = false; del.textContent = 'Delete Account';
-        alert('Delete failed: ' + (e && e.message || e));
-      }
     });
   }
 
