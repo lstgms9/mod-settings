@@ -715,8 +715,8 @@
       <div class="stg-group">
         <div class="stg-group-label">&#9888; BEFORE YOU START</div>
         <div class="stg-sublabel" style="margin:0 0 14px">Open a PuTTY/SSH session to the box first and <b>keep it open</b>. If a 2FA login fails afterwards, run <code>bash /root/2fa-revert.sh</code> in that session (or the provider console) to undo it. Your authenticator code (the one you already use) becomes the box's login code too.</div>
-        <div class="stg-row"><div style="width:100%"><div class="stg-label">Box IP / host</div><input id="sbIp" placeholder="89.117.60.193" autocomplete="off" autocapitalize="off" spellcheck="false" style="width:100%;padding:8px 10px;background:#0b0b14;border:1px solid var(--border,#333);border-radius:6px;color:inherit;font-size:14px"></div></div>
-        <div class="stg-row"><div style="width:100%"><div class="stg-label">Root password</div><input id="sbPw" type="password" placeholder="used once for login, never stored" autocomplete="off" style="width:100%;padding:8px 10px;background:#0b0b14;border:1px solid var(--border,#333);border-radius:6px;color:inherit;font-size:14px"></div></div>
+        <div class="stg-row"><div style="width:100%"><div class="stg-label">Box IP / host</div><input id="sbIp" placeholder="89.117.60.193" autocomplete="off" autocapitalize="off" spellcheck="false" style="width:100%;padding:8px 10px;background:#0b0b14;border-radius:6px;color:inherit;font-size:14px"></div></div>
+        <div class="stg-row"><div style="width:100%"><div class="stg-label">Root password</div><input id="sbPw" type="password" placeholder="used once for login, never stored" autocomplete="off" style="width:100%;padding:8px 10px;background:#0b0b14;border-radius:6px;color:inherit;font-size:14px"></div></div>
         <div class="stg-row">
           <div><div class="stg-label">Install + enable 2FA on this box</div><div class="stg-sublabel">installs the authenticator, seeds your existing code, switches on password+code login</div></div>
           <button class="stg-btn-primary" id="sbRun">Secure box</button>

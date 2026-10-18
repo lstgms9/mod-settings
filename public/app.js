@@ -1705,7 +1705,7 @@
       m.content.innerHTML =
         '<p style="font-size:16px;line-height:1.5;margin:0 0 12px">Your account, profile, games and posts disappear now, and are removed for good after 30 days. Until then, support can bring the account back.</p>' +
         '<p style="font-size:16px;margin:0 0 8px">Type <b>DELETE</b> to confirm:</p>' +
-        '<input type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:100%;box-sizing:border-box;font-size:18px;padding:10px 12px;border-radius:8px;border:1px solid var(--border,#333);background:var(--bg,#0b0b14);color:var(--text,#eee)">' +
+        '<input type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:100%;box-sizing:border-box;font-size:18px;padding:10px 12px;border-radius:8px;background:var(--bg,#0b0b14);color:var(--text,#eee)">' +
         '<p class="stg-del-msg" style="font-size:16px;color:#ff6b6b;min-height:20px;margin:8px 0 0"></p>';
       var inp = m.content.querySelector('input'), msg = m.content.querySelector('.stg-del-msg');
       var go = document.createElement('button'); go.type = 'button'; go.textContent = 'Delete my account'; go.disabled = true;
@@ -2022,7 +2022,7 @@
           '<h2 style="font-family:var(--font-head,Bungee);margin:0 0 6px;color:var(--text,#e4e4f0);font-size:20px">Choose your studio URL</h2>' +
           '<p style="margin:0 0 14px;font-size:14px;color:var(--text-mid,#a0aab0);line-height:1.45">Pick your studio URL. It becomes your website (<strong>your-slug.' + mailDomain + '</strong>) and your studio email (<strong>your-slug@' + mailDomain + '</strong>). <strong style="color:var(--red,#ff3997)">It can&rsquo;t be changed later</strong> — choose carefully.</p>' +
           '<div style="display:flex;align-items:center;background:var(--bg2,#12121f);border:1px solid var(--border,#252540);border-radius:8px;padding:4px 4px 4px 12px;margin-bottom:8px">' +
-            '<input id="stgSlugIn" type="text" placeholder="gamebolina" maxlength="30" autocapitalize="off" spellcheck="false" autocomplete="off" style="flex:1;background:transparent;border:none;color:var(--text,#e4e4f0);font-family:var(--font-mono,monospace);font-size:15px;outline:none;padding:8px 0">' +
+            '<input id="stgSlugIn" class="pui-bare" type="text" placeholder="gamebolina" maxlength="30" autocapitalize="off" spellcheck="false" autocomplete="off" style="flex:1;background:transparent;border:none;color:var(--text,#e4e4f0);font-family:var(--font-mono,monospace);font-size:15px;outline:none;padding:8px 0">' +
             '<span style="font-family:var(--font-mono,monospace);font-size:15px;color:var(--text-mid,#a0aab0);padding:8px 12px 8px 4px">.' + mailDomain + '</span>' +
           '</div>' +
           '<div id="stgSlugStatus" style="font-size:14px;min-height:18px;font-family:var(--font-mono,monospace);color:var(--text-mid,#a0aab0)">3-30 chars, lowercase letters, numbers, hyphens.</div>' +
