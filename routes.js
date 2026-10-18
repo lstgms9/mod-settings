@@ -38,6 +38,41 @@ module.exports = function(router, ctx) {
     fs.writeFileSync(path.join(dir, studio + '.json'), JSON.stringify(data, null, 2));
   }
 
+  // ── 2FA lives on the account record sign-in checks (Damon 2026-10-18) ──
+  // Sign-in (okdunio auth.js tfaCheck) reads the Gecko 'client' record's data.tfa; 2FA setup here wrote the old
+  // per-user file, so enrolling did nothing. tfaHolder finds that record (session slug, else the studio's), and an
+  // older account whose 2FA is only in the old file has it carried over — the same secret, so its authenticator keeps
+  // working. No Gecko record (the okdun.io platform itself): the old file as before.
+  async function tfaClient(req) {
+    for (const id of [req.user.slug, req.user.studio]) {
+      if (!id) continue;
+      try { const c = await storage.get('client', id); if (c && c.data) return c; } catch (e) {}
+    }
+    try {
+      const all = await storage.list('client');
+      const hit = all.find(u => ((u.data || u).studio) === req.user.studio);
+      if (hit) return await storage.get('client', hit.id);
+    } catch (e) {}
+    return null;
+  }
+  async function tfaHolder(req) {
+    const c = await tfaClient(req), user = readUser(req.user.studio, req);
+    if (c) {
+      if (!c.data.tfa && user && user.tfa && user.tfa.method === 'totp') { await storage.update('client', c.id, { tfa: user.tfa }); c.data.tfa = user.tfa; }
+      return { tfa: c.data.tfa || null, pending: c.data.tfaPending || null,
+        save: (patch) => storage.update('client', c.id, patch) };
+    }
+    if (!user) return null;
+    return { tfa: user.tfa || null, pending: user.tfaPending || null,
+      save: async (patch) => { for (const k in patch) { if (patch[k] == null) delete user[k]; else user[k] = patch[k]; } writeUser(req.user.studio, user, req); } };
+  }
+  function tfaCodeOk(tfa, code) {
+    if (!tfa || tfa.method !== 'totp' || !code) return false;
+    try { if (new TOTP({ algorithm: 'SHA1', digits: 6, period: 30, secret: Secret.fromBase32(tfa.secret) }).validate({ token: String(code).trim(), window: 1 }) !== null) return true; } catch (e) {}
+    const h = crypto.createHash('sha256').update(String(code).trim().toLowerCase()).digest('hex');
+    return Array.isArray(tfa.recovery) && tfa.recovery.indexOf(h) !== -1;
+  }
+
   async function getSettingsRecord(studio) {
     const list = await storage.list('setting', { studio });
     if (list.length) return await storage.get('setting', list[0].id);
@@ -63,13 +98,10 @@ module.exports = function(router, ctx) {
       }
       prefs.aiKeys = masked;
     }
-    // include 2fa status from user file
+    // 2fa status from the account record sign-in checks (never the secret)
     const user = readUser(req.user.studio, req);
-    if (user && user.tfa) {
-      prefs.tfa = { method: user.tfa.method, enabled: true };
-    } else {
-      prefs.tfa = { enabled: false };
-    }
+    const th = await tfaHolder(req).catch(() => null);
+    prefs.tfa = th && th.tfa ? { method: th.tfa.method, enabled: true } : { enabled: false };
     // include plan info — user-level record first, then fall back to
     // the client record (gamoid public signups create only a client,
     // not a user-level file, so prefs.plan would otherwise stay
@@ -253,11 +285,11 @@ module.exports = function(router, ctx) {
     } catch {
       return res.error(500, 'QR generation failed');
     }
-    // store pending secret on user (not active until verified)
-    const user = readUser(req.user.studio, req);
-    if (!user) return res.error(404, 'User not found');
-    user.tfaPending = { method: 'totp', secret: secret.base32 };
-    writeUser(req.user.studio, user, req);
+    // store the pending secret on the account (not active until a code from it is verified)
+    const th = await tfaHolder(req);
+    if (!th) return res.error(404, 'User not found');
+    if (th.tfa) return res.error(400, '2FA is already on');
+    await th.save({ tfaPending: { method: 'totp', secret: secret.base32 } });
     res.json({
       qr: qrDataUrl,
       secret: secret.base32,
@@ -270,29 +302,18 @@ module.exports = function(router, ctx) {
     if (!req.user) return res.error(401, 'Not logged in');
     const { code } = req.body || {};
     if (!code) return res.error(400, 'Missing code');
-    const user = readUser(req.user.studio, req);
-    if (!user || !user.tfaPending || user.tfaPending.method !== 'totp') {
+    const th = await tfaHolder(req);
+    if (!th || !th.pending || th.pending.method !== 'totp') {
       return res.error(400, 'No pending TOTP setup');
     }
-    const totp = new TOTP({
-      issuer: 'OkDun',
-      label: req.user.studio,
-      algorithm: 'SHA1',
-      digits: 6,
-      period: 30,
-      secret: Secret.fromBase32(user.tfaPending.secret),
-    });
-    const delta = totp.validate({ token: code, window: 1 });
-    if (delta === null) return res.error(400, 'Invalid code');
+    if (!tfaCodeOk({ method: 'totp', secret: th.pending.secret }, code)) return res.error(400, 'Invalid code');
     // activate 2FA + mint one-time recovery codes. Shown to the user ONCE
     // (returned cleartext here); only sha256 hashes are stored, so a leaked
     // user file can't be used to log in. Each code works once (consumed at
     // login). Lose your authenticator → use one of these to get back in.
     const recoveryCodes = Array.from({ length: 8 }, () => crypto.randomBytes(5).toString('hex'));
     const recovery = recoveryCodes.map(c => crypto.createHash('sha256').update(c).digest('hex'));
-    user.tfa = { method: 'totp', secret: user.tfaPending.secret, recovery };
-    delete user.tfaPending;
-    writeUser(req.user.studio, user, req);
+    await th.save({ tfa: { method: 'totp', secret: th.pending.secret, recovery }, tfaPending: null });
     res.json({ ok: true, method: 'totp', recoveryCodes });
   });
 
@@ -342,13 +363,15 @@ module.exports = function(router, ctx) {
   });
 
   // ── 2FA: disable ────────────────────────────────────────────
+  // turning 2FA off takes a valid code from the authenticator (or a recovery code) — Damon 2026-10-18
   router.delete('/2fa', async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');
+    const th = await tfaHolder(req);
+    if (!th) return res.error(404, 'User not found');
+    if (th.tfa && !tfaCodeOk(th.tfa, (req.body || {}).code)) return res.error(400, 'Enter a valid 2FA code to turn it off');
+    await th.save({ tfa: null, tfaPending: null });
     const user = readUser(req.user.studio, req);
-    if (!user) return res.error(404, 'User not found');
-    delete user.tfa;
-    delete user.tfaPending;
-    writeUser(req.user.studio, user, req);
+    if (user && (user.tfa || user.tfaPending)) { delete user.tfa; delete user.tfaPending; writeUser(req.user.studio, user, req); }   // the old copy too, or it would come back
     res.json({ ok: true });
   });
 
