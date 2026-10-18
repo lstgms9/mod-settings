@@ -35,8 +35,7 @@
 /* ── Main ────────────────────────────────────── */
 .stg-main { flex: 1; padding: 28px 36px; overflow-y: auto; }
 .stg-section { display: none; }
-.stg-section.active { display: block; animation: stgFadeIn 0.2s ease; }
-@keyframes stgFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.stg-section.active { display: block; }
 
 .stg-section-header { font-family: var(--font-head); font-size: 18px; color: var(--text); margin-bottom: 6px; }
 .stg-section-desc { font-size: 14px; color: var(--text-dim); margin-bottom: 28px; max-width: 500px; }
@@ -286,7 +285,7 @@
   background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
   padding: 18px; margin-top: 12px; display: none;
 }
-.stg-tfa-panel.visible { display: block; animation: stgFadeIn 0.3s ease; }
+.stg-tfa-panel.visible { display: block; }
 .stg-tfa-method {
   display: flex; align-items: flex-start; gap: 14px; padding: 14px;
   background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
@@ -310,7 +309,7 @@
   position: absolute; top: 2px; left: 2px; box-shadow: 0 0 6px rgba(57,255,127,0.3);
 }
 .stg-tfa-setup { margin-top: 14px; display: none; }
-.stg-tfa-setup.visible { display: block; animation: stgFadeIn 0.3s ease; }
+.stg-tfa-setup.visible { display: block; }
 .stg-tfa-qr {
   width: 180px; height: 180px; margin: 0 auto 14px; display: flex;
   align-items: center; justify-content: center; border-radius: 8px; overflow: hidden;
@@ -409,7 +408,7 @@
 .stg-team-remove:hover { border-color: var(--red); color: var(--red); }
 .stg-team-edit-panel {
   background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-  padding: 14px; margin: 4px 0 8px; animation: stgFadeIn 0.2s ease;
+  padding: 14px; margin: 4px 0 8px;
 }
 .stg-team-edit-section { margin-bottom: 10px; }
 .stg-team-edit-section:last-child { margin-bottom: 0; }
