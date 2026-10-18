@@ -1124,7 +1124,8 @@
       _platformState = (s.platforms && typeof s.platforms === 'object') ? Object.assign({}, s.platforms) : {};
       renderPlatformRows();
       refreshAddSelect();
-    }).catch(function(){ renderPlatformRows(); refreshAddSelect(); });
+      watchProfileSave();
+    }).catch(function(){ renderPlatformRows(); refreshAddSelect(); watchProfileSave(); });
     var btn = document.getElementById('profileSaveBtn');
     if (btn) btn.addEventListener('click', saveProfile);
     // Display name has its own Save beside it — lit only once the name differs from the saved one
@@ -1194,6 +1195,13 @@
       });
     });
   }
+  // THE settings Save (ui.saveWatch, Damon 2026-10-18): dimmed until something on the form actually changes
+  var _profileWatch = null;
+  function watchProfileSave() {
+    var btn = document.getElementById('profileSaveBtn'), U = window.platform && platform.ui;
+    if (!btn || !U || !U.saveWatch) return;
+    _profileWatch = U.saveWatch(btn, btn.closest('.stg-acct-box') || btn.closest('.stg-section') || document, { state: function() { return _platformState; } });
+  }
   async function saveProfile() {
     var dn = document.getElementById('profileDisplayName');
     var cSel = document.getElementById('profileCountry');
@@ -1214,7 +1222,7 @@
         body: JSON.stringify(payload),
       });
       if (r.ok) {
-        if (btn) { btn.textContent = 'Saved ✓'; setTimeout(function(){ btn.disabled = false; btn.textContent = btn.dataset.orig || 'Save profile'; }, 1200); }
+        if (btn) { btn.textContent = 'Saved ✓'; setTimeout(function(){ btn.disabled = false; btn.textContent = btn.dataset.orig || 'Save profile'; if (_profileWatch) _profileWatch.reset(); }, 1200); }
       } else if (btn) {
         btn.textContent = 'Failed'; btn.disabled = false;
         setTimeout(function(){ btn.textContent = btn.dataset.orig || 'Save profile'; }, 1500);
