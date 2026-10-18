@@ -302,7 +302,7 @@
       if (b.dataset.ai === 'login') location.href = '/api/settings/ai-links/' + t.id + '/start';
       else if (b.dataset.ai === 'key') aiKeyPop(t);
       else if (b.dataset.ai === 'off') {
-        if (!confirm('Disconnect ' + t.name + '? Its key is removed from the vault.')) return;
+        if (!(await platform.ui.confirm('Disconnect ' + t.name + '? Its key is removed from the vault.'))) return;
         var r = await API.delete('/ai-links/' + t.id);
         if (r && r.ok) { toast(t.name + ' disconnected'); loadAILinks(); } else toast((r && r.error) || 'Could not disconnect');
       }
@@ -2255,7 +2255,7 @@
     }
     render(st);
     async function act(btn, url, confirmMsg, busy) {
-      if (!confirm(confirmMsg)) return;
+      if (!(await platform.ui.confirm(confirmMsg))) return;
       btn.disabled = true; btn.textContent = busy;
       try {
         var r = await fetch(url, { method: 'POST', credentials: 'same-origin',
@@ -2267,7 +2267,7 @@
       } catch (err) {
         var st3 = await loadStatus();
         if (st3) render(st3);
-        alert('Failed: ' + err.message);
+        platform.ui.toast('Failed: ' + err.message);
       }
     }
     document.getElementById('sec-publish').addEventListener('click', function(e) {
@@ -2360,7 +2360,7 @@
         if (st.count) mInfo.textContent = st.count + ' files, ' + (st.bytes / 1048576).toFixed(1) + ' MB. When your uploads change, a current archive downloads to your computer automatically (at most weekly).';
       }).catch(function(){});
     tokBtn.onclick = async function() {
-      if (!confirm('Generate a new backup token? Any existing pull script stops working.')) return;
+      if (!(await platform.ui.confirm('Generate a new backup token? Any existing pull script stops working.'))) return;
       await fetch('/api/files/backup/token', { method: 'POST', credentials: 'same-origin' });
       scrBtn.disabled = false;
       scrOut.style.display = 'none';
