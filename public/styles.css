@@ -861,3 +861,7 @@
   #settings-app .stg-section div[style*="font-size"], #settings-app .stg-section span[style*="font-size"] { font-size: var(--stg-text) !important; }
   #settings-app .stg-group-label { font-size: var(--stg-title) !important; }
 }
+/* Settings shown IN a pop-up (Damon 2026-10-18: a page in a pop-up never scrolls itself — the pop-up's box does, with
+   THE bar): the page grows to its full height instead of scrolling its own main pane */
+html.pui-framed #settings-app { height: auto; overflow: visible; }
+html.pui-framed .stg-main { overflow: visible; }
