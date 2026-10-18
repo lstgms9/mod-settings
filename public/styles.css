@@ -842,3 +842,22 @@
   .stg-tier-badge, .stg-group-label, .stg-acct-email, .stg-acct-static, .stg-sublabel,
   .stg-acct-cta, .stg-btn-danger, .stg-input { font-size: 16px !important; }
 }
+/* A TAP PRESSES THE CONTROL (Damon 2026-10-18, phone: the first tap on Enable 2FA selected the box around it): a
+   settings box is never selected or highlighted by a tap; fields stay selectable; toggles and choices take the tap */
+.stg-section, .stg-group, .stg-row, .stg-tfa-panel, .stg-tfa-method, .stg-acct-box, .stg-acct-pair { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+.stg-section input, .stg-section textarea, .stg-section select, .stg-mono-cyan { -webkit-user-select: text; user-select: text; }
+.stg-section .stg-tfa-secret { -webkit-user-select: all; user-select: all; }
+.stg-toggle, .stg-tfa-method { cursor: pointer; touch-action: manipulation; }
+.stg-tfa-cancel { display: block; margin: 16px auto 0; width: auto; padding: 8px 22px; }
+/* ONE TEXT SIZE, ONE TITLE SIZE in Settings on a phone (Damon 2026-10-18): every piece of body text is --stg-text and
+   every section title (MEDIA BACKUP, TWO-FACTOR AUTHENTICATION…) is --stg-title — each 2px bigger than before. Buttons
+   keep their own size. The next tweak is one value here. */
+@media (max-width: 760px) {
+  #settings-app { --stg-text: 18px; --stg-title: 18px; }
+  #settings-app .stg-label, #settings-app .stg-sublabel, #settings-app .stg-section-desc, #settings-app .stg-toggle-label,
+  #settings-app .stg-acct-pair > label, #settings-app .stg-acct-email, #settings-app .stg-acct-static, #settings-app .stg-input,
+  #settings-app .stg-tfa-method-name, #settings-app .stg-tfa-method-desc, #settings-app .stg-ai-name, #settings-app .stg-ai-provider,
+  #settings-app .stg-tier-badge, #settings-app .stg-section p, #settings-app .stg-section li,
+  #settings-app .stg-section div[style*="font-size"], #settings-app .stg-section span[style*="font-size"] { font-size: var(--stg-text) !important; }
+  #settings-app .stg-group-label { font-size: var(--stg-title) !important; }
+}

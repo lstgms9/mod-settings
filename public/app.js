@@ -364,6 +364,7 @@
         toast('2FA disabled');
         return;
       }
+      if (panel.classList.contains('visible')) { cancelSetup(); return; }   // tapping the switch again = back out
       // start setup
       toggle.classList.add('on');
       label.textContent = 'SETUP...';
@@ -373,6 +374,22 @@
       panel.querySelectorAll('.stg-tfa-method').forEach(function(m) { m.classList.remove('selected'); });
       panel.querySelectorAll('.stg-tfa-setup').forEach(function(s) { s.classList.remove('visible'); });
     });
+
+    // BACK OUT at any step (Damon 2026-10-18: setup had no way out): 2FA stays off and the half-made setup (a pending
+    // key) is cleared on the server — nothing is left half-saved
+    function cancelSetup() {
+      if (prefs._tfaEnabled) return;
+      try { API.delete('/2fa'); } catch (e) {}
+      toggle.classList.remove('on'); label.textContent = 'OFF'; label.style.color = '';
+      panel.classList.remove('visible');
+      panel.querySelectorAll('.stg-tfa-method').forEach(function(x) { x.classList.remove('selected'); });
+      panel.querySelectorAll('.stg-tfa-setup').forEach(function(x) { x.classList.remove('visible'); });
+      panel.querySelectorAll('.stg-tfa-code-digit').forEach(function(i) { i.value = ''; });
+      var qr = document.getElementById('tfaQr'), sec = document.getElementById('tfaSecret'), ea = document.getElementById('emailCodeArea');
+      if (qr) qr.innerHTML = ''; if (sec) sec.textContent = ''; if (ea) ea.style.display = 'none';
+    }
+    var cancelBtn = document.getElementById('tfaCancelBtn');
+    if (cancelBtn) cancelBtn.addEventListener('click', cancelSetup);
 
     // method selection
     panel.querySelectorAll('.stg-tfa-method').forEach(function(m) {
