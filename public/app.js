@@ -57,7 +57,7 @@
   var WEIGHTS = { small: '400', medium: '500', large: '600' };
 
   // Appearance switched off for this tenant (PUB_CONFIG.settingsHide 'appearance'): saved theme/accent/font are not applied
-  function appearanceOff() { try { var h = (window.PUB_CONFIG || {}).settingsHide; if (!h || !h.length) { try { h = window.top.PUB_CONFIG.settingsHide; } catch (e) {} } return (h || []).indexOf('appearance') !== -1; } catch (e) { return false; } }
+  function appearanceOff() { try { return ((window.PUB_CONFIG || {}).settingsHide || []).indexOf('appearance') !== -1; } catch (e) { return false; } }
   function applyVisual() {
     if (appearanceOff()) return;
     var r = document.documentElement.style;
@@ -2130,10 +2130,8 @@
   // Applied as soon as this file runs as well as in init: the standalone /settings page (the pop-up) never calls init.
   function applyHide() {
     try {
-      // the pop-up shows /settings?bare=1 in a frame whose own PUB_CONFIG has no settingsHide — read the page's (uniMaster v237)
-      var _own = (window.PUB_CONFIG || {}).settingsHide, _top = null;
-      try { _top = window.top && window.top !== window && window.top.PUB_CONFIG && window.top.PUB_CONFIG.settingsHide; } catch (e) {}
-      var _sh = ((_own && _own.length ? _own : _top) || []).filter(function(x) { return /^[a-z-]+$/.test(x); });
+      // a pop-up's bare page carries the full page's PUB_CONFIG (okdunio, Damon 2026-10-18) — no window.top lookup
+      var _sh = ((window.PUB_CONFIG || {}).settingsHide || []).filter(function(x) { return /^[a-z-]+$/.test(x); });
       var _shEl = document.getElementById('stg-hide-css');
       if (_sh.length && !_shEl) { _shEl = document.createElement('style'); _shEl.id = 'stg-hide-css'; document.head.appendChild(_shEl); }
       // a name is a pane (its nav item) or a part of one tagged data-hide-key (account-info = bio/social/press,
