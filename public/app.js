@@ -336,6 +336,9 @@
     return Array.from(container.querySelectorAll('.stg-tfa-code-digit')).map(function(i) { return i.value; }).join('');
   }
 
+  // the outline globe (ui.v1's icon set) where a country has no flag yet — not the 🌍 emoji (Damon 2026-10-18)
+  var GLOBE_IC = '<svg class="pui-ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.6 3.7 2.6 6S9.8 12.3 8 14C6.2 12.3 5.4 10.3 5.4 8S6.2 3.7 8 2z"/></svg>';
+
   function init2FA() {
     var toggle = document.getElementById('tfaToggle');
     var label = document.getElementById('tfaLabel');
@@ -1118,7 +1121,7 @@
       cSel.innerHTML = '<option value="">— Select country —</option>' +
         COUNTRIES.map(function(c){ return '<option value="' + c[0] + '">' + c[1] + '</option>'; }).join('');
       cSel.addEventListener('change', function() {
-        if (flagEl) flagEl.innerHTML = flagImg(cSel.value) || '\uD83C\uDF0D';  // 🌍 fallback
+        if (flagEl) flagEl.innerHTML = flagImg(cSel.value) || GLOBE_IC;  // 🌍 fallback
       });
     }
     if (tSel) {
@@ -1134,7 +1137,7 @@
       if (dn) { dn.value = s.displayName || s.username || ''; dn.dataset.original = dn.value; }
       if (cSel && s.country) {
         cSel.value = s.country;
-        if (flagEl) flagEl.innerHTML = flagImg(s.country) || '\uD83C\uDF0D';
+        if (flagEl) flagEl.innerHTML = flagImg(s.country) || GLOBE_IC;
       }
       if (tSel && s.timezone) tSel.value = s.timezone;
       if (bio) bio.value = s.bio || '';
