@@ -364,7 +364,7 @@ module.exports = function(router, ctx) {
 
   // ── 2FA: disable ────────────────────────────────────────────
   // turning 2FA off takes a valid code from the authenticator (or a recovery code) — Damon 2026-10-18
-  router.delete('/2fa', async (req, res) => {
+  const tfaOff = async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');
     const th = await tfaHolder(req);
     if (!th) return res.error(404, 'User not found');
@@ -373,7 +373,9 @@ module.exports = function(router, ctx) {
     const user = readUser(req.user.studio, req);
     if (user && (user.tfa || user.tfaPending)) { delete user.tfa; delete user.tfaPending; writeUser(req.user.studio, user, req); }   // the old copy too, or it would come back
     res.json({ ok: true });
-  });
+  };
+  router.post('/2fa/disable', tfaOff);   // a POST carries the code (a DELETE's body never reaches here)
+  router.delete('/2fa', tfaOff);
 
   // ── Email addresses (reads from domain module's storage types) ──
   router.get('/email-addresses', async (req, res) => {

@@ -351,7 +351,7 @@
         // turning it off takes a code from the authenticator (or a recovery code) — Damon 2026-10-18
         var code = prompt('To turn off two-factor authentication, enter the 6-digit code from your authenticator app (or a recovery code).');
         if (!code) return;
-        var off = await API.delete('/2fa', { code: code.trim() });
+        var off = await API.post('/2fa/disable', { code: code.trim() });
         if (!off || !off.ok) { toast((off && off.error) || 'That code did not work'); return; }
         prefs._tfaEnabled = false;
         toggle.classList.remove('on');
