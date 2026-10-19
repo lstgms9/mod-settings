@@ -287,6 +287,13 @@ module.exports = function(router, ctx) {
     res.json({ ok: true });
   });
 
+  // Settings tabs this tenant opens to EVERY account whatever the tier (config.settings.openToAll, e.g. gamoid
+  // ['privacy']: 2FA for free accounts too — Damon 2026-10-19, free accounts can earn money). No value = the tier gate as is.
+  router.get('/open-tabs', async (req, res) => {
+    const c = (req.instance && req.instance.config && req.instance.config.settings) || {};
+    res.json({ open: Array.isArray(c.openToAll) ? c.openToAll : [] });
+  });
+
   // ── 2FA: TOTP setup ─────────────────────────────────────────
   router.post('/2fa/setup-totp', async (req, res) => {
     if (!req.user) return res.error(401, 'Not logged in');

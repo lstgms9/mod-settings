@@ -154,7 +154,11 @@
         if (s.role === 'owner' || s.superOwner) return;
         var levels = { player: 0, dev: 1, studio: 2, studio_pro: 3 };
         var tier = (typeof s.tier === 'number') ? s.tier : (levels[s.tier] || 0);
+        // tabs this tenant opens to every account (config.settings.openToAll — gamoid: Privacy & Security / 2FA)
+        var open = [];
+        try { var or = await fetch('/api/settings/open-tabs', { credentials: 'same-origin' }); if (or.ok) open = (await or.json()).open || []; } catch (e) {}
         sidebar.querySelectorAll('.stg-nav-item[data-min-tier]').forEach(function(el) {
+          if (open.indexOf(el.dataset.section) !== -1) return;
           var req = Number(el.dataset.minTier || 0);
           if (tier < req) el.style.display = 'none';
         });
