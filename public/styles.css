@@ -771,7 +771,8 @@
 /* simple Backups (gamoid v1): two big rows — a switch and Download now */
 #bkSimple .bk-simple-row { padding: 16px 0; }
 #bkSimple .bk-simple-label { font-size: 17px; }
-#bkSimple .bk-simple-btn { width: auto; padding: 10px 22px; font-size: 15px; }
+#bkSimple .bk-simple-btn { width: auto; padding: 10px 22px; }
+@media (min-width: 769px) { #bkSimple .bk-simple-btn { font-size: 15px; } }   /* a PC's size; a phone's is the 16px of .stg-ai-btn (Damon 2026-10-19: nothing under 16px on a phone) */
 #bkSimple .stg-toggle { width: 52px; height: 28px; border-radius: 14px; }
 #bkSimple .stg-toggle::after { width: 22px; height: 22px; }
 #bkSimple .stg-toggle.on::after { left: 26px; }
