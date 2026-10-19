@@ -24,6 +24,8 @@
     <!-- Publish nav — only revealed for flagged dev studios on the dev vertical
          (app.js feature-detects via /api/game/publish-prod/status). -->
     <div class="stg-nav-item" data-section="publish" id="stgPublishNav" style="display:none"><span class="stg-nav-icon"><svg class="stg-nav-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10V2.5M5.2 5.2L8 2.5l2.8 2.7"/><path d="M2.8 9.5v3a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1v-3"/></svg></span> Publish</div>
+    <!-- Admin nav — only for an admin / official account (app.js asks /api/settings/admin-surfaces → social) -->
+    <div class="stg-nav-item" data-section="admin" id="stgAdminNav" style="display:none"><span class="stg-nav-icon"><svg class="stg-nav-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8l5 2v4c0 3.1-2.1 5.4-5 6.4-2.9-1-5-3.3-5-6.4v-4z"/></svg></span> Admin</div>
     <!-- Backups nav — revealed where the studio backup system is live
          (app.js feature-detects via /api/files/backup). -->
     <div class="stg-nav-item" data-section="backups" id="stgBackupsNav" style="display:none"><span class="stg-nav-icon"><svg class="stg-nav-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="8" cy="4" rx="5.2" ry="2.2"/><path d="M2.8 4v8c0 1.2 2.3 2.2 5.2 2.2s5.2-1 5.2-2.2V4"/><path d="M2.8 8c0 1.2 2.3 2.2 5.2 2.2s5.2-1 5.2-2.2"/></svg></span> Backups</div>
@@ -602,6 +604,18 @@
     <!-- DEPLOY — tenant-owner only, master-only. app.js feature-detects and reveals.
          Release-based: cut a pinned artifact, canary soaks it, Promote points the
          stable channel at it; boxes pull on their own schedule and check in here. -->
+    <!-- ADMIN (Damon 2026-10-19): AUTO-POST OUR POSTS TO OUR SOCIALS — an official account's Latest post goes out by itself
+         to gamoid's connected social accounts (X today; mod-social share.js). ON unless switched off. -->
+    <div class="stg-section" id="sec-admin">
+      <div class="stg-section-header">Admin</div>
+      <div class="stg-group">
+        <div class="stg-row">
+          <div class="stg-label">Auto-post our posts to our socials</div>
+          <div class="stg-toggle-wrap"><div class="stg-toggle" id="adAutoPost" role="switch" aria-checked="false" aria-label="Auto-post our posts to our socials" tabindex="0"></div></div>
+        </div>
+        <div class="stg-section-desc" id="adAutoPostNote"></div>
+      </div>
+    </div>
     <div class="stg-section" id="sec-publish">
       <div class="stg-section-header">Push to production</div>
       <div class="stg-section-desc">A game lives in ONE catalog at a time. Push moves it from this dev vertical to the production catalog (beta/live games only); pull it back here for another round of work. The workshop never moves.</div>

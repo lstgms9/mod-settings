@@ -2252,6 +2252,7 @@
     initDeployPanel();
     initSecureBox();
     initPublishPanel();
+    initAdminPanel();
     // init resolves once the menu is final (tier gates applied, Backups found) — the shell shows a module only then
     await Promise.all([_tierGate, initBackupsPanel()].map(function(p) { return Promise.resolve(p).catch(function() {}); }));
   };
@@ -2266,6 +2267,25 @@
       .then(function(r) { return r.ok ? r.json() : {}; }).catch(function() { return {}; });
     return _adminSurfaces;
   }
+  // ── Admin: auto-post our posts to our socials (Damon 2026-10-19) — only for an admin / official account ──
+  async function initAdminPanel() {
+    var nav = document.getElementById('stgAdminNav'), sw = document.getElementById('adAutoPost'), note = document.getElementById('adAutoPostNote');
+    if (!nav || !sw || !(await adminSurfaces()).social) return;
+    var st = null;
+    try { var r = await fetch('/api/social/share/auto', { credentials: 'same-origin', cache: 'no-store' }); if (r.ok) st = await r.json(); } catch (e) {}
+    if (!st) return;
+    nav.style.display = '';
+    function paint(on) { sw.classList.toggle('on', !!on); sw.setAttribute('aria-checked', on ? 'true' : 'false'); }
+    paint(st.on);
+    if (note) note.textContent = 'Posts by ' + (Array.isArray(st.official) ? st.official.join(', ') : st.official) + ' go to @' + String(st.handle || '').replace(/^@/, '') + ' on X' + (st.x ? '.' : ' (X is not connected yet).');
+    sw.onclick = async function() {
+      var on = !sw.classList.contains('on'); paint(on);
+      try { var r = await fetch('/api/social/share/auto', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: on }) }); if (!r.ok) throw 0; platform.ui.toast(on ? 'Auto-post on' : 'Auto-post off'); }
+      catch (e) { paint(!on); platform.ui.toast('Could not save'); }
+    };
+    sw.onkeydown = function(e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); sw.onclick(); } };
+  }
+
   async function initPublishPanel() {
     var nav = document.getElementById('stgPublishNav');
     var listEl = document.getElementById('pubGamesList');

@@ -760,7 +760,10 @@ module.exports = function(router, ctx) {
         publish = !!(me && me.data && me.data.canPublishProd === true);
       } catch (e) {}
     }
-    res.json({ deploy: deployGuard(req) === null, release: !worker && releaseAdmin(req), publish });
+    // social: the auto-post switch (mod-social share.js) — an admin, or an official account (config.social.official)
+    const u = req.user || {}, official = ((((req.instance || {}).config || {}).social || {}).official || []).map(e => String(e).toLowerCase());
+    const social = !!(req.user && (u.superOwner || ['admin', 'owner', 'super_owner'].includes(u.role) || official.includes(String(u.email || '').toLowerCase())));
+    res.json({ deploy: deployGuard(req) === null, release: !worker && releaseAdmin(req), publish, social });
   });
 
   const REL_DIR = '/home/damon/platform/.releases';
