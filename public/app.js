@@ -979,6 +979,7 @@
         planVal = ses2 && ses2.tier;
       } catch (_) {}
     }
+    renderPlanLine();   // a two-plan site (gamoid): its own line + button (Damon 2026-10-19)
     if (planVal) {
       // the tenant's OWN plan names when its sign-up names them (gamoid two plans: studio → 'Studio AI', anything
       // without a paid plan → 'Free'), else the generic names (uniMaster v237: Account still said 'Studio plan')
@@ -1623,14 +1624,58 @@
     var tiers = (window.SIGNUP_CONFIG && window.SIGNUP_CONFIG.tiers) || [];
     return tiers.some(function (t) { return t.userTier === 'studio' && (t.form || []).indexOf('studioSlug') !== -1; });
   }
+  // THE PLAN LINE on a two-plan site (Damon 2026-10-19, gamoid): Free → 'Free' + 'Upgrade to Studio AI' (the code-
+  // locked step: a valid invite code gives this account the pilot's free month); Studio AI → 'Studio AI · $10/mo' +
+  // 'Manage' (Stripe's hosted billing page) where billing is on file, else the invite's free-month line.
+  var _planTwo = null;   // { paid, free, st } once drawn
+  async function renderPlanLine() {
+    try {
+      if (!_planCfg) { var r = await fetch((platform.basePath || '') + '/api/signup/config'); _planCfg = r.ok ? await r.json() : {}; }
+      if (!_planCfg || _planCfg.planStyle !== 'two' || !Array.isArray(_planCfg.tiers)) return;
+      var paid = _planCfg.tiers.find(function(t) { return t.monthly > 0; }), free = _planCfg.tiers.find(function(t) { return !(t.monthly > 0); });
+      if (!paid || !free) return;
+      var st = await (await fetch((platform.basePath || '') + '/api/billpay/plan-status', { credentials: 'same-origin' })).json();
+      function nice(n) { return String(n || '').toLowerCase().replace(/\b(ai)\b/g, 'AI').replace(/(^|\s)([a-z])/g, function(m, a, b) { return a + b.toUpperCase(); }); }
+      var isAI = st.tier === 'studio' || st.tier === 'studio_pro' || !!st.grantUntil;
+      _planTwo = { paid: paid, name: nice(paid.name), isAI: isAI, st: st };
+      var planEl = document.getElementById('planInfo'), btn = document.getElementById('planManageBtn');
+      if (planEl) planEl.textContent = isAI ? nice(paid.name) + ' \u00b7 $' + paid.monthly + '/mo' : nice(free.name);
+      var note = document.getElementById('planNote');
+      if (!note && planEl) { note = document.createElement('div'); note.id = 'planNote'; note.className = 'stg-plan-note'; planEl.parentNode.parentNode.appendChild(note); }
+      if (note) note.textContent = (isAI && st.grantUntil) ? 'Free month from an invite, until ' + new Date(st.grantUntil).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+      if (btn) {
+        if (isAI) { btn.textContent = 'Manage'; btn.hidden = !st.hasBilling; }
+        else { btn.textContent = 'Upgrade to ' + nice(paid.name); btn.hidden = false; }
+      }
+    } catch (e) {}
+  }
+  function planButton() {
+    if (!_planTwo) return openPlanModal();
+    if (_planTwo.isAI) {
+      fetch((platform.basePath || '') + '/api/billpay/billing/portal', { method: 'POST', credentials: 'same-origin' })
+        .then(function(r) { return r.json(); }).then(function(j) { if (j && j.url) window.top.location.href = j.url; else toast((j && j.error) || 'Billing page unavailable'); })
+        .catch(function() { toast('Billing page unavailable'); });
+      return;
+    }
+    var ui = platform.ui, inp = null, errEl = null;
+    ui.editPop({ title: 'Upgrade to ' + _planTwo.name, saveText: 'Apply code', fields: [{ key: 'c', label: 'Invite code', type: 'custom', render: function(host) {
+      host.innerHTML = '<p class="stg-plan-lock">Studio AI is invite-only for now. Enter your code.</p><input class="pui-ep-in" maxlength="300" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Your code">';
+      inp = host.querySelector('input'); setTimeout(function() { inp.focus(); }, 60);
+    } }], onSave: function() {
+      var code = (inp && inp.value || '').trim(); if (!code) throw new Error('Enter your code');
+      return fetch((platform.basePath || '') + '/api/billpay/pilot/redeem', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code }) })
+        .then(function(r) { return r.json().then(function(j) { if (!r.ok || !j.ok) throw new Error((j && j.error) || "That code isn't valid"); return j; }); })
+        .then(function() { toast('Studio AI is on: your first month is free'); renderPlanLine(); });
+    } });
+  }
   function initPlanManage() {
     var btn = document.getElementById('planManageBtn');
-    if (btn) btn.addEventListener('click', openPlanModal);
+    if (btn) btn.addEventListener('click', planButton);
     // Tier badge in the Account header acts as a secondary affordance —
     // clicking it also opens the same plan modal so the colored chip
     // doubles as a "manage" trigger.
     var badge = document.getElementById('accountTierBadge');
-    if (badge) badge.addEventListener('click', openPlanModal);
+    if (badge) badge.addEventListener('click', planButton);
     // Username Save button — debounced availability check on input,
     // POST to /api/auth/change-username on click. Server enforces
     // the 30-day rate limit; UI surfaces the cooldown message.
