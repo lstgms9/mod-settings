@@ -567,10 +567,13 @@ module.exports = function(router, ctx) {
       const publicUrl = req.headers.origin || req.headers.referer || '';
       const link = `${publicUrl}?invite=${token}`;
       try {
-        // okdunio's mailer (vault/relay aware, like the sign-up code), from the site's own sender (config.signup.emailFrom)
-        let ses; try { ses = require.main.require('./lib/ses'); } catch (e) { ses = require(path.join(__dirname, '../../admin/platform-shell/lib/ses')); }
+        // config.signup.siteMail (gamoid, 2026-10-19): okdunio's mailer (vault/relay aware, like the sign-up
+        // code), from the site's own sender (config.signup.emailFrom). Every other site keeps the shell's mailer, no from.
+        const su = siteCfg(req).signup || {}, viaSite = su.siteMail === true;
+        let ses = null; if (viaSite) { try { ses = require.main.require('./lib/ses'); } catch (e) {} }
+        if (!ses) ses = require(path.join(__dirname, '../../admin/platform-shell/lib/ses'));
         await ses.sendEmail({
-          from: ((siteCfg(req).signup || {}).emailFrom) || undefined,
+          from: (viaSite && su.emailFrom) || undefined,
           to: email,
           subject: `You've been invited to join ${req.user.studio} on ${mailBrand(req) || 'OkDun'}`,
           html: `<p>Hi ${displayName || email},</p><p>You've been invited to join <strong>${req.user.studio}</strong>.</p><p><a href="${link}">Accept invitation</a></p><p>This link expires in 7 days.</p>`,
