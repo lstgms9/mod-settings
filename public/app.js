@@ -2246,12 +2246,21 @@
 
   // ── Publish panel (flagged dev studios only) — feature-detected via
   // /api/game/publish-prod/status (404 workers/unconfigured, 403 unflagged).
+  // which admin-only panels this account may open (one 200 answer) — the panels below ask their status only on a yes,
+  // so nobody else gets 404/403s in the console (Damon 2026-10-19)
+  var _adminSurfaces = null;
+  function adminSurfaces() {
+    if (!_adminSurfaces) _adminSurfaces = fetch('/api/settings/admin-surfaces', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function(r) { return r.ok ? r.json() : {}; }).catch(function() { return {}; });
+    return _adminSurfaces;
+  }
   async function initPublishPanel() {
     var nav = document.getElementById('stgPublishNav');
     var listEl = document.getElementById('pubGamesList');
     if (!nav || !listEl) return;
     async function loadStatus() {
       try {
+        if (!(await adminSurfaces()).publish) return null;
         var r = await fetch('/api/game/publish-prod/status', { credentials: 'same-origin', cache: 'no-store' });
         if (!r.ok) return null;
         return await r.json();
@@ -2421,6 +2430,7 @@
     async function loadStatus() {
       try {
         // cache:'no-store' — Chromium heuristically caches this GET otherwise.
+        if (!(await adminSurfaces()).release) return null;
         var r = await fetch('/api/settings/release/status', { credentials: 'same-origin', cache: 'no-store' });
         if (!r.ok) return null;
         return await r.json();
@@ -2654,6 +2664,7 @@
     var runBtn = document.getElementById('sbRun');
     var resEl = document.getElementById('sbResult');
     if (!nav || !runBtn) return;
+    if (!(await adminSurfaces()).deploy) return;
     try { var r = await fetch('/api/settings/deploy/status', { credentials: 'same-origin' }); if (!r.ok) return; } catch (e) { return; }
     nav.style.display = '';
     restoreSection();

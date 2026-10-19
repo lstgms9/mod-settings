@@ -734,6 +734,19 @@ module.exports = function(router, ctx) {
     if (why) return res.error(403, 'Owner only');
     res.json({ ok: true });
   });
+  // GET /admin-surfaces — which admin-only Settings panels this account may open, always a 200 (Damon 2026-10-19: no console
+  // errors for everyone else). The panels ask their own status endpoint only when this says yes; the same guards decide.
+  router.get('/admin-surfaces', async (req, res) => {
+    const worker = process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true';
+    let publish = false;
+    if (!worker && req.user) {
+      try {
+        const me = (req.user.slug ? await storage.get('client', req.user.slug) : null) || (await storage.get('client', req.user.studio));
+        publish = !!(me && me.data && me.data.canPublishProd === true);
+      } catch (e) {}
+    }
+    res.json({ deploy: deployGuard(req) === null, release: !worker && releaseAdmin(req), publish });
+  });
 
   const REL_DIR = '/home/damon/platform/.releases';
   const BOXES_FILE = '/home/damon/platform/.runtime/release-boxes.json';
