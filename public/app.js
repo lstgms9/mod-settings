@@ -1637,15 +1637,17 @@
       var st = await (await fetch((platform.basePath || '') + '/api/billpay/plan-status', { credentials: 'same-origin' })).json();
       function nice(n) { return String(n || '').toLowerCase().replace(/\b(ai)\b/g, 'AI').replace(/(^|\s)([a-z])/g, function(m, a, b) { return a + b.toUpperCase(); }); }
       var isAI = st.tier === 'studio' || st.tier === 'studio_pro' || !!st.grantUntil;
-      _planTwo = { paid: paid, name: nice(paid.name), isAI: isAI, st: st };
+      var keep = !isAI && !!st.grantEndedAt && !st.subscribed;   // the invite's free month ended: 'Keep Studio AI: add a card'
+      _planTwo = { paid: paid, name: nice(paid.name), isAI: isAI, keep: keep, st: st };
       var planEl = document.getElementById('planInfo'), btn = document.getElementById('planManageBtn');
       if (planEl) planEl.textContent = isAI ? nice(paid.name) + ' \u00b7 $' + paid.monthly + '/mo' : nice(free.name);
       var note = document.getElementById('planNote');
       if (!note && planEl) { note = document.createElement('div'); note.id = 'planNote'; note.className = 'stg-plan-note'; planEl.parentNode.parentNode.appendChild(note); }
-      if (note) note.textContent = (isAI && st.grantUntil) ? 'Free month from an invite, until ' + new Date(st.grantUntil).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+      if (note) note.textContent = (isAI && st.grantUntil) ? 'Free month from an invite, until ' + new Date(st.grantUntil).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+        : keep ? 'Your free ' + nice(paid.name) + ' month has ended.' : '';
       if (btn) {
         if (isAI) { btn.textContent = 'Manage'; btn.hidden = !st.hasBilling; }
-        else { btn.textContent = 'Upgrade to ' + nice(paid.name); btn.hidden = false; }
+        else { btn.textContent = keep ? 'Keep ' + nice(paid.name) + ': add a card' : 'Upgrade to ' + nice(paid.name); btn.hidden = false; }
       }
     } catch (e) {}
   }
@@ -1656,6 +1658,11 @@
         .then(function(r) { return r.json(); }).then(function(j) { if (j && j.url) window.top.location.href = j.url; else toast((j && j.error) || 'Billing page unavailable'); })
         .catch(function() { toast('Billing page unavailable'); });
       return;
+    }
+    if (_planTwo.keep) {   // the pay sheet adds the card and starts the monthly subscription (mod-billpay 'studio-ai')
+      var go = function() { window.billpaySheet.open({ kind: 'studio-ai', name: _planTwo.name, price: _planTwo.paid.monthly, onDone: function() { renderPlanLine(); } }); };
+      if (window.billpaySheet) return go();
+      var sc = document.createElement('script'); sc.src = (platform.basePath || '') + '/_m/billpay/paysheet.js'; sc.onload = go; document.head.appendChild(sc); return;
     }
     var ui = platform.ui, inp = null, errEl = null;
     ui.editPop({ title: 'Upgrade to ' + _planTwo.name, saveText: 'Apply code', fields: [{ key: 'c', label: 'Invite code', type: 'custom', render: function(host) {
