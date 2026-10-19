@@ -865,3 +865,38 @@ html.pui-framed .stg-main { overflow: visible; }
 .stg-plan-note { margin-top: 6px; font-size: 14px; color: var(--text-dim, #8a8aa0); }
 .stg-plan-lock { margin: 0 0 10px; font-size: 15px; line-height: 1.4; color: #c8c8dc; }
 @media (max-width: 760px) { .stg-plan-note, .stg-plan-lock { font-size: 16px; } }
+/* EACH SETTINGS TAB FITS ABOUT ONE PHONE SCREEN (Damon 2026-10-19 via uniMaster; 414x896): the same content, packed —
+   less padding between and inside the boxes, no empty space in the avatar box, empty hints take no room, Country and
+   Region share a row, the danger zone is one row. Text sizes are untouched (phone text law). */
+@media (max-width: 760px) {
+  #settings-app .stg-main { padding: 10px 10px 16px; }
+  #settings-app .stg-acct-head { margin-bottom: 8px; gap: 8px; }
+  #settings-app .stg-acct-duet { gap: 8px; margin-bottom: 8px; }
+  #settings-app .stg-acct-box { padding: 10px 12px; gap: 6px; }
+  #settings-app .stg-acct-avatar .stg-avatar-box { min-height: 0; flex: none; border: 0; background: none; }
+  #settings-app .stg-acct-details { gap: 6px; }
+  #settings-app .stg-acct-pair { gap: 6px; }
+  #settings-app .stg-acct-pair > label { gap: 2px; }
+  #settings-app .stg-acct-username-hint:empty { display: none; }
+  #settings-app .stg-acct-pair:has(#profileCountry) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  #settings-app .stg-acct-save { margin-top: 2px; }
+  #settings-app .stg-group { padding: 10px 12px; margin-bottom: 8px; }
+  #settings-app .stg-group-label { margin-bottom: 6px; }
+  #settings-app .stg-danger-group .stg-row { flex-direction: row; align-items: center; gap: 10px; }
+  #settings-app .stg-danger-group .stg-btn-danger { flex: none; }
+  /* the picker laid out as the sign-up form's (picture left, ‹ › Change right, colours under), Save under it */
+  #settings-app .pap-settings .pap-card { padding: 2px 0 0; gap: 6px; }
+  #settings-app .pap-settings .pap-wrap { display: grid; grid-template-columns: auto auto; grid-template-areas: "pic btns" "cols cols"; column-gap: 16px; row-gap: 8px; align-items: center; justify-content: center; }
+  #settings-app .pap-settings .pap-pic { grid-area: pic; }
+  #settings-app .pap-settings .pap-btns { grid-area: btns; display: grid; grid-template-columns: 48px 48px; gap: 6px; }
+  #settings-app .pap-settings .pap-change { grid-column: 1 / -1; justify-self: center; }
+  #settings-app .pap-settings .pap-cols { grid-area: cols; justify-self: center; }
+  #settings-app .pap-settings .pap-save { margin: 0; }
+  #settings-app .stg-acct-details .stg-acct-planrow { row-gap: 6px; }
+  #settings-app .stg-acct-pair-plan .stg-acct-planrow { min-height: 0; }
+  /* the danger zone as one block: 'Delete account' | the button, the warning under both */
+  #settings-app .stg-danger-group .stg-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 2px; align-items: center; }
+  #settings-app .stg-danger-group .stg-row > div:first-child { display: contents; }
+  #settings-app .stg-danger-group .stg-sublabel { grid-column: 1 / -1; grid-row: 2; margin: 0; }
+  #settings-app .stg-section-desc { margin-bottom: 0; }
+}
