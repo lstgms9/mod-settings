@@ -564,8 +564,10 @@ module.exports = function(router, ctx) {
       const publicUrl = req.headers.origin || req.headers.referer || '';
       const link = `${publicUrl}?invite=${token}`;
       try {
-        const ses = require(path.join(__dirname, '../../admin/platform-shell/lib/ses'));
+        // okdunio's mailer (vault/relay aware, like the sign-up code), from the site's own sender (config.signup.emailFrom)
+        let ses; try { ses = require.main.require('./lib/ses'); } catch (e) { ses = require(path.join(__dirname, '../../admin/platform-shell/lib/ses')); }
         await ses.sendEmail({
+          from: ((siteCfg(req).signup || {}).emailFrom) || undefined,
           to: email,
           subject: `You've been invited to join ${req.user.studio} on OkDun`,
           html: `<p>Hi ${displayName || email},</p><p>You've been invited to join <strong>${req.user.studio}</strong>.</p><p><a href="${link}">Accept invitation</a></p><p>This link expires in 7 days.</p>`,
