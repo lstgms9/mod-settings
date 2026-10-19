@@ -806,7 +806,7 @@
   async function startConnect() {
     var basePath = platform.basePath || '';
     try {
-      var r = await fetch(basePath + '/api/connect/create', { method: 'POST' });
+      var r = await fetch(basePath + '/api/billpay/studio/connect', { method: 'POST' });   // THE Connect route (there is no /api/connect/create)
       var data = await r.json();
       if (data.url) window.location.href = data.url;
       else toast(data.error || 'Failed to start');
