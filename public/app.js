@@ -668,6 +668,13 @@
   // ── Password Change ──────────────────────────────────────
   // Change password (Damon 2026-10-15): a button beside Email opens a small pop-up — current password, new password,
   // Update — and says when it's done.
+  // THE avatar picker (ui.avatarPicker), drawn in place on Account (Damon 2026-10-19: the framed page loaded hidden when
+  // Settings opened on another tab, and Account then showed no avatar)
+  function initAvatar() {
+    var box = document.getElementById('stgAvatarBox');
+    if (box && platform.ui && platform.ui.avatarPicker && !box.firstChild) platform.ui.avatarPicker(box, { mode: 'settings' });
+  }
+
   function initPasswordChange() {
     var btn = document.getElementById('changePwBtn');
     if (!btn) return;
@@ -2219,6 +2226,7 @@
     initExport();
     initCacheClear();
     initPasswordChange();
+    initAvatar();
     loadServerInfo();
     loadEmails();
     initEmails();
