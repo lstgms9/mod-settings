@@ -21,6 +21,9 @@ module.exports = function(router, ctx) {
     let v = {}; try { v = JSON.parse(fs.readFileSync(path.join(INSTANCES_DIR, slug, 'instance.json'), 'utf8')).config || {}; } catch (e) {}
     _cfgCache[slug] = { at: Date.now(), v }; return v; };
   require('./lib/ai-links')(router, { config: siteCfg });
+  // the brand in a mail's subject: the site's own name (business.name), or config.signup.mailBrand when set (hashoid keeps 'OkDun')
+  const mailBrand = (req) => { const b = (siteCfg(req).signup || {}).mailBrand; if (b) return b;
+    try { return (JSON.parse(fs.readFileSync(path.join(INSTANCES_DIR, (req && req.instanceSlug) || 'inst-dev', 'instance.json'), 'utf8')).business || {}).name || ''; } catch (e) { return ''; } };
 
   function resolveUsersDir(req) {
     if (req && req.instanceSlug) return path.join(INSTANCES_DIR, req.instanceSlug, 'storage', 'users');
@@ -569,7 +572,7 @@ module.exports = function(router, ctx) {
         await ses.sendEmail({
           from: ((siteCfg(req).signup || {}).emailFrom) || undefined,
           to: email,
-          subject: `You've been invited to join ${req.user.studio} on OkDun`,
+          subject: `You've been invited to join ${req.user.studio} on ${mailBrand(req) || 'OkDun'}`,
           html: `<p>Hi ${displayName || email},</p><p>You've been invited to join <strong>${req.user.studio}</strong>.</p><p><a href="${link}">Accept invitation</a></p><p>This link expires in 7 days.</p>`,
         });
       } catch {}
