@@ -2220,6 +2220,8 @@
   // Panes this tenant switched off (config.settings.hideSections → PUB_CONFIG.settingsHide; gamoid v1, Damon 2026-10-15:
   // appearance, notifications, AI accounts, publish). A stylesheet, so the nav items other code reveals later stay hidden.
   // Applied as soon as this file runs as well as in init: the standalone /settings page (the pop-up) never calls init.
+  // Settings is TABBED: in the pop-up it sits at the top and grows downward, so the tab row never moves (Damon 2026-10-19)
+  window.__pubPopAlign = 'top';
   function applyHide() {
     try {
       // a pop-up's bare page carries the full page's PUB_CONFIG (okdunio, Damon 2026-10-18) — no window.top lookup
