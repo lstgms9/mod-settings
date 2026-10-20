@@ -944,3 +944,16 @@ html.pui-framed .stg-main { overflow: visible; }
 .stg-plan-note:empty { display: none; }
 .stg-acct-username-hint:empty { display: none; }
 #settings-app .stg-danger-group .stg-group-label { color: var(--red, #ff3997); white-space: nowrap; }
+@media (max-width: 760px) {   /* DANGER ZONE and its button fit one row in the pop-up's narrower page */
+  #settings-app .stg-danger-group .stg-group-label { letter-spacing: .5px; }
+  #settings-app .stg-danger-group .stg-btn-danger { padding: 6px 10px; color: var(--red, #ff3997); }
+}
+@media (max-width: 760px) {   /* the last few rows of air, so Account fits a 414x896 phone in the pop-up */
+  #settings-app .stg-sidebar { padding: 8px 0 2px; }
+  #settings-app .stg-sidebar-title { margin-bottom: 4px; }
+  #settings-app .stg-main { padding: 8px 10px 4px; }
+  #settings-app .stg-acct-box { padding: 8px 12px; }
+  #settings-app .stg-acct-details { gap: 5px; }
+  #settings-app .stg-section .stg-danger-group { margin-bottom: 0; }
+  #settings-app .stg-acct-head { margin-bottom: 4px; }
+}
