@@ -108,6 +108,18 @@
   var SEC_LS = 'stgSection:' + (window.INSTANCE_SLUG || '');
   var _navTouched = false;
 
+  // SETTINGS OPENS FAST (Damon 2026-10-20: 18 calls in 4 waves, 1.6s): on open only what Account shows is read, in ONE
+  // parallel round; every other tab reads its own data the first time it is opened (onTab); each answer is read once
+  // and shared (the session through platform.user.current, the plan config, the plan status, your studio)
+  var _tabLoad = {}, _tabDone = {};
+  function onTab(sec, fn) { _tabLoad[sec] = fn; var a = document.querySelector('#sec-' + sec + '.active'); if (a) runTab(sec); }
+  function runTab(sec) { if (_tabDone[sec] || !_tabLoad[sec]) return; _tabDone[sec] = 1; try { Promise.resolve(_tabLoad[sec]()).catch(function() {}); } catch (e) {} }
+  var _once = {};
+  function once(k, f) { return _once[k] || (_once[k] = Promise.resolve().then(f).catch(function() { return null; })); }
+  function planCfg() { return once('cfg', function() { return fetch((platform.basePath || '') + '/api/signup/config').then(function(r) { return r.ok ? r.json() : {}; }); }); }
+  function planStatus() { return once('plan', function() { return fetch((platform.basePath || '') + '/api/billpay/plan-status', { credentials: 'same-origin' }).then(function(r) { return r.json(); }); }); }
+  function studioThings() { return once('studios', function() { return fetch('/_api/storage/list?type=thing&kind=studio').then(function(r) { return r.json(); }); }); }
+
   // Activate a section by its data-section key. Returns false if that
   // section has no nav item or the item is hidden (tier/role gated), so
   // callers can skip restoring a section the viewer can't see.
@@ -122,6 +134,7 @@
     var el = document.getElementById('sec-' + sec);
     if (el) el.classList.add('active');
     if (sec === 'revenue') loadConnectStatus();
+    runTab(sec);
     if (!opts || opts.persist !== false) { try { localStorage.setItem(SEC_LS, sec); } catch (e) {} }
     return true;
   }
@@ -156,7 +169,7 @@
         var tier = (typeof s.tier === 'number') ? s.tier : (levels[s.tier] || 0);
         // tabs this tenant opens to every account (config.settings.openToAll — gamoid: Privacy & Security / 2FA)
         var open = [];
-        try { var or = await fetch('/api/settings/open-tabs', { credentials: 'same-origin' }); if (or.ok) open = (await or.json()).open || []; } catch (e) {}
+        try { var ot = await openTabs(); if (ot) open = ot.open || []; } catch (e) {}
         sidebar.querySelectorAll('.stg-nav-item[data-min-tier]').forEach(function(el) {
           if (open.indexOf(el.dataset.section) !== -1) return;
           var req = Number(el.dataset.minTier || 0);
@@ -165,6 +178,8 @@
       } catch (e) {}
     })();
   }
+
+  function openTabs() { return once('open', function() { return fetch('/api/settings/open-tabs', { credentials: 'same-origin' }).then(function(r) { return r.ok ? r.json() : null; }); }); }
 
   // ── Segmented controls ──────────────────────────────────────
   function initSegs() {
@@ -314,7 +329,7 @@
     // back from a login (OpenRouter): say how it went, once
     var q = (location.search.match(/[?&]ai=([a-z-]+)/) || [])[1];
     if (q) { toast({ 'openrouter-connected': 'OpenRouter connected', 'openrouter-cancelled': 'OpenRouter login cancelled', 'vault-unavailable': 'Could not save to the vault yet' }[q] || 'OpenRouter login did not finish'); try { history.replaceState(null, '', location.pathname); } catch (e) {} }
-    loadAILinks();
+    onTab('ai', loadAILinks);
   }
 
   // ── 2FA ─────────────────────────────────────────────────────
@@ -717,7 +732,7 @@
   var _planCfg = null;
   async function tenantPlanName(tier) {
     try {
-      if (!_planCfg) { var r = await fetch((platform.basePath || '') + '/api/signup/config'); _planCfg = r.ok ? await r.json() : {}; }
+      if (!_planCfg) _planCfg = (await planCfg()) || {};
       if (!_planCfg || _planCfg.planStyle !== 'two' || !Array.isArray(_planCfg.tiers)) return null;
       function nice(n) { return String(n || '').toLowerCase().replace(/\b(ai)\b/g, 'AI').replace(/(^|\s)([a-z])/g, function(m, a, b) { return a + b.toUpperCase(); }); }
       var hit = _planCfg.tiers.find(function(t) { return t.userTier === tier || t.id === tier; });
@@ -963,7 +978,7 @@
         if (slugEl) slugEl.textContent = sesObj3.studioSlug;
         var snEl = document.getElementById('accountStudioName');
         if (snEl) {
-          var things2 = await fetch('/_api/storage/list?type=thing').then(function(r){ return r.json(); }).catch(function(){ return []; });
+          var things2 = (await studioThings()) || [];
           var myStudio2 = Array.isArray(things2) ? things2.find(function(t) {
             return t.kind === 'studio' && (t.slug === sesObj3.studioSlug || t.owner_user_id === sesObj3.slug);
           }) : null;
@@ -997,7 +1012,7 @@
       var sesObj = await platform.user.current();
       var isStudioTier = sesObj && (sesObj.tier === 'studio' || sesObj.tier === 'studio_pro' || sesObj.plan === 'studio' || sesObj.plan === 'studio_pro');
       if (chip && isStudioTier && sesObj.studioSlug) {
-        var things = await fetch('/_api/storage/list?type=thing').then(function(r){ return r.json(); }).catch(function(){ return []; });
+        var things = (await studioThings()) || [];
         var st = Array.isArray(things) ? things.find(function(t){
           return t.kind === 'studio' && (t.slug === sesObj.studioSlug || t.owner_user_id === sesObj.slug);
         }) : null;
@@ -1127,7 +1142,7 @@
     }
     // Pre-fill from /api/auth/session (carries displayName, country,
     // timezone, bio, platforms when the user record / client.data has them).
-    fetch('/api/auth/session').then(function(r){ return r.json(); }).then(function(s){
+    platform.user.current().then(function(s){
       if (!s || !s.loggedIn) return;
       var dn = document.getElementById('profileDisplayName');
       var bio = document.getElementById('profileBio');
@@ -1611,13 +1626,15 @@
   // locked step: a valid invite code gives this account the pilot's free month); Studio AI → 'Studio AI · $10/mo' +
   // 'Manage' (Stripe's hosted billing page) where billing is on file, else the invite's free-month line.
   var _planTwo = null;   // { paid, free, st } once drawn
+  var _planFresh = false;   // after a plan change the status is read anew
   async function renderPlanLine() {
     try {
-      if (!_planCfg) { var r = await fetch((platform.basePath || '') + '/api/signup/config'); _planCfg = r.ok ? await r.json() : {}; }
+      if (!_planCfg) _planCfg = (await planCfg()) || {};
       if (!_planCfg || _planCfg.planStyle !== 'two' || !Array.isArray(_planCfg.tiers)) return;
       var paid = _planCfg.tiers.find(function(t) { return t.monthly > 0; }), free = _planCfg.tiers.find(function(t) { return !(t.monthly > 0); });
       if (!paid || !free) return;
-      var st = await (await fetch((platform.basePath || '') + '/api/billpay/plan-status', { credentials: 'same-origin' })).json();
+      var st = _planFresh ? await (await fetch((platform.basePath || '') + '/api/billpay/plan-status', { credentials: 'same-origin' })).json() : await planStatus();
+      if (!st) return;
       function nice(n) { return String(n || '').toLowerCase().replace(/\b(ai)\b/g, 'AI').replace(/(^|\s)([a-z])/g, function(m, a, b) { return a + b.toUpperCase(); }); }
       var isAI = st.tier === 'studio' || st.tier === 'studio_pro' || !!st.grantUntil;
       var keep = !isAI && !!st.grantEndedAt && !st.subscribed;   // the invite's free month ended: 'Keep Studio AI: add a card'
@@ -1636,7 +1653,7 @@
     var T = window.top, U = T.platform && T.platform.ui; if (!U || !U.modal) return;
     var m = U.modal({ frame: (platform.basePath || '') + '/signup?pop=1&manage=1', title: '' });
     m.modal.style.width = 'min(760px, calc(100vw - 2 * var(--pui-pop-gap, 10px)))'; m.modal.style.maxWidth = 'none';
-    if (!_manageHooked) { _manageHooked = true; T.addEventListener('message', function(e) { if (e.data && e.data.type === 'plan-changed') renderPlanLine(); }); }
+    if (!_manageHooked) { _manageHooked = true; T.addEventListener('message', function(e) { if (e.data && e.data.type === 'plan-changed') { _planFresh = true; renderPlanLine(); } }); }
   }
   function initPlanManage() {
     var btn = document.getElementById('planManageBtn');
@@ -1763,7 +1780,7 @@
   var _mbxSlug = null, _mbxDomain = null, _mbxList = [], _mbxTeam = [], _mbxMode = null;
   async function initMailboxes() {
     var ses;
-    try { ses = await (await fetch('/api/auth/session')).json(); } catch (e) { ses = {}; }
+    try { ses = (await platform.user.current()) || {}; } catch (e) { ses = {}; }
     var plan = (ses && ses.plan) || 'free';
     var isStudio = (plan === 'studio' || plan === 'studio_pro');
     // Company mailboxes: tenant owner (damon for gamoid.io) gets them
@@ -1776,6 +1793,9 @@
     var nav = document.getElementById('stgMailboxesNav');
     if (nav) nav.style.display = (isStudio || isCompany) ? '' : 'none';
     if (!isStudio && !isCompany) return;
+    onTab('mailboxes', function() { return mailboxesOpen(ses, isCompany); });
+  }
+  async function mailboxesOpen(ses, isCompany) {
 
     // Company takes priority for super_owner — gamoid employees see
     // their @gamoid.io mailboxes, not whatever studio they may have
@@ -2222,7 +2242,10 @@
       }
     } catch (_) {}
 
-    var data = await API.get('/prefs');
+    adminSurfaces(); openTabs();   // Account's reads start together (a two-plan site's plan line + studio chip too)
+    planCfg().then(function(c) { if (c && c.planStyle === 'two') { planStatus(); studioThings(); } });
+    var both = await Promise.all([API.get('/prefs'), platform.user.current().catch(function() { return null; })]);
+    var data = both[0];
     if (data && !data.error) {
       delete data.aiKeys;   // legacy API-key grid removed 2026-07-20 — keys ignored
       prefs = data;
@@ -2252,14 +2275,14 @@
     initCacheClear();
     initPasswordChange();
     initAvatar();
-    loadServerInfo();
+    onTab('storage', loadServerInfo);
     loadEmails();
     initEmails();
     initProfile();
     initPlanManage();
     initMailboxes();
     initTeam();
-    if (_userRole === 'owner' || _userRole === 'admin') loadTeam();
+    if (_userRole === 'owner' || _userRole === 'admin') onTab('team', loadTeam);
     // Show assigned emails for all users
     var myEmailsGroup = document.getElementById('myEmailsGroup');
     if (myEmailsGroup) { myEmailsGroup.style.display = ''; loadMyEmails(); }
@@ -2377,8 +2400,12 @@
   async function initBackupsPanel() {
     var nav = document.getElementById('stgBackupsNav');
     if (!nav) return;
-    // a tenant whose config says it has backups shows the item at once; elsewhere the probe below decides
-    if ((window.PUB_CONFIG || {}).backupsSimple) nav.style.display = '';
+    // a tenant whose config says it has backups shows the item at once and reads them when the tab opens
+    if ((window.PUB_CONFIG || {}).backupsSimple) { nav.style.display = ''; onTab('backups', backupsOpen); restoreSection(); return; }
+    return backupsOpen();
+  }
+  async function backupsOpen() {
+    var nav = document.getElementById('stgBackupsNav');
     var list;
     try {
       var r = await fetch('/api/files/backup', { credentials: 'same-origin', cache: 'no-store' });
