@@ -830,8 +830,8 @@
 }
 /* Settings shown IN a pop-up (Damon 2026-10-18: a page in a pop-up never scrolls itself — the pop-up's box does, with
    THE bar): the page grows to its full height instead of scrolling its own main pane */
-html.pui-framed #settings-app { height: auto; overflow: visible; }
-html.pui-framed .stg-main { overflow: visible; }
+html.pui-framed #settings-app, .pui-inpop #settings-app { height: auto; overflow: visible; }   /* in a pop-up (its frame, or mounted in it) */
+html.pui-framed .stg-main, .pui-inpop .stg-main { overflow: visible; }
 /* the plan line's note (an invite's free month) and the code pop-up's line (Damon 2026-10-19) */
 .stg-plan-note { margin-top: 6px; font-size: 14px; color: var(--text-dim, #8a8aa0); }
 .stg-plan-lock { margin: 0 0 10px; font-size: 15px; line-height: 1.4; color: #c8c8dc; }
