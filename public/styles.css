@@ -881,7 +881,7 @@ html.pui-framed .stg-main { overflow: visible; }
 
 /* THE ACCOUNT FIELDS (Damon 2026-10-19/20): a clear field outline showing the value — no title, a placeholder when empty;
    read-only ones (Email) look the same, never a faint box. A row = the field + its own Save on the right. */
-.stg-fieldrow { display: flex; align-items: center; gap: 8px; }
+.stg-fieldrow { display: flex; align-items: center; gap: 8px; margin: 0; }
 .stg-fieldrow > .stg-inbox { flex: 1 1 auto; min-width: 0; }
 .stg-fieldrow > .stg-acct-cta { flex: none; width: auto; }
 .stg-inbox { display: flex; flex-direction: column; justify-content: center; gap: 1px; padding: 10px 12px; min-height: 48px; box-sizing: border-box; border: 1px solid var(--border2, #3a3a55);

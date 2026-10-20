@@ -507,17 +507,19 @@
           <div class="stg-avatar-box" id="stgAvatarBox"></div>
         </div>
         <div class="stg-acct-box pui-card stg-acct-details">
+          <!-- EACH FIELD IS ITS OWN <form> (Damon's iPhone 2026-10-20: the keyboard's ˅ 'next field' jumped from Username to the
+               Country box and opened its picker) — iOS's ˄ ˅ only walk a form's own fields, so they go nowhere; Done closes the keyboard -->
           <!-- THE ACCOUNT FIELDS (Damon 2026-10-19/20): each a clear box showing its VALUE, no title (a placeholder only when empty);
                order: Username, Email, Change password, Country, plan line. Username keeps its own Save (greyed until edited). -->
-          <div class="stg-fieldrow">
-            <label class="stg-inbox"><input type="text" class="stg-inbox-in stg-acct-username-input" id="accountUsername" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Username"></label>
-            <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="usernameSaveBtn" disabled>Save</button>
-          </div>
+          <form class="stg-fieldrow" onsubmit="return false" autocomplete="off">
+            <label class="stg-inbox"><input type="text" class="stg-inbox-in stg-acct-username-input" id="accountUsername" enterkeyhint="done" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Username"></label>
+            <button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="usernameSaveBtn" disabled>Save</button>
+          </form>
           <div class="stg-acct-username-hint" id="usernameHint"></div>
-          <div class="stg-fieldrow">
-            <label class="stg-inbox"><input type="text" class="stg-inbox-in" id="profileDisplayName" placeholder="Display name" maxlength="40"></label>
-            <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="displayNameSaveBtn" disabled>Save</button>
-          </div>
+          <form class="stg-fieldrow" onsubmit="return false" autocomplete="off">
+            <label class="stg-inbox"><input type="text" class="stg-inbox-in" id="profileDisplayName" enterkeyhint="done" placeholder="Display name" maxlength="40"></label>
+            <button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="displayNameSaveBtn" disabled>Save</button>
+          </form>
           <div class="stg-acct-username-hint" id="displayNameHint"></div>
           <div class="stg-acct-pair stg-acct-pair-full stg-acct-pair-studio" id="accountStudioNameRow" style="display:none">
             <label>Studio name<input type="text" class="stg-input" id="accountStudioName" placeholder="Your studio"></label>
@@ -529,13 +531,13 @@
           <div class="stg-acct-email stg-acct-email-line" id="accountEmail" data-fallback="you@example.com">—</div>
           <label class="stg-inbox stg-inbox-ro"><input type="text" class="stg-inbox-in stg-mono-cyan" id="accountRecoveryEmail" placeholder="Recovery email" readonly></label>
           <div><button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="changePwBtn">Change password</button></div>
-          <div class="stg-fieldrow">
+          <form class="stg-fieldrow" onsubmit="return false" autocomplete="off">
             <label class="stg-inbox"><span class="stg-acct-flagrow">
                 <span class="stg-flag-preview" id="profileCountryFlag"><svg class="pui-ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.6 3.7 2.6 6S9.8 12.3 8 14C6.2 12.3 5.4 10.3 5.4 8S6.2 3.7 8 2z"/></svg></span>
                 <select class="stg-inbox-in" id="profileCountry"></select>
               </span></label>
-            <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="profileSaveBtn">Save</button>
-          </div>
+            <button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="profileSaveBtn">Save</button>
+          </form>
         </div>
       </div>
 
