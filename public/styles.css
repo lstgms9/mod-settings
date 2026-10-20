@@ -832,6 +832,8 @@
    THE bar): the page grows to its full height instead of scrolling its own main pane */
 html.pui-framed #settings-app, .pui-inpop #settings-app { height: auto; overflow: visible; }   /* in a pop-up (its frame, or mounted in it) */
 html.pui-framed .stg-main, .pui-inpop .stg-main { overflow: visible; }
+/* in a pop-up on a PC the pop-up's X floats over the top-right corner: 'Manage account' sits clear of it (master2 2026-10-20) */
+@media (min-width: 761px) { html.pui-framed .stg-acct-head, .pui-inpop .stg-acct-head { padding-right: 34px; } }
 /* the plan line's note (an invite's free month) and the code pop-up's line (Damon 2026-10-19) */
 .stg-plan-note { margin-top: 6px; font-size: 14px; color: var(--text-dim, #8a8aa0); }
 .stg-plan-lock { margin: 0 0 10px; font-size: 15px; line-height: 1.4; color: #c8c8dc; }
