@@ -884,13 +884,15 @@ html.pui-framed .stg-main { overflow: visible; }
   #settings-app .stg-danger-group .stg-row { flex-direction: row; align-items: center; gap: 10px; }
   #settings-app .stg-danger-group .stg-btn-danger { flex: none; }
   /* the picker laid out as the sign-up form's (picture left, ‹ › Change right, colours under), Save under it */
-  #settings-app .pap-settings .pap-card { padding: 2px 0 0; gap: 6px; }
-  #settings-app .pap-settings .pap-wrap { display: grid; grid-template-columns: auto auto; grid-template-areas: "pic btns" "cols cols"; column-gap: 16px; row-gap: 8px; align-items: center; justify-content: center; }
+  /* picture left; ‹ › Change on one row with SAVE under it, beside the picture; the colours below both */
+  #settings-app .pap-settings .pap-card { display: grid; grid-template-columns: auto minmax(0, auto); grid-template-areas: "pic btns" "pic save" "cols cols" "err err";
+    column-gap: 14px; row-gap: 8px; align-items: center; justify-content: center; padding: 2px 0 0; }
+  #settings-app .pap-settings .pap-wrap { display: contents; }
   #settings-app .pap-settings .pap-pic { grid-area: pic; }
-  #settings-app .pap-settings .pap-btns { grid-area: btns; display: grid; grid-template-columns: 48px 48px; gap: 6px; }
-  #settings-app .pap-settings .pap-change { grid-column: 1 / -1; justify-self: center; }
+  #settings-app .pap-settings .pap-btns { grid-area: btns; display: flex; gap: 6px; }
   #settings-app .pap-settings .pap-cols { grid-area: cols; justify-self: center; }
-  #settings-app .pap-settings .pap-save { margin: 0; }
+  #settings-app .pap-settings .pap-save { grid-area: save; width: 100%; max-width: none; margin: 0; }
+  #settings-app .pap-settings .pap-err { grid-area: err; }
   #settings-app .stg-acct-details .stg-acct-planrow { row-gap: 6px; }
   #settings-app .stg-acct-pair-plan .stg-acct-planrow { min-height: 0; }
   /* the danger zone as one block: 'Delete account' | the button, the warning under both */
