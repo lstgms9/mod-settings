@@ -996,7 +996,7 @@
         planVal = ses2 && ses2.tier;
       } catch (_) {}
     }
-    renderPlanLine();   // a two-plan site (gamoid): its own line + button (Damon 2026-10-19)
+    await renderPlanLine();   // a two-plan site (gamoid): its own line + button (Damon 2026-10-19)
     if (planVal) {
       // the tenant's OWN plan names when its sign-up names them (gamoid two plans: studio → 'Studio AI', anything
       // without a paid plan → 'Free'), else the generic names (uniMaster v237: Account still said 'Studio plan')
@@ -2287,7 +2287,7 @@
     // Show assigned emails for all users
     var myEmailsGroup = document.getElementById('myEmailsGroup');
     if (myEmailsGroup) { myEmailsGroup.style.display = ''; loadMyEmails(); }
-    applyPrefs();
+    var _first = applyPrefs();   // the Account screen's own reads (plan line, studio chip) — the pop-up waits for them
     applyVisual();
     restoreSection();
     // Deep link: /settings#<section> opens that section — the shell's user-menu
@@ -2303,7 +2303,7 @@
     initPublishPanel();
     initAdminPanel();
     // init resolves once the menu is final (tier gates applied, Backups found) — the shell shows a module only then
-    await Promise.all([_tierGate, initBackupsPanel()].map(function(p) { return Promise.resolve(p).catch(function() {}); }));
+    await Promise.all([_tierGate, initBackupsPanel(), _first].map(function(p) { return Promise.resolve(p).catch(function() {}); }));
   };
 
   // ── Publish panel (flagged dev studios only) — feature-detected via
