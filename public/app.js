@@ -1823,7 +1823,9 @@
     var sub = document.querySelector('#sec-mailboxes .stg-section-desc');
     if (header) header.textContent = (_mbxMode === 'company') ? 'Company Mailboxes' : 'Studio Mailboxes';
     if (sub) sub.textContent = (_mbxMode === 'company')
-      ? 'Email addresses under your gamoid.io company domain. Assign mailboxes to Gamoid employees.'
+      // the site's own domain + house name, from its mail domain (hashoid audit 2026-10-20: hashoid.io read 'gamoid.io …
+      // Gamoid employees'); gamoid.io → 'gamoid.io … Gamoid', byte-identical to before
+      ? 'Email addresses under your ' + _mbxDomain + ' company domain. Assign mailboxes to ' + (_mbxDomain.split('.')[0].charAt(0).toUpperCase() + _mbxDomain.split('.')[0].slice(1)) + ' employees.'
       : ('Email addresses at ' + _mbxDomain + ', prefixed with your studio name (e.g. ' + (_mbxSlug || 'studio') + 'sales@' + _mbxDomain + '). Assign a mailbox to a dev to give them mail access.');
 
     // Load existing mailboxes + team members in parallel.
