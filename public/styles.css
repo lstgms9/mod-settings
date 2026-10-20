@@ -928,3 +928,11 @@ html.pui-framed .stg-main { overflow: visible; }
 /* the sign-in email: plain orange text on its own line (no box) */
 .stg-acct-email-line { padding: 4px 2px; font-size: 16px; overflow-wrap: anywhere; background: none; border: 0; border-radius: 0; min-height: 0; }   /* NO box: boxes are for what you can edit */
 @media (max-width: 760px) { #settings-app .stg-acct-email-line { font-size: var(--stg-text, 18px) !important; } }
+
+/* THE TWO BUTTON STYLES on gamoid (config.ui.cardLine; Damon 2026-10-20 button sweep — hashoid keeps its own look):
+   ui.v1's tokens. PRIMARY (orange, black text): the action buttons (Save, Update, Add, Upgrade, Confirm, Copy codes, a
+   picked option). SECONDARY (the card/field line): Change password and every other plain button, Cancel. Danger stays red. */
+html[data-cl] .stg-ai-connect, html[data-cl] .stg-btn-primary, html[data-cl] .stg-modal-btn-confirm:not(.danger), html[data-cl] .stg-tfa-verify-btn {
+  background: var(--pui-pri-bg) !important; border: 1.5px solid var(--pui-pri-bg) !important; color: var(--pui-pri-fg) !important; }
+html[data-cl] .stg-ai-btn:not(.stg-ai-connect):not(.stg-ai-disconnect):not([data-rm]):not([data-press-rm]), html[data-cl] .stg-modal-btn-cancel, html[data-cl] #changePwBtn {
+  background: transparent !important; border: 1.5px solid var(--pui-sec-line) !important; color: var(--pui-sec-fg) !important; }
