@@ -116,7 +116,8 @@
   function runTab(sec) { if (_tabDone[sec] || !_tabLoad[sec]) return; _tabDone[sec] = 1; try { Promise.resolve(_tabLoad[sec]()).catch(function() {}); } catch (e) {} }
   var _once = {};
   function once(k, f) { return _once[k] || (_once[k] = Promise.resolve().then(f).catch(function() { return null; })); }
-  function planCfg() { return once('cfg', function() { return fetch((platform.basePath || '') + '/api/signup/config').then(function(r) { return r.ok ? r.json() : {}; }); }); }
+  // the sign-up config the page already carries (window.SIGNUP_CONFIG) — fetched only when it isn't there (a framed page)
+  function planCfg() { return once('cfg', function() { return window.SIGNUP_CONFIG ? window.SIGNUP_CONFIG : fetch((platform.basePath || '') + '/api/signup/config').then(function(r) { return r.ok ? r.json() : {}; }); }); }
   function planStatus() { return once('plan', function() { return fetch((platform.basePath || '') + '/api/billpay/plan-status', { credentials: 'same-origin' }).then(function(r) { return r.json(); }); }); }
   // your studio: the studios YOU own (the list's owner filter, server side) — never every studio on the site
   function studioThings() { return once('studios', function() { return platform.user.current().then(function(s) { var me = s && (s.slug || s.studio); return me ? fetch('/_api/storage/list?type=thing&kind=studio&owner_user_id=' + encodeURIComponent(me)).then(function(r) { return r.json(); }) : []; }); }); }
