@@ -132,11 +132,17 @@
     if (!item || getComputedStyle(item).display === 'none') return false;
     sidebar.querySelectorAll('.stg-nav-item').forEach(function(n) { n.classList.remove('active'); });
     item.classList.add('active');
-    document.querySelectorAll('#stgMain .stg-section').forEach(function(s) { s.classList.remove('active'); });
-    var el = document.getElementById('sec-' + sec);
-    if (el) el.classList.add('active');
+    var el = document.getElementById('sec-' + sec), cur = document.querySelector('#stgMain .stg-section.active');
     if (sec === 'revenue') loadConnectStatus();
     runTab(sec);
+    // BUILD THE SCREEN, THEN SHOW IT (Damon 2026-10-20): a tapped tab is built hidden in place and swapped in when final
+    // (its reads in, its pictures loaded), the current one staying up until then — ui.v1's one path
+    if (opts && opts.swap && el && cur && el !== cur && platform.ui && platform.ui.swapWhenFinal) {
+      platform.ui.swapWhenFinal(cur, el, { show: function(x) { x.classList.add('active'); }, hide: function(x) { x.classList.remove('active'); } });
+    } else {
+      document.querySelectorAll('#stgMain .stg-section').forEach(function(s) { s.classList.remove('active'); });
+      if (el) el.classList.add('active');
+    }
     if (!opts || opts.persist !== false) { try { localStorage.setItem(SEC_LS, sec); } catch (e) {} }
     return true;
   }
@@ -157,7 +163,7 @@
       var item = e.target.closest('.stg-nav-item');
       if (!item) return;
       _navTouched = true;
-      selectSection(item.dataset.section);
+      selectSection(item.dataset.section, { swap: true });   // a tap: the tab is built, then shown (ui.swapWhenFinal)
     });
     // Tier-gate sidebar items via data-min-tier. Hide entries whose
     // required tier exceeds the viewer's. Player=0, Dev=1, Studio=2,
