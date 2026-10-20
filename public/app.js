@@ -933,7 +933,8 @@
       try { sesObj = await platform.user.current(); } catch (_) {}
       var studioSlug = sesObj && sesObj.studioSlug;
       // mail is staff-only (config.mail.staffOnly): a studio has no mailbox, so show the signup email
-      if (studioSlug && !(window.INSTANCE_MAIL && window.INSTANCE_MAIL.staffOnly)) {
+      // (a site without studio mailboxes — config.settings.removeFields 'studio-mailbox' — always shows the sign-in email)
+      if (studioSlug && !removed('studio-mailbox') && !(window.INSTANCE_MAIL && window.INSTANCE_MAIL.staffOnly)) {
         var mailParent = (window.INSTANCE_MAIL && window.INSTANCE_MAIL.studioMailDomain) || 'gamoids.com';
         emailEl.textContent = studioSlug + '@' + mailParent;
       } else if (idEmail) {
@@ -2230,9 +2231,20 @@
       if (_shEl) _shEl.textContent = _sh.map(function(x) { return '.stg-nav-item[data-section="' + x + '"],[data-hide-key="' + x + '"]'; }).join(',') + (_sh.length ? '{display:none!important}' : '');
     } catch (_) {}
   }
-  applyHide();
+  // Fields this tenant does not have at all (config.settings.removeFields → PUB_CONFIG.settingsRemove; gamoid, Damon
+  // 2026-10-19: no display names — the username is the name; ONE email, the sign-in one). DELETED from the page, never
+  // hidden; the code that fills them finds nothing and does nothing.
+  function removed(k) { var r = (window.PUB_CONFIG || {}).settingsRemove; return Array.isArray(r) && r.indexOf(k) >= 0; }
+  function applyRemove() {
+    try {
+      var kill = function(id) { var e = document.getElementById(id), l = e && e.closest('label'); if (l) l.remove(); };
+      if (removed('display-name')) kill('profileDisplayName');
+      if (removed('recovery-email')) kill('accountRecoveryEmail');
+    } catch (_) {}
+  }
+  applyHide(); applyRemove();
   window.platform.module.init = async function() {
-    applyHide();
+    applyHide(); applyRemove();
     // Fill any [data-tenant-brand] placeholders with the current
     // tenant's display name. mod-settings is multi-tenant, so we read
     // from window.SIGNUP_CONFIG.heroTitle when present, otherwise
