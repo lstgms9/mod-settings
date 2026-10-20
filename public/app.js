@@ -2305,6 +2305,11 @@
     initAdminPanel();
     // init resolves once the menu is final (tier gates applied, Backups found) — the shell shows a module only then
     await Promise.all([_tierGate, initBackupsPanel(), _first].map(function(p) { return Promise.resolve(p).catch(function() {}); }));
+    // THE OTHER TABS READY BEFORE THEY'RE OPENED (Damon 2026-10-20: a tab draws its final content in its first frame): once
+    // the first screen is up, each visible tab's own reads run quietly, so opening it later shows it complete
+    setTimeout(function() {
+      Object.keys(_tabLoad).forEach(function(k) { var n = document.querySelector('.stg-nav-item[data-section="' + k + '"]'); if (n && getComputedStyle(n).display !== 'none') runTab(k); });
+    }, 900);
   };
 
   // ── Publish panel (flagged dev studios only) — feature-detected via
@@ -2402,6 +2407,9 @@
   async function initBackupsPanel() {
     var nav = document.getElementById('stgBackupsNav');
     if (!nav) return;
+    // ONE backups view, the other DELETED at once (never drawn and then hidden — Damon 2026-10-20: the detailed view,
+    // ~1600px, showed on the first visit until its read came back): config.settings.backupsSimple keeps the simple view
+    var _drop = document.getElementById((window.PUB_CONFIG || {}).backupsSimple ? 'bkDetail' : 'bkSimple'); if (_drop) _drop.remove();
     // a tenant whose config says it has backups shows the item at once and reads them when the tab opens
     if ((window.PUB_CONFIG || {}).backupsSimple) { nav.style.display = ''; onTab('backups', backupsOpen); restoreSection(); return; }
     return backupsOpen();
@@ -2425,13 +2433,14 @@
     var scrBtn = document.getElementById('bkScriptBtn');
     var scrOut = document.getElementById('bkScriptOut');
     var arc = (list.archives || [])[0];
-    if (arc) {
+    if (arc && nameEl) {
       nameEl.textContent = arc.name;
       infoEl.textContent = (arc.size / 1048576).toFixed(1) + ' MB · archived ' + String(arc.mtime).slice(0, 16).replace('T', ' ');
       dlBtn.disabled = false;
       dlBtn.onclick = function() { location.href = '/api/files/backup/latest'; };
     }
     function paintMode(mode) {
+      if (!autoBtn) return;
       autoBtn.classList.toggle('stg-ai-connect', mode === 'auto');
       manBtn.classList.toggle('stg-ai-connect', mode === 'manual');
     }
@@ -2440,7 +2449,7 @@
         var r = await fetch('/api/files/backup/settings', { credentials: 'same-origin', cache: 'no-store' });
         var j = await r.json();
         paintMode(j.mode);
-        scrBtn.disabled = !j.hasToken;
+        if (scrBtn) scrBtn.disabled = !j.hasToken;
       } catch (e) {}
     }
     async function setMode(mode) {
@@ -2448,14 +2457,15 @@
         headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: mode }) });
       paintMode(mode);
     }
-    autoBtn.onclick = function() { setMode('auto'); };
-    manBtn.onclick = function() { setMode('manual'); };
+    if (autoBtn) autoBtn.onclick = function() { setMode('auto'); };
+    if (manBtn) manBtn.onclick = function() { setMode('manual'); };
     // Media backup (default-on auto-download to the user's machine)
     var mOn = document.getElementById('bkMediaOn');
     var mOff = document.getElementById('bkMediaOff');
     var mNow = document.getElementById('bkMediaNow');
     var mInfo = document.getElementById('bkMediaInfo');
     function paintMedia(on) {
+      if (!mOn) return;
       mOn.classList.toggle('stg-ai-connect', on);
       mOff.classList.toggle('stg-ai-connect', !on);
     }
@@ -2464,14 +2474,12 @@
         headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mediaAuto: on }) });
       paintMedia(on);
     }
-    mOn.onclick = function() { setMedia(true); };
-    mOff.onclick = function() { setMedia(false); };
-    mNow.onclick = function() { location.href = '/api/files/export?mine=1'; };
+    if (mOn) mOn.onclick = function() { setMedia(true); };
+    if (mOff) mOff.onclick = function() { setMedia(false); };
+    if (mNow) mNow.onclick = function() { location.href = '/api/files/export?mine=1'; };
     // The simple view: ONE switch (the same mediaAuto setting the On/Off pair writes) and Download now (the latest
     // nightly archive when there is one, else a fresh export of your files). config.settings.backupsSimple hides the rest.
     var sw = document.getElementById('bkSwitch'), sNow = document.getElementById('bkSimpleNow');
-    if ((window.PUB_CONFIG || {}).backupsSimple) { var det = document.getElementById('bkDetail'); if (det) det.style.display = 'none'; }
-    else { var simp = document.getElementById('bkSimple'); if (simp) simp.style.display = 'none'; }
     var _paintMedia = paintMedia;
     paintMedia = function(on) { _paintMedia(on); if (sw) { sw.classList.toggle('on', !!on); sw.setAttribute('aria-checked', on ? 'true' : 'false'); } };
     if (sw) { sw.onclick = function() { setMedia(!sw.classList.contains('on')); }; sw.onkeydown = function(e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); sw.onclick(); } }; }
@@ -2480,20 +2488,20 @@
       .then(function(r){ return r.json(); })
       .then(function(st) {
         paintMedia(st.auto !== false);
-        if (st.count) mInfo.textContent = st.count + ' files, ' + (st.bytes / 1048576).toFixed(1) + ' MB. When your uploads change, a current archive downloads to your computer automatically (at most weekly).';
+        if (st.count && mInfo) mInfo.textContent = st.count + ' files, ' + (st.bytes / 1048576).toFixed(1) + ' MB. When your uploads change, a current archive downloads to your computer automatically (at most weekly).';
       }).catch(function(){});
-    tokBtn.onclick = async function() {
+    if (tokBtn) tokBtn.onclick = async function() {
       if (!(await platform.ui.confirm('Generate a new backup token? Any existing pull script stops working.'))) return;
       await fetch('/api/files/backup/token', { method: 'POST', credentials: 'same-origin' });
       scrBtn.disabled = false;
       scrOut.style.display = 'none';
     };
-    scrBtn.onclick = async function() {
+    if (scrBtn) scrBtn.onclick = async function() {
       var r = await fetch('/api/files/backup/script', { credentials: 'same-origin', cache: 'no-store' });
       scrOut.textContent = await r.text();
       scrOut.style.display = '';
     };
-    loadSettings();
+    if (autoBtn) loadSettings();   // the detailed view's own settings (the simple view needs only the media switch)
   }
 
   // ── Deploy panel (owner-only, master-only) — release-based ──
