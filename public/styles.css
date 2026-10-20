@@ -931,11 +931,15 @@ html.pui-framed .stg-main { overflow: visible; }
 
 /* THE TWO BUTTON STYLES on gamoid (config.ui.cardLine; Damon 2026-10-20 button sweep — hashoid keeps its own look):
    ui.v1's tokens. PRIMARY (orange, black text): the action buttons (Save, Update, Add, Upgrade, Confirm, Copy codes, a
-   picked option) in Bungee. SECONDARY (the card/field line): Change password and every other plain button, Cancel, in DM
-   Sans. Labels at ui.v1's sizes (18px phone / 16px PC). Danger stays red. */
+   picked option) in Bungee. SECONDARY (the card/field line): every other plain button, Cancel, in DM Sans. Labels at
+   ui.v1's sizes (18px phone / 16px PC). Danger stays red. Change password keeps its approved look: an ORANGE button, its
+   own DM Sans label at its old size (Damon 2026-10-20). */
 html[data-cl] .stg-ai-connect, html[data-cl] .stg-btn-primary, html[data-cl] .stg-modal-btn-confirm:not(.danger), html[data-cl] .stg-tfa-verify-btn {
   background: var(--pui-pri-bg) !important; border: 1.5px solid var(--pui-pri-bg) !important; color: var(--pui-pri-fg) !important;
   font-family: 'Bungee', var(--font-head, system-ui), sans-serif !important; font-weight: 400 !important; letter-spacing: .03em; font-size: var(--pui-pri-fs) !important; }
-html[data-cl] .stg-ai-btn:not(.stg-ai-connect):not(.stg-ai-disconnect):not([data-rm]):not([data-press-rm]), html[data-cl] .stg-modal-btn-cancel, html[data-cl] #changePwBtn {
+html[data-cl] .stg-ai-btn:not(.stg-ai-connect):not(.stg-ai-disconnect):not([data-rm]):not([data-press-rm]), html[data-cl] .stg-modal-btn-cancel {
   background: transparent !important; border: 1.5px solid var(--pui-sec-line) !important; color: var(--pui-sec-fg) !important;
   font-family: 'DM Sans', system-ui, sans-serif !important; font-weight: 600 !important; font-size: var(--pui-sec-fs) !important; }
+html[data-cl] #changePwBtn {
+  background: var(--pui-pri-bg) !important; border: 1.5px solid var(--pui-pri-bg) !important; color: var(--pui-pri-fg) !important;
+  font-family: 'DM Sans', system-ui, sans-serif !important; font-weight: 600 !important; letter-spacing: normal; font-size: var(--pui-sec-fs) !important; }
