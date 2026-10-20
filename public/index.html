@@ -525,7 +525,8 @@
           <div class="stg-acct-pair stg-acct-pair-full stg-acct-pair-studio" id="accountStudioRow" style="display:none">
             <label>Studio slug<div class="stg-acct-static stg-acct-locked" id="accountStudioSlug" title="Permanent — subdomain &amp; mailbox owner">—</div></label>
           </div>
-          <label class="stg-inbox stg-inbox-ro"><div class="stg-inbox-in stg-acct-email" id="accountEmail" data-fallback="you@example.com">—</div></label>
+          <!-- the sign-in email: plain orange text, never a box — boxes are for what you can edit (Damon 2026-10-20) -->
+          <div class="stg-acct-email stg-acct-email-line" id="accountEmail" data-fallback="you@example.com">—</div>
           <label class="stg-inbox stg-inbox-ro"><input type="text" class="stg-inbox-in stg-mono-cyan" id="accountRecoveryEmail" placeholder="Recovery email" readonly></label>
           <div><button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="changePwBtn">Change password</button></div>
           <div class="stg-fieldrow">

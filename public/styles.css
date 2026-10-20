@@ -922,5 +922,9 @@ html.pui-framed .stg-main { overflow: visible; }
 /* THE PLAN BUTTON (Damon 2026-10-20): small, right-justified on the chip row — 'Studio AI' yellow, 'Upgrade' orange */
 .stg-plan-btn { margin-left: auto; padding: 5px 12px; border-radius: 8px; border: 0; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 16px; line-height: 1.2;
   background: #ffe03d; color: #0b0b14; white-space: nowrap; }
-.stg-plan-btn[data-plan="free"] { background: var(--primary, #f5891f); }
+.stg-plan-btn[data-plan="free"] { background: #2a2a40; color: var(--text); }
 .stg-plan-btn[hidden] { display: none; }
+
+/* the sign-in email: plain orange text on its own line (no box) */
+.stg-acct-email-line { padding: 4px 2px; font-size: 16px; overflow-wrap: anywhere; }
+@media (max-width: 760px) { #settings-app .stg-acct-email-line { font-size: var(--stg-text, 18px) !important; } }

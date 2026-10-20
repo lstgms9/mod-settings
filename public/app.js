@@ -1122,6 +1122,7 @@
         COUNTRIES.map(function(c){ return '<option value="' + c[0] + '">' + c[1] + '</option>'; }).join('');
       cSel.addEventListener('change', function() {
         if (flagEl) flagEl.innerHTML = flagImg(cSel.value) || GLOBE_IC;  // 🌍 fallback
+        if (removed('country-save')) saveProfile();   // no Save button: the change is the save
       });
     }
     // Pre-fill from /api/auth/session (carries displayName, country,
@@ -1236,6 +1237,7 @@
       });
       if (r.ok) {
         if (btn) { btn.textContent = 'Saved ✓'; setTimeout(function(){ btn.disabled = false; btn.textContent = btn.dataset.orig || 'Save profile'; if (_profileWatch) _profileWatch.reset(); }, 1200); }
+        else toast('Saved');   // saved on change (no Save button)
       } else if (btn) {
         btn.textContent = 'Failed'; btn.disabled = false;
         setTimeout(function(){ btn.textContent = btn.dataset.orig || 'Save profile'; }, 1500);
@@ -1622,34 +1624,19 @@
       _planTwo = { paid: paid, name: nice(paid.name), isAI: isAI, keep: keep, st: st };
       // THE PLAN BUTTON, top right (Damon 2026-10-20): 'Studio AI' — tap to manage it — or 'Upgrade' on Free
       var btn = document.getElementById('planManageBtn');
-      if (btn) { btn.textContent = isAI ? nice(paid.name) : 'Upgrade'; btn.setAttribute('data-plan', isAI ? 'ai' : 'free'); btn.hidden = false; }
+      if (btn) { btn.textContent = isAI ? nice(paid.name) : nice(free.name); btn.setAttribute('data-plan', isAI ? 'ai' : 'free'); btn.hidden = false; }
     } catch (e) {}
   }
+  // THE PLAN BUTTON → the MANAGE ACCOUNT pop-up (Damon 2026-10-20): the sign-up page's own two plan cards
+  // (/signup?pop=1&manage=1, mod-signup manageMode), the current one marked; it does the switching (Free at the month's
+  // end, Studio AI by card or an invite code) and says so (postMessage 'plan-changed') → this button follows
+  var _manageHooked = false;
   function planButton() {
     if (!_planTwo) return openPlanModal();
-    if (_planTwo.isAI) {
-      // an invite's free month (no card yet): its dates, not a billing page (no 'No billing on file')
-      if (!_planTwo.st.hasBilling) { var gu = _planTwo.st.grantUntil; toast(gu ? 'Free month from an invite, until ' + new Date(gu).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : _planTwo.name + ' is on'); return; }
-      fetch((platform.basePath || '') + '/api/billpay/billing/portal', { method: 'POST', credentials: 'same-origin' })
-        .then(function(r) { return r.json(); }).then(function(j) { if (j && j.url) window.top.location.href = j.url; else toast((j && j.error) || 'Billing page unavailable'); })
-        .catch(function() { toast('Billing page unavailable'); });
-      return;
-    }
-    if (_planTwo.keep) {   // the pay sheet adds the card and starts the monthly subscription (mod-billpay 'studio-ai')
-      var go = function() { window.billpaySheet.open({ kind: 'studio-ai', name: _planTwo.name, price: _planTwo.paid.monthly, onDone: function() { renderPlanLine(); } }); };
-      if (window.billpaySheet) return go();
-      var sc = document.createElement('script'); sc.src = (platform.basePath || '') + '/_m/billpay/paysheet.js'; sc.onload = go; document.head.appendChild(sc); return;
-    }
-    var ui = platform.ui, inp = null, errEl = null;
-    ui.editPop({ title: 'Upgrade to ' + _planTwo.name, saveText: 'Apply code', fields: [{ key: 'c', label: 'Invite code', type: 'custom', render: function(host) {
-      host.innerHTML = '<p class="stg-plan-lock">Studio AI is invite-only for now. Enter your code.</p><input class="pui-ep-in" maxlength="300" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Your code">';
-      inp = host.querySelector('input'); setTimeout(function() { inp.focus(); }, 60);
-    } }], onSave: function() {
-      var code = (inp && inp.value || '').trim(); if (!code) throw new Error('Enter your code');
-      return fetch((platform.basePath || '') + '/api/billpay/pilot/redeem', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code }) })
-        .then(function(r) { return r.json().then(function(j) { if (!r.ok || !j.ok) throw new Error((j && j.error) || "That code isn't valid"); return j; }); })
-        .then(function() { toast('Studio AI is on: your first month is free'); renderPlanLine(); });
-    } });
+    var T = window.top, U = T.platform && T.platform.ui; if (!U || !U.modal) return;
+    var m = U.modal({ frame: (platform.basePath || '') + '/signup?pop=1&manage=1', title: '' });
+    m.modal.style.width = 'min(760px, calc(100vw - 2 * var(--pui-pop-gap, 10px)))'; m.modal.style.maxWidth = 'none';
+    if (!_manageHooked) { _manageHooked = true; T.addEventListener('message', function(e) { if (e.data && e.data.type === 'plan-changed') renderPlanLine(); }); }
   }
   function initPlanManage() {
     var btn = document.getElementById('planManageBtn');
@@ -2210,6 +2197,8 @@
       var kill = function(id) { var e = document.getElementById(id), l = e && (e.closest('.stg-fieldrow') || e.closest('label')); if (l) l.remove(); };
       if (removed('display-name')) { kill('profileDisplayName'); var h = document.getElementById('displayNameHint'); if (h) h.remove(); }
       if (removed('recovery-email')) kill('accountRecoveryEmail');
+      // Country saves the moment it changes (gamoid, Damon 2026-10-20): its Save button is deleted
+      if (removed('country-save')) { var sb = document.getElementById('profileSaveBtn'); if (sb) sb.remove(); }
     } catch (_) {}
   }
   applyHide(); applyRemove();
