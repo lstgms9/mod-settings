@@ -878,7 +878,6 @@ html.pui-framed .stg-main { overflow: visible; }
   #settings-app .stg-acct-pair { gap: 6px; }
   #settings-app .stg-acct-pair > label { gap: 2px; }
   #settings-app .stg-acct-username-hint:empty { display: none; }
-  #settings-app .stg-acct-pair:has(#profileCountry) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   #settings-app .stg-acct-save { margin-top: 2px; }
   #settings-app .stg-group { padding: 10px 12px; margin-bottom: 8px; }
   #settings-app .stg-group-label { margin-bottom: 6px; }
@@ -895,11 +894,50 @@ html.pui-framed .stg-main { overflow: visible; }
   #settings-app .stg-acct-details .stg-acct-planrow { row-gap: 6px; }
   #settings-app .stg-acct-pair-plan .stg-acct-planrow { min-height: 0; }
   /* the danger zone as one block: 'Delete account' | the button, the warning under both */
-  #settings-app .stg-danger-group .stg-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 2px; align-items: center; }
-  #settings-app .stg-danger-group .stg-row > div:first-child { display: contents; }
-  #settings-app .stg-danger-group .stg-sublabel { grid-column: 1 / -1; grid-row: 2; margin: 0; }
+  /* the danger zone as one block: DANGER ZONE | the button on one row, 'Delete account' and its warning under */
+  #settings-app .stg-danger-group { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 2px; align-items: center; }
+  #settings-app .stg-danger-group .stg-group-label { grid-column: 1; grid-row: 1; margin: 0; }
+  #settings-app .stg-danger-group .stg-row, #settings-app .stg-danger-group .stg-row > div:first-child { display: contents; }
+  #settings-app .stg-danger-group .stg-btn-danger { grid-column: 2; grid-row: 1; }
+  #settings-app .stg-danger-group .stg-label { grid-column: 1 / -1; grid-row: 2; margin-top: 4px; }
+  #settings-app .stg-danger-group .stg-sublabel { grid-column: 1 / -1; grid-row: 3; margin: 0; }
+  #settings-app .stg-inbox { padding: 4px 12px 5px; }
   #settings-app .stg-section-desc { margin-bottom: 0; }
 }
 
 /* Account: the heading left, its short line right, one row (Damon 2026-10-19) */
 .stg-acct-titlerow { flex: 1 1 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+
+/* THE ACCOUNT FIELDS (Damon 2026-10-19): a clear field outline with its label INSIDE (as the sign-in form's fields);
+   read-only ones (Email) look the same, never a faint box. A row = the field + its own Save on the right. */
+.stg-fieldrow { display: flex; align-items: center; gap: 8px; }
+.stg-fieldrow > .stg-inbox { flex: 1 1 auto; min-width: 0; }
+.stg-fieldrow > .stg-acct-cta { flex: none; width: auto; }
+.stg-inbox { display: flex; flex-direction: column; gap: 1px; padding: 6px 12px 7px; border: 1px solid var(--border2, #3a3a55);
+  border-radius: 10px; background: var(--bg); min-width: 0; cursor: text; }
+.stg-inbox:focus-within { border-color: var(--primary); }
+.stg-inbox-lbl { font-size: 13px; color: var(--text-dim); letter-spacing: .02em; }
+.stg-inbox-in { display: block; width: 100%; min-width: 0; box-sizing: border-box; border: 0; outline: 0; padding: 0; margin: 0;
+  background: transparent; color: var(--text); font: inherit; font-size: 16px; min-height: 22px; }
+.stg-inbox-ro { cursor: default; }
+#settings-app .stg-inbox .stg-inbox-in { border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; }
+#changePwBtn { width: auto; }
+.stg-inbox-ro .stg-inbox-in { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stg-inbox .stg-acct-flagrow { display: flex; align-items: center; gap: 8px; }
+.stg-inbox select.stg-inbox-in { appearance: auto; cursor: pointer; }
+.stg-inbox select.stg-inbox-in option { background: var(--bg2); color: var(--text); }
+/* the plan line: 'Free · Upgrade to Studio AI' / 'Studio AI · $10/mo · Manage' — one line, the action a link */
+.stg-acct-plan { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; padding: 2px 2px 0; }
+.stg-acct-plan .stg-acct-static { padding: 0; min-height: 0; }
+.stg-linkbtn { background: none; border: 0; padding: 0; color: var(--primary); font: inherit; font-weight: 600; cursor: pointer; }
+.stg-linkbtn::before { content: '\00b7  '; color: var(--text-dim); font-weight: 400; white-space: pre; }
+.stg-linkbtn[hidden] { display: none; }
+/* the danger zone: a clearly visible RED outline (Damon 2026-10-19) */
+.stg-section .stg-danger-group { border: 1.5px solid var(--red, #ff3997); }
+@media (max-width: 760px) {
+  #settings-app .stg-inbox-lbl { font-size: 16px !important; }
+  #settings-app .stg-inbox-in { font-size: var(--stg-text, 18px) !important; }
+  #settings-app .stg-acct-plan, #settings-app .stg-linkbtn { font-size: var(--stg-text, 18px); }
+}
+.stg-plan-note:empty { display: none; }
+.stg-acct-username-hint:empty { display: none; }

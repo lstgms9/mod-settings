@@ -503,62 +503,46 @@
       <!-- AVATAR + DETAILS duet -->
       <div class="stg-acct-duet">
         <div class="stg-acct-box pui-card stg-acct-avatar">
-          <div class="stg-group-label">AVATAR</div>
           <div class="stg-avatar-box" id="stgAvatarBox"></div>
         </div>
         <div class="stg-acct-box pui-card stg-acct-details">
-          <div class="stg-group-label">DETAILS</div>
-          <!-- Username first (the handle), Display name beside it — each with its own Save, greyed until edited (Damon 2026-10-15) -->
-          <div class="stg-acct-pair stg-acct-names stg-acct-pair-username">
-            <label>Username
-              <div class="stg-acct-userrow">
-                <input type="text" class="stg-input stg-acct-username-input" id="accountUsername" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="—">
-                <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="usernameSaveBtn" disabled>Save</button>
-              </div>
-              <div class="stg-acct-username-hint" id="usernameHint"></div>
-            </label>
-            <label>Display name
-              <div class="stg-acct-userrow">
-                <input type="text" class="stg-input" id="profileDisplayName" placeholder="Your name" maxlength="40">
-                <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="displayNameSaveBtn" disabled>Save</button>
-              </div>
-              <div class="stg-acct-username-hint" id="displayNameHint"></div>
-            </label>
+          <!-- THE ACCOUNT FIELDS (Damon 2026-10-19): each in a box with its label INSIDE it (as the sign-in form's fields);
+               order: Username, Email, Change password, Country, plan line. Username keeps its own Save (greyed until edited). -->
+          <div class="stg-fieldrow">
+            <label class="stg-inbox"><span class="stg-inbox-lbl">Username</span>
+              <input type="text" class="stg-inbox-in stg-acct-username-input" id="accountUsername" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="—"></label>
+            <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="usernameSaveBtn" disabled>Save</button>
           </div>
+          <div class="stg-acct-username-hint" id="usernameHint"></div>
+          <div class="stg-fieldrow">
+            <label class="stg-inbox"><span class="stg-inbox-lbl">Display name</span>
+              <input type="text" class="stg-inbox-in" id="profileDisplayName" placeholder="Your name" maxlength="40"></label>
+            <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="displayNameSaveBtn" disabled>Save</button>
+          </div>
+          <div class="stg-acct-username-hint" id="displayNameHint"></div>
           <div class="stg-acct-pair stg-acct-pair-full stg-acct-pair-studio" id="accountStudioNameRow" style="display:none">
             <label>Studio name<input type="text" class="stg-input" id="accountStudioName" placeholder="Your studio"></label>
           </div>
           <div class="stg-acct-pair stg-acct-pair-full stg-acct-pair-studio" id="accountStudioRow" style="display:none">
             <label>Studio slug<div class="stg-acct-static stg-acct-locked" id="accountStudioSlug" title="Permanent — subdomain &amp; mailbox owner">—</div></label>
           </div>
-          <div class="stg-acct-pair stg-acct-pair-full">
-            <label>Email
-              <div class="stg-acct-planrow">
-                <div class="stg-acct-email" id="accountEmail" data-fallback="you@example.com">—</div>
-                <button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="changePwBtn">Change password</button>
-              </div>
-            </label>
-            <label>Recovery email<input type="text" class="stg-input stg-mono-cyan" id="accountRecoveryEmail" placeholder="—" readonly></label>
-          </div>
-          <div class="stg-acct-pair stg-acct-pair-plan" data-hide-key="account-tier">
-            <label>Current plan
-              <div class="stg-acct-planrow">
-                <div class="stg-acct-static" id="planInfo">Free plan</div>
-                <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="planManageBtn">Manage Plan</button>
-              </div>
-            </label>
-          </div>
-          <div class="stg-acct-pair">
-            <label>Country
-              <div class="stg-acct-flagrow">
+          <label class="stg-inbox stg-inbox-ro"><span class="stg-inbox-lbl">Email</span>
+            <div class="stg-inbox-in stg-acct-email" id="accountEmail" data-fallback="you@example.com">—</div></label>
+          <label class="stg-inbox stg-inbox-ro"><span class="stg-inbox-lbl">Recovery email</span>
+            <input type="text" class="stg-inbox-in stg-mono-cyan" id="accountRecoveryEmail" placeholder="—" readonly></label>
+          <div><button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="changePwBtn">Change password</button></div>
+          <div class="stg-fieldrow">
+            <label class="stg-inbox"><span class="stg-inbox-lbl">Country</span>
+              <span class="stg-acct-flagrow">
                 <span class="stg-flag-preview" id="profileCountryFlag"><svg class="pui-ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.6 3.7 2.6 6S9.8 12.3 8 14C6.2 12.3 5.4 10.3 5.4 8S6.2 3.7 8 2z"/></svg></span>
-                <select class="stg-input" id="profileCountry"></select>
-              </div>
-            </label>
-            <span class="stg-acct-arrow">→</span>
-            <label>Region<select class="stg-input" id="profileTimezone"></select></label>
+                <select class="stg-inbox-in" id="profileCountry"></select>
+              </span></label>
+            <button class="stg-ai-btn stg-ai-connect stg-acct-cta" id="profileSaveBtn">Save</button>
           </div>
-          <div class="stg-acct-save"><button class="stg-ai-btn stg-ai-connect" id="profileSaveBtn" style="width:auto;padding:8px 20px;">Save</button></div>
+          <!-- the plan line: 'Free · Upgrade to Studio AI' / 'Studio AI · $10/mo · Manage' -->
+          <div class="stg-acct-plan" data-hide-key="account-tier">
+            <span class="stg-acct-static" id="planInfo">Free plan</span><button type="button" class="stg-linkbtn" id="planManageBtn">Manage Plan</button>
+          </div>
         </div>
       </div>
 

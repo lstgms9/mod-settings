@@ -946,7 +946,7 @@
     if (recEl && idEmail) recEl.value = idEmail;
     // A recovery address that IS the email above says nothing — only show it when the Email row is a different
     // address (a studio mailbox); otherwise the page showed the same address twice (Damon 2026-10-15)
-    try { if (recEl && emailEl && recEl.value && recEl.value.toLowerCase() === String(emailEl.textContent || '').trim().toLowerCase()) recEl.closest('label').style.display = 'none'; } catch (_) {}
+    try { if (recEl && emailEl && recEl.value && recEl.value.toLowerCase() === String(emailEl.textContent || '').trim().toLowerCase()) recEl.closest('label').remove(); } catch (_) {}
 
     // STUDIO row — only rendered for studio-tier viewers. Slug is locked
     // (website subdomain + mailbox local-part keyed off it); name is the
@@ -1050,13 +1050,6 @@
     ['AE','United Arab Emirates'],['SA','Saudi Arabia'],['IL','Israel'],
     ['CL','Chile'],['CO','Colombia'],['PE','Peru'],['UY','Uruguay'],
   ];
-  // Region presets — coarse-grained on purpose. Damon's spec: just the
-  // 3 macro regions, not a city-by-city picker.
-  var TIMEZONES = [
-    ['Americas','Americas'],
-    ['Europe','Europe'],
-    ['Asia','Asia'],
-  ];
   // Country code → flag IMAGE (flagcdn SVG). Emoji flags render as bare letters
   // on Linux/Chromium/Windows, so always use an image.
   function flagImg(cc) {
@@ -1125,7 +1118,6 @@
   }
   function initProfile() {
     var cSel = document.getElementById('profileCountry');
-    var tSel = document.getElementById('profileTimezone');
     var flagEl = document.getElementById('profileCountryFlag');
     if (cSel) {
       // Country option text is just the country name. The flag emoji
@@ -1136,10 +1128,6 @@
       cSel.addEventListener('change', function() {
         if (flagEl) flagEl.innerHTML = flagImg(cSel.value) || GLOBE_IC;  // 🌍 fallback
       });
-    }
-    if (tSel) {
-      tSel.innerHTML = '<option value="">— Select region —</option>' +
-        TIMEZONES.map(function(t){ return '<option value="' + t[0] + '">' + t[1] + '</option>'; }).join('');
     }
     // Pre-fill from /api/auth/session (carries displayName, country,
     // timezone, bio, platforms when the user record / client.data has them).
@@ -1152,7 +1140,6 @@
         cSel.value = s.country;
         if (flagEl) flagEl.innerHTML = flagImg(s.country) || GLOBE_IC;
       }
-      if (tSel && s.timezone) tSel.value = s.timezone;
       if (bio) bio.value = s.bio || '';
       _platformState = (s.platforms && typeof s.platforms === 'object') ? Object.assign({}, s.platforms) : {};
       renderPlatformRows();
@@ -1238,13 +1225,11 @@
   async function saveProfile() {
     var dn = document.getElementById('profileDisplayName');
     var cSel = document.getElementById('profileCountry');
-    var tSel = document.getElementById('profileTimezone');
     var bio = document.getElementById('profileBio');
     var btn = document.getElementById('profileSaveBtn');
     var payload = {
       displayName: dn ? dn.value.trim() : null,
       country:     cSel ? cSel.value || null : null,
-      timezone:    tSel ? tSel.value || null : null,
       bio:         bio ? bio.value.trim() : null,
       platforms:   _platformState,
     };
@@ -1643,7 +1628,7 @@
       var planEl = document.getElementById('planInfo'), btn = document.getElementById('planManageBtn');
       if (planEl) planEl.textContent = isAI ? nice(paid.name) + ' \u00b7 $' + paid.monthly + '/mo' : nice(free.name);
       var note = document.getElementById('planNote');
-      if (!note && planEl) { note = document.createElement('div'); note.id = 'planNote'; note.className = 'stg-plan-note'; planEl.parentNode.parentNode.appendChild(note); }
+      if (!note && planEl) { note = document.createElement('div'); note.id = 'planNote'; note.className = 'stg-plan-note'; planEl.parentNode.insertAdjacentElement('afterend', note); }
       if (note) note.textContent = (isAI && st.grantUntil) ? 'Free month from an invite, until ' + new Date(st.grantUntil).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
         : keep ? 'Your free ' + nice(paid.name) + ' month has ended.' : '';
       if (btn) {
@@ -1655,6 +1640,7 @@
   function planButton() {
     if (!_planTwo) return openPlanModal();
     if (_planTwo.isAI) {
+      if (!_planTwo.st.hasBilling) return;   // an invite's free month: nothing to manage yet (no 'No billing on file')
       fetch((platform.basePath || '') + '/api/billpay/billing/portal', { method: 'POST', credentials: 'same-origin' })
         .then(function(r) { return r.json(); }).then(function(j) { if (j && j.url) window.top.location.href = j.url; else toast((j && j.error) || 'Billing page unavailable'); })
         .catch(function() { toast('Billing page unavailable'); });
@@ -2239,8 +2225,8 @@
   function removed(k) { var r = (window.PUB_CONFIG || {}).settingsRemove; return Array.isArray(r) && r.indexOf(k) >= 0; }
   function applyRemove() {
     try {
-      var kill = function(id) { var e = document.getElementById(id), l = e && e.closest('label'); if (l) l.remove(); };
-      if (removed('display-name')) kill('profileDisplayName');
+      var kill = function(id) { var e = document.getElementById(id), l = e && (e.closest('.stg-fieldrow') || e.closest('label')); if (l) l.remove(); };
+      if (removed('display-name')) { kill('profileDisplayName'); var h = document.getElementById('displayNameHint'); if (h) h.remove(); }
       if (removed('recovery-email')) kill('accountRecoveryEmail');
     } catch (_) {}
   }
