@@ -985,9 +985,9 @@
       // the tenant's OWN plan names when its sign-up names them (gamoid two plans: studio → 'Studio AI', anything
       // without a paid plan → 'Free'), else the generic names (uniMaster v237: Account still said 'Studio plan')
       var _pn = await tenantPlanName(planVal);
-      var planEl = document.getElementById('planInfo');
+      var planEl = document.getElementById('planManageBtn');
       var label = _pn || ((TIER_NAMES[planVal] || (planVal.charAt(0).toUpperCase() + planVal.slice(1))) + ' plan');
-      if (planEl) planEl.textContent = label;
+      if (planEl && !_planTwo) { planEl.textContent = label; planEl.hidden = false; }
     }
     // Studio identity chip — icon square + logo wordmark. Renders to the
     // LEFT of the tier badge for studio-tier viewers. Square = iconFileId;
@@ -1620,24 +1620,16 @@
       var isAI = st.tier === 'studio' || st.tier === 'studio_pro' || !!st.grantUntil;
       var keep = !isAI && !!st.grantEndedAt && !st.subscribed;   // the invite's free month ended: 'Keep Studio AI: add a card'
       _planTwo = { paid: paid, name: nice(paid.name), isAI: isAI, keep: keep, st: st };
-      var planEl = document.getElementById('planInfo'), btn = document.getElementById('planManageBtn');
-      // ONE plan line (Damon 2026-10-20): 'Studio AI' (tap it to manage) / 'Free · Upgrade to Studio AI' — no price
-      if (planEl) planEl.textContent = isAI ? nice(paid.name) : nice(free.name);
-      var note = document.getElementById('planNote');
-      if (!note && planEl) { note = document.createElement('div'); note.id = 'planNote'; note.className = 'stg-plan-note'; planEl.parentNode.insertAdjacentElement('afterend', note); }
-      if (note) note.textContent = (isAI && st.grantUntil) ? 'Free month from an invite, until ' + new Date(st.grantUntil).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
-        : keep ? 'Your free ' + nice(paid.name) + ' month has ended.' : '';
-      if (btn) {
-        if (isAI) btn.hidden = true;   // the name itself manages it
-        else { btn.textContent = keep ? 'Keep ' + nice(paid.name) + ': add a card' : 'Upgrade to ' + nice(paid.name); btn.hidden = false; }
-      }
+      // THE PLAN BUTTON, top right (Damon 2026-10-20): 'Studio AI' — tap to manage it — or 'Upgrade' on Free
+      var btn = document.getElementById('planManageBtn');
+      if (btn) { btn.textContent = isAI ? nice(paid.name) : 'Upgrade'; btn.setAttribute('data-plan', isAI ? 'ai' : 'free'); btn.hidden = false; }
     } catch (e) {}
   }
   function planButton() {
     if (!_planTwo) return openPlanModal();
     if (_planTwo.isAI) {
       // an invite's free month (no card yet): its dates, not a billing page (no 'No billing on file')
-      if (!_planTwo.st.hasBilling) { var n = document.getElementById('planNote'); toast((n && n.textContent) || (_planTwo.name + ' is on')); return; }
+      if (!_planTwo.st.hasBilling) { var gu = _planTwo.st.grantUntil; toast(gu ? 'Free month from an invite, until ' + new Date(gu).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : _planTwo.name + ' is on'); return; }
       fetch((platform.basePath || '') + '/api/billpay/billing/portal', { method: 'POST', credentials: 'same-origin' })
         .then(function(r) { return r.json(); }).then(function(j) { if (j && j.url) window.top.location.href = j.url; else toast((j && j.error) || 'Billing page unavailable'); })
         .catch(function() { toast('Billing page unavailable'); });
@@ -1662,9 +1654,6 @@
   function initPlanManage() {
     var btn = document.getElementById('planManageBtn');
     if (btn) btn.addEventListener('click', planButton);
-    // the plan's name is the plan's button (Damon 2026-10-20: tap 'Studio AI' to manage it)
-    var planName = document.getElementById('planInfo');
-    if (planName) planName.addEventListener('click', planButton);
     // Username Save button — debounced availability check on input,
     // POST to /api/auth/change-username on click. Server enforces
     // the 30-day rate limit; UI surfaces the cooldown message.
@@ -2041,8 +2030,6 @@
       var j = await r.json();
       if (!r.ok || !j.ok) throw new Error(j.error || 'Upgrade failed');
       toast('Plan updated to ' + (t.name || tierId).toUpperCase());
-      var planEl = document.getElementById('planInfo');
-      if (planEl) planEl.textContent = (t.name || tierId).charAt(0).toUpperCase() + (t.name || tierId).slice(1).toLowerCase();
       var planModal = document.getElementById('stgPlanModal');
       if (planModal) planModal.remove();
       var slugModal = document.getElementById('stgSlugModal');

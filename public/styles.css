@@ -465,7 +465,7 @@
   gap: 16px; flex-wrap: wrap;
   margin-bottom: 18px;
 }
-.stg-acct-head-right { display: flex; align-items: center; gap: 10px; }
+.stg-acct-head-right { display: flex; align-items: center; gap: 10px; flex: 1 1 100%; }   /* the studio chip left, the plan button right */
 .stg-acct-studio-chip {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 12px;
@@ -580,8 +580,6 @@
 }
 /* Plan row: button right-justified at the far edge, plan name on
    the left. Replaces the earlier inline-next-to-plan version. */
-.stg-acct-pair-plan { grid-template-columns: 1fr; }
-.stg-acct-planrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 30px; }
 /* Username row: editable input + Save button + inline hint
    (cooldown countdown / availability). */
 .stg-acct-userrow { display: flex; align-items: center; gap: 10px; min-height: 30px; flex-wrap: wrap; }
@@ -665,11 +663,6 @@
 .stg-modal-btn-confirm.danger {
   background: var(--red, #ff3997);
   color: #0b0b14;
-}
-.stg-acct-planrow .stg-acct-static { padding: 0; min-height: 0; flex: 0 0 auto; white-space: nowrap; }
-.stg-acct-planrow .stg-acct-cta {
-  align-self: auto; width: auto; height: 32px;
-  padding: 0 14px; font-size: 14px; flex: 0 0 auto;
 }
 
 /* Locked identity field (Username, Studio Slug) — must not look
@@ -776,14 +769,11 @@
 .stg-acct-names .stg-acct-cta { flex: none; width: auto; }
 @media (max-width: 760px) { .stg-acct-names { grid-template-columns: 1fr; } }
 .stg-acct-names .stg-acct-userrow { flex-wrap: nowrap; } .stg-acct-names .stg-acct-username-input { min-width: 0; }
-.stg-acct-planrow .stg-acct-email { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .stg-acct-details { min-width: 0; }
 /* the Details box never pushes past its column (Settings also opens as a pop-up — narrower than the page) */
 .stg-acct-details .stg-acct-pair > label { min-width: 0; }
 .stg-acct-details select.stg-input, .stg-acct-details .stg-input { min-width: 0; max-width: 100%; }
-.stg-acct-details .stg-acct-planrow { flex-wrap: wrap; }
-.stg-acct-details .stg-acct-planrow .stg-acct-email { flex: 1 1 160px; }
 
 /* Phone: every word in Settings ~2px bigger — tabs, labels, fields (Damon 2026-10-16). One scale on the root, so the
    whole page grows together (14px → 16px) instead of a hundred size overrides. */
@@ -874,8 +864,6 @@ html.pui-framed .stg-main { overflow: visible; }
   #settings-app .pap-settings .pap-cols { grid-area: cols; justify-self: center; }
   #settings-app .pap-settings .pap-save { grid-area: save; width: 100%; max-width: none; margin: 0; }
   #settings-app .pap-settings .pap-err { grid-area: err; }
-  #settings-app .stg-acct-details .stg-acct-planrow { row-gap: 6px; }
-  #settings-app .stg-acct-pair-plan .stg-acct-planrow { min-height: 0; }
   /* the danger zone as one block: 'Delete account' | the button, the warning under both */
   /* the danger zone as one block: DANGER ZONE | the button on one row, 'Delete account' and its warning under */
   #settings-app .stg-danger-group { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 2px; align-items: center; }
@@ -908,17 +896,10 @@ html.pui-framed .stg-main { overflow: visible; }
 .stg-inbox .stg-acct-flagrow { display: flex; align-items: center; gap: 8px; }
 .stg-inbox select.stg-inbox-in { appearance: auto; cursor: pointer; }
 .stg-inbox select.stg-inbox-in option { background: var(--bg2); color: var(--text); }
-/* the plan line: 'Free · Upgrade to Studio AI' / 'Studio AI · $10/mo · Manage' — one line, the action a link */
-.stg-acct-plan { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; padding: 2px 2px 0; }
-.stg-acct-plan .stg-acct-static { padding: 0; min-height: 0; }
-.stg-linkbtn { background: none; border: 0; padding: 0; color: var(--primary); font: inherit; font-weight: 600; cursor: pointer; }
-.stg-linkbtn::before { content: '\00b7  '; color: var(--text-dim); font-weight: 400; white-space: pre; }
-.stg-linkbtn[hidden] { display: none; }
 /* the danger zone: a clearly visible RED outline (Damon 2026-10-19) */
 .stg-section .stg-danger-group { border: 1.5px solid var(--red, #ff3997); }
 @media (max-width: 760px) {
   #settings-app .stg-inbox-in { font-size: var(--stg-text, 18px) !important; }
-  #settings-app .stg-acct-plan, #settings-app .stg-linkbtn { font-size: var(--stg-text, 18px); }
 }
 .stg-plan-note:empty { display: none; }
 .stg-acct-username-hint:empty { display: none; }
@@ -937,5 +918,9 @@ html.pui-framed .stg-main { overflow: visible; }
   #settings-app .stg-acct-head { margin-bottom: 4px; }
 }
 
-/* the plan's name is a button (tap 'Studio AI' to manage it) that reads as the plan line's text */
-.stg-plan-name { background: none; border: 0; color: var(--text); font: inherit; cursor: pointer; text-align: left; }
+
+/* THE PLAN BUTTON (Damon 2026-10-20): small, right-justified on the chip row — 'Studio AI' yellow, 'Upgrade' orange */
+.stg-plan-btn { margin-left: auto; padding: 5px 12px; border-radius: 8px; border: 0; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 16px; line-height: 1.2;
+  background: #ffe03d; color: #0b0b14; white-space: nowrap; }
+.stg-plan-btn[data-plan="free"] { background: var(--primary, #f5891f); }
+.stg-plan-btn[hidden] { display: none; }
