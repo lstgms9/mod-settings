@@ -941,3 +941,4 @@ html.pui-framed .stg-main { overflow: visible; }
 }
 .stg-plan-note:empty { display: none; }
 .stg-acct-username-hint:empty { display: none; }
+#settings-app .stg-danger-group .stg-group-label { color: var(--red, #ff3997); white-space: nowrap; }
