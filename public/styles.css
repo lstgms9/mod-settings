@@ -926,5 +926,5 @@ html.pui-framed .stg-main { overflow: visible; }
 .stg-plan-btn[hidden] { display: none; }
 
 /* the sign-in email: plain orange text on its own line (no box) */
-.stg-acct-email-line { padding: 4px 2px; font-size: 16px; overflow-wrap: anywhere; }
+.stg-acct-email-line { padding: 4px 2px; font-size: 16px; overflow-wrap: anywhere; background: none; border: 0; border-radius: 0; min-height: 0; }   /* NO box: boxes are for what you can edit */
 @media (max-width: 760px) { #settings-app .stg-acct-email-line { font-size: var(--stg-text, 18px) !important; } }
