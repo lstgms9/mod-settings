@@ -455,11 +455,11 @@
         if (codes.length) {
           // Show the one-time recovery codes — they're never shown again.
           panel.innerHTML =
-            '<div class="stg-tfa-recovery" style="padding:8px">' +
-              '<h4 style="margin:0 0 6px">Save your recovery codes</h4>' +
-              '<p style="margin:0 0 10px;opacity:.8;font-size:14px">Each works once if you lose your authenticator. Store them safely — they won’t be shown again.</p>' +
-              '<div class="stg-tfa-codes" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-family:ui-monospace,monospace;margin-bottom:12px">' +
-                codes.map(function(c){ return '<code style="background:#0b0b14;border:1px solid var(--border,#333);border-radius:4px;padding:6px 8px;letter-spacing:1px">' + c + '</code>'; }).join('') +
+            '<div class="stg-tfa-recovery" style="padding:calc(8 * var(--u, 1px))">' +
+              '<h4 style="margin:0 0 calc(6 * var(--u, 1px))">Save your recovery codes</h4>' +
+              '<p style="margin:0 0 calc(10 * var(--u, 1px));opacity:.8;font-size:calc(14 * var(--u, 1px))">Each works once if you lose your authenticator. Store them safely — they won’t be shown again.</p>' +
+              '<div class="stg-tfa-codes" style="display:grid;grid-template-columns:1fr 1fr;gap:calc(6 * var(--u, 1px));font-family:ui-monospace,monospace;margin-bottom:calc(12 * var(--u, 1px))">' +
+                codes.map(function(c){ return '<code style="background:#0b0b14;border:calc(1 * var(--u, 1px)) solid var(--border,#333);border-radius:calc(4 * var(--u, 1px));padding:calc(6 * var(--u, 1px)) calc(8 * var(--u, 1px));letter-spacing:calc(1 * var(--u, 1px))">' + c + '</code>'; }).join('') +
               '</div>' +
               '<button class="stg-btn-primary" id="tfaRecCopy">Copy codes</button> ' +
               '<button class="stg-seg-btn" id="tfaRecDone">Done</button>' +
@@ -778,9 +778,9 @@
 
     if (tier === 'free') {
       el.innerHTML = '<div class="stg-upgrade-prompt">' +
-        '<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;">Upgrade to accept payments</div>' +
-        '<div style="font-size:14px;color:var(--text-dim);margin-bottom:12px;">Start with OK Lite (' + TIER_PRICES.lite + ') to accept payments from your customers with just a 5% platform fee.</div>' +
-        '<button class="stg-ai-btn stg-ai-connect" style="width:auto;padding:8px 20px;" onclick="platform.nav.goto(\'/bill-pay\')">Upgrade Plan</button>' +
+        '<div style="font-size:calc(14 * var(--u, 1px));font-weight:600;color:var(--text);margin-bottom:calc(6 * var(--u, 1px));">Upgrade to accept payments</div>' +
+        '<div style="font-size:calc(14 * var(--u, 1px));color:var(--text-dim);margin-bottom:calc(12 * var(--u, 1px));">Start with OK Lite (' + TIER_PRICES.lite + ') to accept payments from your customers with just a 5% platform fee.</div>' +
+        '<button class="stg-ai-btn stg-ai-connect" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));" onclick="platform.nav.goto(\'/bill-pay\')">Upgrade Plan</button>' +
         '</div>';
       return;
     }
@@ -788,7 +788,7 @@
     if (!data.status || data.status === 'none') {
       el.innerHTML = '<div class="stg-row">' +
         '<div><div class="stg-label">Payment processing</div><div class="stg-sublabel">Connect a Stripe account to accept payments from your customers.</div></div>' +
-        '<button class="stg-ai-btn stg-ai-connect" id="startConnectBtn" style="width:auto;padding:8px 20px;">Start accepting payments</button>' +
+        '<button class="stg-ai-btn stg-ai-connect" id="startConnectBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));">Start accepting payments</button>' +
         '</div>';
       return;
     }
@@ -814,12 +814,12 @@
         '</div>';
       html += '<div class="stg-row">' +
         '<div><div class="stg-label">Stripe Dashboard</div><div class="stg-sublabel">View your payouts, transactions, and settings</div></div>' +
-        '<button class="stg-ai-btn stg-ai-connect" id="openDashboardBtn" style="width:auto;padding:8px 20px;">Open Dashboard</button>' +
+        '<button class="stg-ai-btn stg-ai-connect" id="openDashboardBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));">Open Dashboard</button>' +
         '</div>';
     } else {
       html += '<div class="stg-row">' +
         '<div><div class="stg-label">Complete setup</div><div class="stg-sublabel">Finish Stripe onboarding to start accepting payments.</div></div>' +
-        '<button class="stg-ai-btn stg-ai-connect" id="refreshConnectBtn" style="width:auto;padding:8px 20px;">Continue Setup</button>' +
+        '<button class="stg-ai-btn stg-ai-connect" id="refreshConnectBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));">Continue Setup</button>' +
         '</div>';
     }
 
@@ -1105,10 +1105,10 @@
     }
     host.innerHTML = keys.map(function(k) {
       var handle = _platformState[k];
-      return '<div class="stg-row" style="padding:6px 10px;background:var(--bg-card,#12121f);border:1px solid var(--border,#252540);border-radius:6px;gap:8px;">' +
-        '<span style="min-width:140px;font-size:14px">' + _platLabel(k) + '</span>' +
+      return '<div class="stg-row" style="padding:calc(6 * var(--u, 1px)) calc(10 * var(--u, 1px));background:var(--bg-card,#12121f);border:calc(1 * var(--u, 1px)) solid var(--border,#252540);border-radius:calc(6 * var(--u, 1px));gap:calc(8 * var(--u, 1px));">' +
+        '<span style="min-width:calc(140 * var(--u, 1px));font-size:calc(14 * var(--u, 1px))">' + _platLabel(k) + '</span>' +
         '<input type="text" class="stg-input plat-row-input" data-key="' + k + '" value="' + String(handle || '').replace(/"/g,'&quot;') + '" placeholder="handle / URL" style="flex:1">' +
-        '<button class="stg-ai-btn" data-rm="' + k + '" style="width:auto;padding:6px 12px;background:transparent;border:1px solid var(--red,#ff3997);color:var(--red,#ff3997)">×</button>' +
+        '<button class="stg-ai-btn" data-rm="' + k + '" style="width:auto;padding:calc(6 * var(--u, 1px)) calc(12 * var(--u, 1px));background:transparent;border:calc(1 * var(--u, 1px)) solid var(--red,#ff3997);color:var(--red,#ff3997)">×</button>' +
       '</div>';
     }).join('');
     Array.from(host.querySelectorAll('.plat-row-input')).forEach(function(inp) {
@@ -1221,10 +1221,10 @@
       return;
     }
     host.innerHTML = _pressState.map(function(r, i) {
-      return '<div class="stg-row" style="padding:6px 10px;background:var(--bg-card,#12121f);border:1px solid var(--border,#252540);border-radius:6px;gap:8px;">' +
-        '<span style="min-width:140px;font-size:14px">' + (r.name || '').replace(/</g,'&lt;') + '</span>' +
-        '<a href="' + (r.url || '#').replace(/"/g,'&quot;') + '" target="_blank" rel="noopener" style="flex:1;font-size:14px;color:var(--primary);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.url || '').replace(/</g,'&lt;') + '</a>' +
-        '<button class="stg-ai-btn" data-press-rm="' + i + '" style="width:auto;padding:6px 12px;background:transparent;border:1px solid var(--red,#ff3997);color:var(--red,#ff3997)">×</button>' +
+      return '<div class="stg-row" style="padding:calc(6 * var(--u, 1px)) calc(10 * var(--u, 1px));background:var(--bg-card,#12121f);border:calc(1 * var(--u, 1px)) solid var(--border,#252540);border-radius:calc(6 * var(--u, 1px));gap:calc(8 * var(--u, 1px));">' +
+        '<span style="min-width:calc(140 * var(--u, 1px));font-size:calc(14 * var(--u, 1px))">' + (r.name || '').replace(/</g,'&lt;') + '</span>' +
+        '<a href="' + (r.url || '#').replace(/"/g,'&quot;') + '" target="_blank" rel="noopener" style="flex:1;font-size:calc(14 * var(--u, 1px));color:var(--primary);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.url || '').replace(/</g,'&lt;') + '</a>' +
+        '<button class="stg-ai-btn" data-press-rm="' + i + '" style="width:auto;padding:calc(6 * var(--u, 1px)) calc(12 * var(--u, 1px));background:transparent;border:calc(1 * var(--u, 1px)) solid var(--red,#ff3997);color:var(--red,#ff3997)">×</button>' +
       '</div>';
     }).join('');
     Array.from(host.querySelectorAll('[data-press-rm]')).forEach(function(btn) {
@@ -1896,7 +1896,7 @@
       row.className = 'stg-mbx-row';
       // Full email gets a full row of its own. The pulldown + delete
       // sit on a secondary row below so the email never gets truncated.
-      row.style.cssText = 'display:flex;flex-direction:column;gap:8px;padding:10px 14px;background:var(--bg2,#12121f);border:1px solid var(--border,#252540);border-radius:8px;';
+      row.style.cssText = 'display:flex;flex-direction:column;gap:calc(8 * var(--u, 1px));padding:calc(10 * var(--u, 1px)) calc(14 * var(--u, 1px));background:var(--bg2,#12121f);border:calc(1 * var(--u, 1px)) solid var(--border,#252540);border-radius:calc(8 * var(--u, 1px));';
       var full = addr.address || ((addr.data && addr.data.fullAddress) || '');
       if (full.indexOf('@') === -1 && addr.domain) full = full + '@' + addr.domain;
       var assigned = (addr.data && addr.data.assignedTo) || addr.assignedTo || [];
@@ -1905,14 +1905,14 @@
       // are deletable. Server enforces this too.
       var isPrimary = !!(addr.isPrimary || (addr.data && addr.data.isPrimary));
       row.innerHTML =
-        '<div style="font-family:var(--font-mono,monospace);color:var(--text,#e4e4f0);font-size:14px;word-break:break-all;line-height:1.3;">' + escapeHTML(full) + '</div>' +
-        '<div style="display:flex;gap:8px;align-items:center;">' +
+        '<div style="font-family:var(--font-mono,monospace);color:var(--text,#e4e4f0);font-size:calc(14 * var(--u, 1px));word-break:break-all;line-height:1.3;">' + escapeHTML(full) + '</div>' +
+        '<div style="display:flex;gap:calc(8 * var(--u, 1px));align-items:center;">' +
           '<select class="stg-input mbx-reassign" data-id="' + addr.id + '" style="flex:1;min-width:0;">' +
             '<option value="">— Owner only —</option>' +
           '</select>' +
           (isPrimary
-            ? '<span class="stg-sublabel" title="Your studio\'s default mailbox — can\'t be deleted" style="white-space:nowrap;padding:6px 14px;opacity:.7;">Default</span>'
-            : '<button class="stg-ai-btn mbx-del" data-id="' + addr.id + '" style="background:transparent;color:var(--red,#ff3997);border:1px solid var(--border,#252540);padding:6px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">Delete</button>') +
+            ? '<span class="stg-sublabel" title="Your studio\'s default mailbox — can\'t be deleted" style="white-space:nowrap;padding:calc(6 * var(--u, 1px)) calc(14 * var(--u, 1px));opacity:.7;">Default</span>'
+            : '<button class="stg-ai-btn mbx-del" data-id="' + addr.id + '" style="background:transparent;color:var(--red,#ff3997);border:calc(1 * var(--u, 1px)) solid var(--border,#252540);padding:calc(6 * var(--u, 1px)) calc(14 * var(--u, 1px));border-radius:calc(8 * var(--u, 1px));cursor:pointer;white-space:nowrap;">Delete</button>') +
         '</div>';
       host.appendChild(row);
       var sel = row.querySelector('select.mbx-reassign');
@@ -2372,7 +2372,7 @@
           '<div class="stg-sublabel">' + (g.pushable
             ? 'State: ' + esc(g.state) + ' — ready to push'
             : 'State: ' + esc(g.state) + ' — reach beta or live to push') + '</div></div>' +
-          '<button class="stg-ai-btn stg-ai-connect pub-go" data-id="' + esc(g.id) + '" style="width:auto;padding:8px 20px;"' +
+          '<button class="stg-ai-btn stg-ai-connect pub-go" data-id="' + esc(g.id) + '" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));"' +
           (g.pushable ? '' : ' disabled') + '>Push to production</button></div>';
       }).join('');
       if (!s.pushed.length) pushedEl.innerHTML = '<span style="color:var(--text-mid)">Nothing pushed from here yet.</span>';
@@ -2380,7 +2380,7 @@
         return '<div class="stg-row">' +
           '<div><div class="stg-label">' + esc(g.name || g.slug) + '</div>' +
           '<div class="stg-sublabel">Pushed ' + esc(String(g.pushedAt || '').slice(0, 16).replace('T', ' ')) + (g.sha ? ' @ ' + esc(g.sha) : '') + '</div></div>' +
-          '<button class="stg-ai-btn pub-back" data-id="' + esc(g.id) + '" style="width:auto;padding:8px 20px;">Pull back</button></div>';
+          '<button class="stg-ai-btn pub-back" data-id="' + esc(g.id) + '" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));">Pull back</button></div>';
       }).join('');
     }
     render(st);
@@ -2594,7 +2594,7 @@
       var head = '<div style="font-weight:600;color:' + OUT_COLOR[o.state] + '">' + OUT_MARK[o.state] + ' ' + esc(o.line) + '</div>';
       var rows = o.detail.map(function (d) {
         var b = d.b;
-        return '<div style="margin-top:4px;color:var(--text-mid);font-family:ui-monospace,Menlo,monospace;font-size:13px">' +
+        return '<div style="margin-top:calc(4 * var(--u, 1px));color:var(--text-mid);font-family:ui-monospace,Menlo,monospace;font-size:calc(13 * var(--u, 1px))">' +
           OUT_MARK[d.state] + ' ' + esc(d.n) + ' · ' + esc(b.site || '—') + ' · v' + (b.version || 0) +
           (o.target && b.version !== o.target ? ' → v' + o.target : '') +
           ' · <span style="color:' + OUT_COLOR[d.state] + '">' + esc(d.why) + '</span>' +
@@ -2613,26 +2613,26 @@
         var s = await loadStatus(); if (s) render(s);
       }, 3000);
     }
-    var td = 'padding:6px 10px;border-top:1px solid var(--border)';
-    var th = 'text-align:left;padding:6px 10px;color:var(--text-mid);font-size:14px;letter-spacing:.08em;text-transform:uppercase';
+    var td = 'padding:calc(6 * var(--u, 1px)) calc(10 * var(--u, 1px));border-top:calc(1 * var(--u, 1px)) solid var(--border)';
+    var th = 'text-align:left;padding:calc(6 * var(--u, 1px)) calc(10 * var(--u, 1px));color:var(--text-mid);font-size:calc(14 * var(--u, 1px));letter-spacing:.08em;text-transform:uppercase';
     function render(s) {
       // ── ONE DEPLOYER (Damon 2026-09-27): a version is a NUMBER over a commit
       // set — nothing is bundled, so there is no size, no sha, no dirty flag.
       // Promote is the only thing that moves a box, and it means NOW.
       manEl.innerHTML =
-        '<div style="font-size:14px">Latest cut: <b>v' + (s.version || 0) + '</b>' +
+        '<div style="font-size:calc(14 * var(--u, 1px))">Latest cut: <b>v' + (s.version || 0) + '</b>' +
         (s.createdAt ? ' · ' + fmtAgo(s.createdAt) : '') +
         ' · stable → <b style="color:var(--text)">v' + (s.stable || 0) + '</b>' +
         (s.stable === s.version ? ' <span style="color:var(--text-mid)">(boxes are on the latest)</span>'
                                  : ' <span style="color:#ff8c00">(promote to move every box)</span>') +
         '</div>' +
-        '<div style="margin-top:4px;font-size:14px;color:var(--text-mid)">A cut records the current dev commits; boxes fetch only the difference between their version and stable.</div>';
+        '<div style="margin-top:calc(4 * var(--u, 1px));font-size:calc(14 * var(--u, 1px));color:var(--text-mid)">A cut records the current dev commits; boxes fetch only the difference between their version and stable.</div>';
 
       var names = Object.keys(s.boxes || {});
       if (!names.length) {
         boxesEl.innerHTML = '<span style="color:var(--text-mid)">No box check-ins yet.</span>';
       } else {
-        var rows = '<table style="width:100%;border-collapse:collapse;font-size:14px;font-family:ui-monospace,Menlo,monospace"><thead><tr>' +
+        var rows = '<table style="width:100%;border-collapse:collapse;font-size:calc(14 * var(--u, 1px));font-family:ui-monospace,Menlo,monospace"><thead><tr>' +
           '<th style="' + th + '">Box</th><th style="' + th + '">Site</th><th style="' + th + '">Version</th>' +
           '<th style="' + th + '">Health</th><th style="' + th + '">Doing</th><th style="' + th + '">Last seen</th><th style="' + th + '">Flags</th></tr></thead><tbody>';
         names.forEach(function (n) {
@@ -2662,8 +2662,8 @@
         if (a.version === s.stable) tags.push('stable');
         if (a.version === s.version) tags.push('latest');
         var back = a.version < s.version;
-        return '<div class="stg-row" style="padding:4px 0;border-top:1px solid var(--border)">' +
-          '<div style="font-size:14px;font-family:ui-monospace,Menlo,monospace">v' + a.version +
+        return '<div class="stg-row" style="padding:calc(4 * var(--u, 1px)) 0;border-top:calc(1 * var(--u, 1px)) solid var(--border)">' +
+          '<div style="font-size:calc(14 * var(--u, 1px));font-family:ui-monospace,Menlo,monospace">v' + a.version +
           ' · ' + fmtAgo(a.createdAt) + (a.sites && a.sites.length ? ' · ' + esc(a.sites.join(' ')) : '') +
           (tags.length ? ' <b style="color:var(--primary)">[' + tags.join(', ') + ']</b>' : '') +
           '</div><div><button class="stg-seg-btn rel-promote" data-v="' + a.version + '"' +

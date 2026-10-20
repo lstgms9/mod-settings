@@ -88,7 +88,7 @@
       <!-- DISPLAY FONT hidden for now — heading font stays Bungee (default). -->
       <div class="stg-group" style="display:none;">
         <div class="stg-group-label">DISPLAY FONT</div>
-        <div class="stg-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+        <div class="stg-row" style="flex-direction:column;align-items:flex-start;gap:calc(8 * var(--u, 1px));">
           <div><div class="stg-label">Heading font</div><div class="stg-sublabel">Default is Bungee (Latin only). Auto-switches to Nunito for non-Latin languages. Or pick your own.</div></div>
           <div class="stg-font-grid" id="fontGrid"></div>
         </div>
@@ -111,8 +111,8 @@
       <div class="stg-mbx-duet">
         <div class="stg-acct-box pui-card stg-mbx-existing">
           <div class="stg-group-label">EXISTING</div>
-          <div id="mbxList" style="display:flex;flex-direction:column;gap:8px;"></div>
-          <div id="mbxListEmpty" class="stg-sublabel" style="display:none;padding:14px 0;">No mailboxes yet — create one on the right.</div>
+          <div id="mbxList" style="display:flex;flex-direction:column;gap:calc(8 * var(--u, 1px));"></div>
+          <div id="mbxListEmpty" class="stg-sublabel" style="display:none;padding:calc(14 * var(--u, 1px)) 0;">No mailboxes yet — create one on the right.</div>
         </div>
 
         <div class="stg-acct-box pui-card stg-mbx-create">
@@ -129,7 +129,7 @@
             </select>
             <span class="stg-sublabel">Optional — leave empty to keep owner-only.</span>
           </div>
-          <button class="stg-ai-btn stg-ai-connect" id="mbxAddBtn" style="padding:10px 20px;align-self:flex-end;">Create mailbox</button>
+          <button class="stg-ai-btn stg-ai-connect" id="mbxAddBtn" style="padding:calc(10 * var(--u, 1px)) calc(20 * var(--u, 1px));align-self:flex-end;">Create mailbox</button>
           <div id="mbxErr" class="stg-sublabel" style="color:var(--red,#ff3997);display:none;"></div>
         </div>
       </div>
@@ -158,7 +158,7 @@
         <div class="stg-group-label">GLOBAL</div>
         <div class="stg-row">
           <div><div class="stg-label">Autopilot</div><div class="stg-sublabel">Master switch. When off, AI does nothing automatically.</div></div>
-          <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;align-items:center;gap:calc(8 * var(--u, 1px))">
             <div class="stg-toggle" data-key="autopilotEnabled"></div><span>OFF</span>
           </div>
         </div>
@@ -209,7 +209,7 @@
           <div class="stg-group-label">EARN FROM ADS</div>
           <div class="stg-row">
             <div><div class="stg-label">Enable ad revenue</div><div class="stg-sublabel">Earn from ads displayed on your site</div></div>
-            <div style="display:flex;align-items:center;gap:10px;">
+            <div style="display:flex;align-items:center;gap:calc(10 * var(--u, 1px));">
               <div class="stg-toggle" data-key="adRevenue" style="opacity:0.4;pointer-events:none;"></div>
               <span class="stg-connect-badge pending">Coming soon</span>
             </div>
@@ -317,7 +317,7 @@
           <div class="stg-toggle-wrap"><div class="stg-toggle" id="tfaToggle" data-key="tfa"></div><span class="stg-toggle-label" id="tfaLabel">OFF</span></div>
         </div>
         <div class="stg-tfa-panel" id="tfaPanel">
-          <div style="font-size:14px;color:var(--text);font-weight:600;margin-bottom:12px;">Choose your 2FA method:</div>
+          <div style="font-size:calc(14 * var(--u, 1px));color:var(--text);font-weight:600;margin-bottom:calc(12 * var(--u, 1px));">Choose your 2FA method:</div>
           <div class="stg-tfa-method" id="tfa-totp" data-method="totp">
             <div class="stg-tfa-method-icon"><svg class="pui-ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg></div>
             <div style="flex:1">
@@ -336,22 +336,22 @@
           </div>
           <!-- TOTP setup -->
           <div class="stg-tfa-setup" id="setup-totp">
-            <div style="text-align:center;font-size:14px;color:var(--text-dim);margin-bottom:16px;">Scan this QR code with your authenticator app:</div>
+            <div style="text-align:center;font-size:calc(14 * var(--u, 1px));color:var(--text-dim);margin-bottom:calc(16 * var(--u, 1px));">Scan this QR code with your authenticator app:</div>
             <div class="stg-tfa-qr" id="tfaQr"></div>
-            <div style="text-align:center;font-size:14px;color:var(--text-dim);margin-bottom:8px;">Or enter this key manually:</div>
+            <div style="text-align:center;font-size:calc(14 * var(--u, 1px));color:var(--text-dim);margin-bottom:calc(8 * var(--u, 1px));">Or enter this key manually:</div>
             <div class="stg-tfa-secret" id="tfaSecret"></div>
-            <div style="text-align:center;font-size:14px;color:var(--text-dim);margin-bottom:8px;margin-top:20px;">Enter the 6-digit code from your app to verify:</div>
+            <div style="text-align:center;font-size:calc(14 * var(--u, 1px));color:var(--text-dim);margin-bottom:calc(8 * var(--u, 1px));margin-top:calc(20 * var(--u, 1px));">Enter the 6-digit code from your app to verify:</div>
             <div class="stg-tfa-code-row" id="totpCodeRow"></div>
             <button class="stg-tfa-verify-btn" id="totpVerifyBtn">Verify &amp; Enable</button>
           </div>
           <!-- Email setup -->
           <div class="stg-tfa-setup" id="setup-email">
-            <div style="text-align:center;font-size:14px;color:var(--text-dim);margin-bottom:12px;">We'll send a test code to your email to verify it works.</div>
-            <div style="text-align:center;margin-bottom:16px;">
-              <button class="stg-ai-btn stg-ai-connect" id="sendEmailCodeBtn" style="width:auto;padding:10px 24px;">Send Test Code</button>
+            <div style="text-align:center;font-size:calc(14 * var(--u, 1px));color:var(--text-dim);margin-bottom:calc(12 * var(--u, 1px));">We'll send a test code to your email to verify it works.</div>
+            <div style="text-align:center;margin-bottom:calc(16 * var(--u, 1px));">
+              <button class="stg-ai-btn stg-ai-connect" id="sendEmailCodeBtn" style="width:auto;padding:calc(10 * var(--u, 1px)) calc(24 * var(--u, 1px));">Send Test Code</button>
             </div>
             <div id="emailCodeArea" style="display:none;">
-              <div style="text-align:center;font-size:14px;color:#39ff7f;margin-bottom:12px;">Code sent! Check your inbox.</div>
+              <div style="text-align:center;font-size:calc(14 * var(--u, 1px));color:#39ff7f;margin-bottom:calc(12 * var(--u, 1px));">Code sent! Check your inbox.</div>
               <div class="stg-tfa-code-row" id="emailCodeRow"></div>
               <button class="stg-tfa-verify-btn" id="emailVerifyBtn">Verify &amp; Enable</button>
             </div>
@@ -390,9 +390,9 @@
         </div>
         <div class="stg-row">
           <div><div class="stg-label">Status</div></div>
-          <div id="serverStatus" style="display:flex;align-items:center;gap:8px;">
+          <div id="serverStatus" style="display:flex;align-items:center;gap:calc(8 * var(--u, 1px));">
             <span class="stg-server-dot" id="serverDot"></span>
-            <span id="serverStatusText" style="font-family:var(--font-mono);font-size:14px;">--</span>
+            <span id="serverStatusText" style="font-family:var(--font-mono);font-size:calc(14 * var(--u, 1px));">--</span>
           </div>
         </div>
         <div class="stg-row">
@@ -411,8 +411,8 @@
 
       <div class="stg-group">
         <div class="stg-group-label">STORAGE</div>
-        <div id="storageBarWrap" style="margin-bottom:4px;">
-          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px;">
+        <div id="storageBarWrap" style="margin-bottom:calc(4 * var(--u, 1px));">
+          <div style="display:flex;justify-content:space-between;font-size:calc(14 * var(--u, 1px));margin-bottom:calc(6 * var(--u, 1px));">
             <span style="color:var(--text-dim)">Instance data</span>
             <span class="stg-mono-cyan" id="storageSize">--</span>
           </div>
@@ -420,7 +420,7 @@
         </div>
         <div class="stg-row">
           <div><div class="stg-label">Export all data</div><div class="stg-sublabel">Download a zip of all your instance data</div></div>
-          <button class="stg-ai-btn stg-ai-connect" id="exportBtn" style="width:auto;padding:8px 20px;">Export ZIP</button>
+          <button class="stg-ai-btn stg-ai-connect" id="exportBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));">Export ZIP</button>
         </div>
       </div>
 
@@ -428,7 +428,7 @@
         <div class="stg-group-label">BROWSER</div>
         <div class="stg-row">
           <div><div class="stg-label">Clear browser cache</div><div class="stg-sublabel">Clears localStorage only -- no server data affected</div></div>
-          <button class="stg-ai-btn stg-ai-connect" id="clearCacheBtn" style="width:auto;padding:8px 20px;">Clear</button>
+          <button class="stg-ai-btn stg-ai-connect" id="clearCacheBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));">Clear</button>
         </div>
       </div>
     </div>
@@ -465,8 +465,8 @@
       <div class="stg-group">
         <div class="stg-group-label">MEMBERS</div>
         <div id="teamMembers"></div>
-        <div style="margin-top:12px;">
-          <button class="stg-ai-btn stg-ai-connect" id="inviteBtn" style="width:auto;padding:8px 20px;">Invite Member</button>
+        <div style="margin-top:calc(12 * var(--u, 1px));">
+          <button class="stg-ai-btn stg-ai-connect" id="inviteBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));">Invite Member</button>
         </div>
       </div>
 
@@ -629,17 +629,17 @@
         <div class="stg-group-label">LATEST ARCHIVE</div>
         <div class="stg-row">
           <div><div class="stg-label" id="bkLatestName">No archive yet</div><div class="stg-sublabel" id="bkLatestInfo">Backups run nightly after your first change</div></div>
-          <button class="stg-ai-btn stg-ai-connect" id="bkDownloadBtn" style="width:auto;padding:8px 20px;" disabled>Download</button>
+          <button class="stg-ai-btn stg-ai-connect" id="bkDownloadBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));" disabled>Download</button>
         </div>
       </div>
       <div class="stg-group">
         <div class="stg-group-label">MEDIA BACKUP</div>
         <div class="stg-row">
           <div><div class="stg-label">Auto-download my media</div><div class="stg-sublabel" id="bkMediaInfo">When your uploads change, a current archive downloads to your computer automatically (at most weekly). On by default.</div></div>
-          <div style="display:flex;gap:8px;">
-            <button class="stg-ai-btn" id="bkMediaOn" style="width:auto;padding:8px 16px;">On</button>
-            <button class="stg-ai-btn" id="bkMediaOff" style="width:auto;padding:8px 16px;">Off</button>
-            <button class="stg-ai-btn stg-ai-connect" id="bkMediaNow" style="width:auto;padding:8px 16px;">Download now</button>
+          <div style="display:flex;gap:calc(8 * var(--u, 1px));">
+            <button class="stg-ai-btn" id="bkMediaOn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));">On</button>
+            <button class="stg-ai-btn" id="bkMediaOff" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));">Off</button>
+            <button class="stg-ai-btn stg-ai-connect" id="bkMediaNow" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));">Download now</button>
           </div>
         </div>
       </div>
@@ -647,19 +647,19 @@
         <div class="stg-group-label">AUTOMATIC PULL</div>
         <div class="stg-row">
           <div><div class="stg-label">Mode</div><div class="stg-sublabel">Auto = a script on your machine fetches new archives nightly. Manual = you download here yourself.</div></div>
-          <div style="display:flex;gap:8px;">
-            <button class="stg-ai-btn" id="bkModeAuto" style="width:auto;padding:8px 16px;">Auto</button>
-            <button class="stg-ai-btn" id="bkModeManual" style="width:auto;padding:8px 16px;">Manual</button>
+          <div style="display:flex;gap:calc(8 * var(--u, 1px));">
+            <button class="stg-ai-btn" id="bkModeAuto" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));">Auto</button>
+            <button class="stg-ai-btn" id="bkModeManual" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));">Manual</button>
           </div>
         </div>
         <div class="stg-row" id="bkScriptRow">
           <div><div class="stg-label">Pull script</div><div class="stg-sublabel">Personal script with your backup token — drop it in cron / Task Scheduler. Regenerating the token invalidates the old script.</div></div>
-          <div style="display:flex;gap:8px;">
-            <button class="stg-ai-btn stg-ai-connect" id="bkTokenBtn" style="width:auto;padding:8px 16px;">New token</button>
-            <button class="stg-ai-btn stg-ai-connect" id="bkScriptBtn" style="width:auto;padding:8px 16px;" disabled>Show script</button>
+          <div style="display:flex;gap:calc(8 * var(--u, 1px));">
+            <button class="stg-ai-btn stg-ai-connect" id="bkTokenBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));">New token</button>
+            <button class="stg-ai-btn stg-ai-connect" id="bkScriptBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));" disabled>Show script</button>
           </div>
         </div>
-        <pre id="bkScriptOut" style="display:none;white-space:pre-wrap;word-break:break-all;background:var(--bg2,#111);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:14px;margin:10px 0 0;"></pre>
+        <pre id="bkScriptOut" style="display:none;white-space:pre-wrap;word-break:break-all;background:var(--bg2,#111);border:calc(1 * var(--u, 1px)) solid var(--border);border-radius:calc(8 * var(--u, 1px));padding:calc(12 * var(--u, 1px));font-size:calc(14 * var(--u, 1px));margin:calc(10 * var(--u, 1px)) 0 0;"></pre>
       </div>
       </div>
     </div>
@@ -670,13 +670,13 @@
 
       <div class="stg-group">
         <div class="stg-group-label">RELEASE</div>
-        <div id="relManifest" style="margin:0 0 12px">loading…</div>
+        <div id="relManifest" style="margin:0 0 calc(12 * var(--u, 1px))">loading…</div>
         <div class="stg-row">
           <div>
             <div class="stg-label">Deploy the current commits</div>
             <div class="stg-sublabel" id="relDeployHint">one click: numbers the current dev commits and moves every box to that version now — each fetches only its difference</div>
           </div>
-          <div style="display:flex;gap:8px">
+          <div style="display:flex;gap:calc(8 * var(--u, 1px))">
             <button class="stg-seg-btn" id="relRefresh">Refresh</button>
             <button class="stg-btn-primary" id="relDeploy">Deploy</button>
           </div>
@@ -685,18 +685,18 @@
 
       <div class="stg-group">
         <div class="stg-group-label">RESULT</div>
-        <div id="relResult" style="margin:0 0 14px;padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:#0b0b14;font-size:14px">nothing deployed yet</div>
+        <div id="relResult" style="margin:0 0 calc(14 * var(--u, 1px));padding:calc(10 * var(--u, 1px)) calc(12 * var(--u, 1px));border:calc(1 * var(--u, 1px)) solid var(--border);border-radius:calc(6 * var(--u, 1px));background:#0b0b14;font-size:calc(14 * var(--u, 1px))">nothing deployed yet</div>
         <div class="stg-group-label">BOXES</div>
-        <div id="relBoxes" style="margin:0 0 4px">no check-ins yet</div>
+        <div id="relBoxes" style="margin:0 0 calc(4 * var(--u, 1px))">no check-ins yet</div>
       </div>
 
       <div class="stg-group">
         <div class="stg-group-label">VERSIONS</div>
-        <div id="relHistory" style="margin:0 0 4px">—</div>
+        <div id="relHistory" style="margin:0 0 calc(4 * var(--u, 1px))">—</div>
         <div class="stg-row">
           <div style="width:100%">
-            <div class="stg-group-label" style="margin:14px 0 6px">DEPLOY LOG</div>
-            <pre id="relLog" style="margin:0;background:#0b0b14;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:280px;overflow:auto;font-size:14px;line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(empty)</pre>
+            <div class="stg-group-label" style="margin:calc(14 * var(--u, 1px)) 0 calc(6 * var(--u, 1px))">DEPLOY LOG</div>
+            <pre id="relLog" style="margin:0;background:#0b0b14;border:calc(1 * var(--u, 1px)) solid var(--border);border-radius:calc(6 * var(--u, 1px));padding:calc(12 * var(--u, 1px));max-height:calc(280 * var(--u, 1px));overflow:auto;font-size:calc(14 * var(--u, 1px));line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(empty)</pre>
           </div>
         </div>
       </div>
@@ -708,14 +708,14 @@
       <div class="stg-section-desc">Turn on SSH 2FA for any server using your existing authenticator code. Enter its IP and root password — we log in, set it up, and switch it on.</div>
       <div class="stg-group">
         <div class="stg-group-label">&#9888; BEFORE YOU START</div>
-        <div class="stg-sublabel" style="margin:0 0 14px">Open a PuTTY/SSH session to the box first and <b>keep it open</b>. If a 2FA login fails afterwards, run <code>bash /root/2fa-revert.sh</code> in that session (or the provider console) to undo it. Your authenticator code (the one you already use) becomes the box's login code too.</div>
-        <div class="stg-row"><div style="width:100%"><div class="stg-label">Box IP / host</div><input id="sbIp" placeholder="89.117.60.193" autocomplete="off" autocapitalize="off" spellcheck="false" style="width:100%;padding:8px 10px;background:#0b0b14;border-radius:6px;color:inherit;font-size:14px"></div></div>
-        <div class="stg-row"><div style="width:100%"><div class="stg-label">Root password</div><input id="sbPw" type="password" placeholder="used once for login, never stored" autocomplete="off" style="width:100%;padding:8px 10px;background:#0b0b14;border-radius:6px;color:inherit;font-size:14px"></div></div>
+        <div class="stg-sublabel" style="margin:0 0 calc(14 * var(--u, 1px))">Open a PuTTY/SSH session to the box first and <b>keep it open</b>. If a 2FA login fails afterwards, run <code>bash /root/2fa-revert.sh</code> in that session (or the provider console) to undo it. Your authenticator code (the one you already use) becomes the box's login code too.</div>
+        <div class="stg-row"><div style="width:100%"><div class="stg-label">Box IP / host</div><input id="sbIp" placeholder="89.117.60.193" autocomplete="off" autocapitalize="off" spellcheck="false" style="width:100%;padding:calc(8 * var(--u, 1px)) calc(10 * var(--u, 1px));background:#0b0b14;border-radius:calc(6 * var(--u, 1px));color:inherit;font-size:calc(14 * var(--u, 1px))"></div></div>
+        <div class="stg-row"><div style="width:100%"><div class="stg-label">Root password</div><input id="sbPw" type="password" placeholder="used once for login, never stored" autocomplete="off" style="width:100%;padding:calc(8 * var(--u, 1px)) calc(10 * var(--u, 1px));background:#0b0b14;border-radius:calc(6 * var(--u, 1px));color:inherit;font-size:calc(14 * var(--u, 1px))"></div></div>
         <div class="stg-row">
           <div><div class="stg-label">Install + enable 2FA on this box</div><div class="stg-sublabel">installs the authenticator, seeds your existing code, switches on password+code login</div></div>
           <button class="stg-btn-primary" id="sbRun">Secure box</button>
         </div>
-        <div class="stg-row"><div style="width:100%"><pre id="sbResult" style="margin:0;background:#0b0b14;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:280px;overflow:auto;font-size:14px;line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(enter IP + password, then click Secure box)</pre></div></div>
+        <div class="stg-row"><div style="width:100%"><pre id="sbResult" style="margin:0;background:#0b0b14;border:calc(1 * var(--u, 1px)) solid var(--border);border-radius:calc(6 * var(--u, 1px));padding:calc(12 * var(--u, 1px));max-height:calc(280 * var(--u, 1px));overflow:auto;font-size:calc(14 * var(--u, 1px));line-height:1.45;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">(enter IP + password, then click Secure box)</pre></div></div>
       </div>
     </div>
 
