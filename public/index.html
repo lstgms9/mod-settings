@@ -510,12 +510,12 @@
           <!-- EACH FIELD IS ITS OWN <form> (Damon's iPhone 2026-10-20: the keyboard's ˅ 'next field' jumped from Username to the
                Country box and opened its picker) — iOS's ˄ ˅ only walk a form's own fields, so they go nowhere; Done closes the keyboard -->
           <!-- THE ACCOUNT FIELDS (Damon 2026-10-19/20): each a clear box showing its VALUE, no title (a placeholder only when empty);
-               order: Username, Email, Change password, Country, plan line. Username keeps its own Save (greyed until edited). -->
+               order: Username (read-only), Email, Change password, Country, plan line. -->
+          <!-- THE HANDLE never changes (Damon 2026-10-21, every site): shown read-only, with the red note under it -->
           <form class="stg-fieldrow" onsubmit="return false" autocomplete="off">
-            <label class="stg-inbox"><input type="text" class="stg-inbox-in stg-acct-username-input" id="accountUsername" enterkeyhint="done" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Username"></label>
-            <button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="usernameSaveBtn" disabled>Save</button>
+            <label class="stg-inbox"><input type="text" class="stg-inbox-in stg-acct-username-input" id="accountUsername" readonly tabindex="-1" placeholder="Username"></label>
           </form>
-          <div class="stg-acct-username-hint" id="usernameHint"></div>
+          <div class="stg-handle-note">Your handle can never be changed.</div>
           <form class="stg-fieldrow" onsubmit="return false" autocomplete="off">
             <label class="stg-inbox"><input type="text" class="stg-inbox-in" id="profileDisplayName" enterkeyhint="done" placeholder="Display name" maxlength="40"></label>
             <button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="displayNameSaveBtn" disabled>Save</button>

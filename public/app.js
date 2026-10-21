@@ -930,8 +930,7 @@
         }
       } catch (_) {}
     }
-    // Populate Details box. Username + Display name are editable; email
-    // is read-only (changing it requires re-verification, future work).
+    // Populate Details box. Display name is editable; the username (handle) and email are read-only.
     var dn = document.getElementById('profileDisplayName');
     if (dn && idName && !dn.value) dn.value = idName;
     var unEl = document.getElementById('accountUsername');
@@ -940,8 +939,7 @@
         try { var s = await platform.user.current(); return s && (s.username || s.handle); } catch(_) { return null; }
       })());
       if (unVal) {
-        // Username is mutable (any time). The input is the
-        // canonical editor; the Save button + hint live next to it.
+        // the handle, read-only: it never changes (Damon 2026-10-21)
         if (unEl.tagName === 'INPUT') unEl.value = unVal;
         else unEl.textContent = unVal;
         unEl.dataset.original = unVal;
@@ -1178,7 +1176,7 @@
         try {
           var r = await fetch('/api/auth/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ displayName: v }) });
           if (r.ok) { dnIn.dataset.original = v; if (dnHint) { dnHint.textContent = 'Saved.'; dnHint.className = 'stg-acct-username-hint ok'; } }
-          else if (dnHint) { dnHint.textContent = 'Save failed'; dnHint.className = 'stg-acct-username-hint bad'; }
+          else if (dnHint) { var dj = await r.json().catch(function() { return null; }); dnHint.textContent = (dj && dj.error) || 'Save failed'; dnHint.className = 'stg-acct-username-hint bad'; }   // 'That display name is taken — pick another.'
         } catch (e) { if (dnHint) { dnHint.textContent = 'Connection error'; dnHint.className = 'stg-acct-username-hint bad'; } }
         dnBtn.textContent = 'Save'; dnSync();
       });
@@ -1666,82 +1664,6 @@
   function initPlanManage() {
     var btn = document.getElementById('planManageBtn');
     if (btn) btn.addEventListener('click', planButton);
-    // Username Save button — debounced availability check on input,
-    // POST to /api/auth/change-username on click. Server enforces
-    // the 30-day rate limit; UI surfaces the cooldown message.
-    var unInp = document.getElementById('accountUsername');
-    var unSave = document.getElementById('usernameSaveBtn');
-    var unHint = document.getElementById('usernameHint');
-    if (unInp && unSave && unInp.tagName === 'INPUT' && !unInp.readOnly) {
-      var unCheckTimer = null;
-      // Aside (label-row cooldown copy) provides the standing notice;
-      // the hint span carries live availability + post-save messages.
-      unInp.addEventListener('input', function() {
-        var v = unInp.value.trim().toLowerCase();
-        if (v !== unInp.value) unInp.value = v;
-        var orig = unInp.dataset.original || '';
-        unSave.disabled = true;
-        unHint.textContent = '';
-        unHint.className = 'stg-acct-username-hint';
-        if (!v || v === orig) return;
-        if (!/^[a-z0-9_-]{3,20}$/.test(v)) {
-          unHint.textContent = '3–20 chars, a–z, 0–9, _ -';
-          unHint.className = 'stg-acct-username-hint bad';
-          return;
-        }
-        unHint.textContent = 'Checking…';
-        clearTimeout(unCheckTimer);
-        unCheckTimer = setTimeout(async function() {
-          try {
-            var r = await fetch('/api/auth/check-username?name=' + encodeURIComponent(v));
-            var d = await r.json();
-            if (d.available) {
-              unHint.textContent = '✓ available';
-              unHint.className = 'stg-acct-username-hint ok';
-              unSave.disabled = false;
-            } else {
-              unHint.textContent = '✗ ' + (d.reason || 'taken');
-              unHint.className = 'stg-acct-username-hint bad';
-            }
-          } catch (e) {
-            unHint.textContent = 'Network error';
-            unHint.className = 'stg-acct-username-hint bad';
-          }
-        }, 300);
-      });
-      unSave.addEventListener('click', async function() {
-        var v = unInp.value.trim().toLowerCase();
-        unSave.disabled = true;
-        unSave.textContent = 'Saving…';
-        try {
-          var r = await fetch('/api/auth/change-username', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: v }),
-          });
-          var d = await r.json();
-          if (r.ok && d.ok) {
-            unInp.dataset.original = d.username;
-            unInp.value = d.username;
-            unHint.textContent = 'Saved.';
-            unHint.className = 'stg-acct-username-hint ok';
-            var aside1 = document.getElementById('usernameAside');
-            if (aside1) aside1.style.display = 'none';
-          } else if (r.status === 429 && d.daysRemaining) {
-            unHint.textContent = 'Already changed recently. ' + d.daysRemaining + ' day' + (d.daysRemaining === 1 ? '' : 's') + ' until next change.';
-            unHint.className = 'stg-acct-username-hint bad';
-            unInp.readOnly = true;
-          } else {
-            unHint.textContent = (d && d.error) || 'Save failed';
-            unHint.className = 'stg-acct-username-hint bad';
-          }
-        } catch (e) {
-          unHint.textContent = 'Network error';
-          unHint.className = 'stg-acct-username-hint bad';
-        }
-        unSave.textContent = 'Save';
-      });
-    }
 
     // SAFE DELETE ACCOUNT (Damon 2026-10-18): the person types DELETE to confirm. The server marks the account deleted
     // and hides it (nothing removed); it's wiped for good 30 days later; support can restore it until then.
