@@ -666,7 +666,7 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 .stg-acct-username-hint.bad { color: var(--red, #ff3997); }
 .stg-acct-username-hint.ok  { color: var(--green, #39ff7f); }
 /* the handle's standing note (Damon 2026-10-21): red, 16px+ */
-.stg-handle-note { color: var(--red, #ff3997); font-size: calc(16 * var(--u, 1px)); font-weight: 600; margin-top: calc(2 * var(--u, 1px)); }
+.stg-handle-note { color: #ff3b30; font-size: calc(16 * var(--u, 1px)); font-weight: 600; margin-bottom: calc(2 * var(--u, 1px)); }
 
 /* ── Confirm modal (replaces window.confirm) ─────────────── */
 .stg-modal-bg {
