@@ -140,21 +140,6 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 .stg-seg-equal { width: calc(340 * var(--u, 1px)); }
 .stg-seg-equal .stg-seg-btn { flex: 1; text-align: center; padding-left: calc(6 * var(--u, 1px)); padding-right: calc(6 * var(--u, 1px)); }
 
-/* ── Toggle ──────────────────────────────────── */
-.stg-toggle-wrap { display: flex; align-items: center; gap: calc(10 * var(--u, 1px)); }
-.stg-toggle {
-  width: calc(42 * var(--u, 1px)); height: calc(22 * var(--u, 1px)); background: var(--bg); border: calc(1 * var(--u, 1px)) solid var(--border);
-  border-radius: calc(11 * var(--u, 1px)); cursor: pointer; position: relative; transition: all 0.3s; flex-shrink: 0;
-}
-.stg-toggle.on { background: rgba(57,255,127,0.12); border-color: #39ff7f; }
-.stg-toggle::after {
-  content: ''; width: calc(16 * var(--u, 1px)); height: calc(16 * var(--u, 1px)); background: var(--text-dim);
-  border-radius: 50%; position: absolute; top: calc(2 * var(--u, 1px)); left: calc(2 * var(--u, 1px)); transition: all 0.3s;
-}
-.stg-toggle.on::after { left: calc(22 * var(--u, 1px)); background: #39ff7f; box-shadow: 0 0 calc(8 * var(--u, 1px)) rgba(57,255,127,0.3); }
-.stg-toggle-label { font-size: calc(14 * var(--u, 1px)); font-family: var(--font-mono); color: var(--text-dim); min-width: calc(28 * var(--u, 1px)); }
-.stg-toggle.on + .stg-toggle-label { color: #39ff7f; }
-
 /* ── Select ──────────────────────────────────── */
 .stg-select-wrap { position: relative; }
 .stg-select {
@@ -505,7 +490,7 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
      in source) — otherwise the field labels stayed 11px. */
   #settings-app .stg-acct-pair > label,
   .stg-label,
-  .stg-toggle-label,
+  .pui-switch-label,
   .stg-btn, .stg-ai-btn,
   .stg-ai-name,
   .stg-connect-badge,
@@ -809,9 +794,9 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 #bkSimple .bk-simple-label { font-size: calc(17 * var(--u, 1px)); }
 #bkSimple .bk-simple-btn { width: auto; padding: calc(10 * var(--u, 1px)) calc(22 * var(--u, 1px)); }
 @media (min-width: 769px) { #bkSimple .bk-simple-btn { font-size: calc(15 * var(--u, 1px)); } }   /* a PC's size; a phone's is the 16px of .stg-ai-btn (Damon 2026-10-19: nothing under 16px on a phone) */
-#bkSimple .stg-toggle { width: calc(52 * var(--u, 1px)); height: calc(28 * var(--u, 1px)); border-radius: calc(14 * var(--u, 1px)); }
-#bkSimple .stg-toggle::after { width: calc(22 * var(--u, 1px)); height: calc(22 * var(--u, 1px)); }
-#bkSimple .stg-toggle.on::after { left: calc(26 * var(--u, 1px)); }
+#bkSimple .pui-switch { width: calc(52 * var(--u, 1px)); height: calc(28 * var(--u, 1px)); border-radius: calc(14 * var(--u, 1px)); }
+#bkSimple .pui-switch::after { width: calc(22 * var(--u, 1px)); height: calc(22 * var(--u, 1px)); }
+#bkSimple .pui-switch.on::after { left: calc(26 * var(--u, 1px)); }
 
 /* Account → Details: the password row and the one Save for the details */
 .stg-acct-pwrow { display: flex; gap: calc(8 * var(--u, 1px)); flex-wrap: wrap; align-items: center; }
@@ -871,14 +856,14 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 .stg-section, .stg-group, .stg-row, .stg-tfa-panel, .stg-tfa-method, .stg-acct-box, .stg-acct-pair { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .stg-section input, .stg-section textarea, .stg-section select, .stg-mono-cyan { -webkit-user-select: text; user-select: text; }
 .stg-section .stg-tfa-secret { -webkit-user-select: all; user-select: all; }
-.stg-toggle, .stg-tfa-method { cursor: pointer; touch-action: manipulation; }
+.stg-tfa-method { cursor: pointer; touch-action: manipulation; }
 .stg-tfa-cancel { display: block; margin: calc(16 * var(--u, 1px)) auto 0; width: auto; padding: calc(8 * var(--u, 1px)) calc(22 * var(--u, 1px)); }
 /* ONE TEXT SIZE, ONE TITLE SIZE in Settings on a phone (Damon 2026-10-18): every piece of body text is --stg-text and
    every section title (MEDIA BACKUP, TWO-FACTOR AUTHENTICATION…) is --stg-title — each 2px bigger than before. Buttons
    keep their own size. The next tweak is one value here. */
 @media (max-width: 760px) {
   #settings-app { --stg-text: calc(18 * var(--u, 1px)); --stg-title: calc(18 * var(--u, 1px)); }
-  #settings-app .stg-label, #settings-app .stg-sublabel, #settings-app .stg-section-desc, #settings-app .stg-toggle-label,
+  #settings-app .stg-label, #settings-app .stg-sublabel, #settings-app .stg-section-desc, #settings-app .pui-switch-label,
   #settings-app .stg-acct-pair > label, #settings-app .stg-acct-email, #settings-app .stg-acct-static, #settings-app .stg-input,
   #settings-app .stg-tfa-method-name, #settings-app .stg-tfa-method-desc, #settings-app .stg-ai-name, #settings-app .stg-ai-provider,
   #settings-app .stg-section p, #settings-app .stg-section li,

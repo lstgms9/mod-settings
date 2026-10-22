@@ -210,7 +210,7 @@
   // ── Toggles ─────────────────────────────────────────────────
   function initToggles() {
     document.getElementById('settings-app').addEventListener('click', function(e) {
-      var toggle = e.target.closest('.stg-toggle');
+      var toggle = e.target.closest('.pui-switch');
       if (!toggle || toggle.id === 'tfaToggle') return;
       toggle.classList.toggle('on');
       var lbl = toggle.nextElementSibling;
@@ -879,7 +879,7 @@
       }
     });
     // toggles
-    document.querySelectorAll('#settings-app .stg-toggle[data-key]').forEach(function(t) {
+    document.querySelectorAll('#settings-app .pui-switch[data-key]').forEach(function(t) {
       if (t.id === 'tfaToggle') return;
       var key = t.dataset.key;
       if (prefs[key] !== undefined) {

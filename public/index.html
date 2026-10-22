@@ -157,7 +157,7 @@
         <div class="stg-row">
           <div><div class="stg-label">Autopilot</div><div class="stg-sublabel">Master switch. When off, AI does nothing automatically.</div></div>
           <div style="display:flex;align-items:center;gap:calc(8 * var(--u, 1px))">
-            <div class="stg-toggle" data-key="autopilotEnabled"></div><span>OFF</span>
+            <div class="pui-switch" data-key="autopilotEnabled"></div><span>OFF</span>
           </div>
         </div>
         <div class="stg-row">
@@ -208,7 +208,7 @@
           <div class="stg-row">
             <div><div class="stg-label">Enable ad revenue</div><div class="stg-sublabel">Earn from ads displayed on your site</div></div>
             <div style="display:flex;align-items:center;gap:calc(10 * var(--u, 1px));">
-              <div class="stg-toggle" data-key="adRevenue" style="opacity:0.4;pointer-events:none;"></div>
+              <div class="pui-switch" data-key="adRevenue" style="opacity:0.4;pointer-events:none;"></div>
               <span class="stg-connect-badge pending">Coming soon</span>
             </div>
           </div>
@@ -225,11 +225,11 @@
         <div class="stg-group-label">SOUNDS</div>
         <div class="stg-row">
           <div><div class="stg-label">Notification sounds</div><div class="stg-sublabel">New emails, alerts, mentions</div></div>
-          <div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="notifSounds"></div><span class="stg-toggle-label">ON</span></div>
+          <div class="pui-switch-wrap"><div class="pui-switch on" data-key="notifSounds"></div><span class="pui-switch-label">ON</span></div>
         </div>
         <div class="stg-row">
           <div><div class="stg-label">Chat message sounds</div><div class="stg-sublabel">Incoming messages in comms</div></div>
-          <div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="chatSounds"></div><span class="stg-toggle-label">ON</span></div>
+          <div class="pui-switch-wrap"><div class="pui-switch on" data-key="chatSounds"></div><span class="pui-switch-label">ON</span></div>
         </div>
         <div class="stg-row">
           <div><div class="stg-label">Sound volume</div></div>
@@ -242,19 +242,19 @@
 
       <div class="stg-group">
         <div class="stg-group-label">CHANNELS</div>
-        <div class="stg-row"><div><div class="stg-label">Email notifications</div><div class="stg-sublabel">New mail, replies, forwards</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="notifEmail"></div><span class="stg-toggle-label">ON</span></div></div>
-        <div class="stg-row"><div><div class="stg-label">Social media alerts</div><div class="stg-sublabel">Mentions, DMs, comments</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="notifSocial"></div><span class="stg-toggle-label">ON</span></div></div>
+        <div class="stg-row"><div><div class="stg-label">Email notifications</div><div class="stg-sublabel">New mail, replies, forwards</div></div><div class="pui-switch-wrap"><div class="pui-switch on" data-key="notifEmail"></div><span class="pui-switch-label">ON</span></div></div>
+        <div class="stg-row"><div><div class="stg-label">Social media alerts</div><div class="stg-sublabel">Mentions, DMs, comments</div></div><div class="pui-switch-wrap"><div class="pui-switch on" data-key="notifSocial"></div><span class="pui-switch-label">ON</span></div></div>
         <!-- Planner reminders + Billing alerts rows removed. -->
       </div>
 
       <div class="stg-group">
         <div class="stg-group-label">GAMES &amp; SOCIAL</div>
-        <div class="stg-row"><div><div class="stg-label">Multiplayer invites</div><div class="stg-sublabel">Someone invites you to a multiplayer game</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="notifMultiplayerInvite"></div><span class="stg-toggle-label">ON</span></div></div>
-        <div class="stg-row"><div><div class="stg-label">Tournament invites</div><div class="stg-sublabel">Someone invites you to a tournament</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="notifTournamentInvite"></div><span class="stg-toggle-label">ON</span></div></div>
-        <div class="stg-row"><div><div class="stg-label">New mate</div><div class="stg-sublabel">When a follow becomes mutual</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="notifNewMate"></div><span class="stg-toggle-label">ON</span></div></div>
-        <div class="stg-row"><div><div class="stg-label">New follower</div><div class="stg-sublabel">When someone follows you</div></div><div class="stg-toggle-wrap"><div class="stg-toggle" data-key="notifNewFollower"></div><span class="stg-toggle-label">OFF</span></div></div>
-        <div class="stg-row"><div><div class="stg-label">Follower milestones</div><div class="stg-sublabel">When you pass 100 · 500 · 1K followers</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="notifFollowerMilestone"></div><span class="stg-toggle-label">ON</span></div></div>
-        <div class="stg-row"><div><div class="stg-label">Games you follow</div><div class="stg-sublabel">Updates &amp; releases from games/studios you follow</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="notifGameUpdate"></div><span class="stg-toggle-label">ON</span></div></div>
+        <div class="stg-row"><div><div class="stg-label">Multiplayer invites</div><div class="stg-sublabel">Someone invites you to a multiplayer game</div></div><div class="pui-switch-wrap"><div class="pui-switch on" data-key="notifMultiplayerInvite"></div><span class="pui-switch-label">ON</span></div></div>
+        <div class="stg-row"><div><div class="stg-label">Tournament invites</div><div class="stg-sublabel">Someone invites you to a tournament</div></div><div class="pui-switch-wrap"><div class="pui-switch on" data-key="notifTournamentInvite"></div><span class="pui-switch-label">ON</span></div></div>
+        <div class="stg-row"><div><div class="stg-label">New mate</div><div class="stg-sublabel">When a follow becomes mutual</div></div><div class="pui-switch-wrap"><div class="pui-switch on" data-key="notifNewMate"></div><span class="pui-switch-label">ON</span></div></div>
+        <div class="stg-row"><div><div class="stg-label">New follower</div><div class="stg-sublabel">When someone follows you</div></div><div class="pui-switch-wrap"><div class="pui-switch" data-key="notifNewFollower"></div><span class="pui-switch-label">OFF</span></div></div>
+        <div class="stg-row"><div><div class="stg-label">Follower milestones</div><div class="stg-sublabel">When you pass 100 · 500 · 1K followers</div></div><div class="pui-switch-wrap"><div class="pui-switch on" data-key="notifFollowerMilestone"></div><span class="pui-switch-label">ON</span></div></div>
+        <div class="stg-row"><div><div class="stg-label">Games you follow</div><div class="stg-sublabel">Updates &amp; releases from games/studios you follow</div></div><div class="pui-switch-wrap"><div class="pui-switch on" data-key="notifGameUpdate"></div><span class="pui-switch-label">ON</span></div></div>
       </div>
 
       <!-- QUIET HOURS group removed. -->
@@ -312,7 +312,7 @@
         <div class="stg-group-label">TWO-FACTOR AUTHENTICATION</div>
         <div class="stg-row">
           <div><div class="stg-label">Enable 2FA</div><div class="stg-sublabel">Require a second step when logging in</div></div>
-          <div class="stg-toggle-wrap"><div class="stg-toggle" id="tfaToggle" data-key="tfa"></div><span class="stg-toggle-label" id="tfaLabel">OFF</span></div>
+          <div class="pui-switch-wrap"><div class="pui-switch" id="tfaToggle" data-key="tfa"></div><span class="pui-switch-label" id="tfaLabel">OFF</span></div>
         </div>
         <div class="stg-tfa-panel" id="tfaPanel">
           <div style="font-size:calc(14 * var(--u, 1px));color:var(--text);font-weight:600;margin-bottom:calc(12 * var(--u, 1px));">Choose your 2FA method:</div>
@@ -370,8 +370,8 @@
 
       <div class="stg-group" data-hide-key="privacy-visibility">
         <div class="stg-group-label">VISIBILITY</div>
-        <div class="stg-row"><div><div class="stg-label">Public profile</div><div class="stg-sublabel">Show your business on the <span data-tenant-brand>this site</span> directory</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="publicProfile"></div><span class="stg-toggle-label">ON</span></div></div>
-        <div class="stg-row"><div><div class="stg-label">Online status</div><div class="stg-sublabel">Let others see when you're active</div></div><div class="stg-toggle-wrap"><div class="stg-toggle on" data-key="onlineStatus"></div><span class="stg-toggle-label">ON</span></div></div>
+        <div class="stg-row"><div><div class="stg-label">Public profile</div><div class="stg-sublabel">Show your business on the <span data-tenant-brand>this site</span> directory</div></div><div class="pui-switch-wrap"><div class="pui-switch on" data-key="publicProfile"></div><span class="pui-switch-label">ON</span></div></div>
+        <div class="stg-row"><div><div class="stg-label">Online status</div><div class="stg-sublabel">Let others see when you're active</div></div><div class="pui-switch-wrap"><div class="pui-switch on" data-key="onlineStatus"></div><span class="pui-switch-label">ON</span></div></div>
       </div>
     </div>
 
@@ -589,7 +589,7 @@
       <div class="stg-group">
         <div class="stg-row">
           <div class="stg-label">Auto-post our posts to our socials</div>
-          <div class="stg-toggle-wrap"><div class="stg-toggle" id="adAutoPost" role="switch" aria-checked="false" aria-label="Auto-post our posts to our socials" tabindex="0"></div></div>
+          <div class="pui-switch-wrap"><div class="pui-switch" id="adAutoPost" role="switch" aria-checked="false" aria-label="Auto-post our posts to our socials" tabindex="0"></div></div>
         </div>
         <div class="stg-section-desc" id="adAutoPostNote"></div>
       </div>
@@ -614,7 +614,7 @@
       <div class="stg-group" id="bkSimple">
         <div class="stg-row bk-simple-row">
           <div class="stg-label bk-simple-label">Back up my work</div>
-          <div class="stg-toggle-wrap"><div class="stg-toggle" id="bkSwitch" role="switch" aria-checked="false" aria-label="Back up my work" tabindex="0"></div></div>
+          <div class="pui-switch-wrap"><div class="pui-switch" id="bkSwitch" role="switch" aria-checked="false" aria-label="Back up my work" tabindex="0"></div></div>
         </div>
         <div class="stg-row bk-simple-row">
           <div class="stg-label bk-simple-label">Download a copy</div>
