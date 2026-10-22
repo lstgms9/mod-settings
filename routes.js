@@ -702,35 +702,6 @@ module.exports = function(router, ctx) {
     res.json({ ok: true });
   });
 
-  // ── Deploy gamoid (owner-only, master-only) ─────────────────────
-  // Gate for box-admin surfaces (Secure-box panel, and the /deploy/status
-  // probe it feature-detects on). Disabled on worker boxes (WORKER_MODE=1).
-  function deployGuard(req) {
-    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return 'worker-mode';
-    // Owner = explicit allowlist (DEPLOY_ADMIN_EMAILS in master ~/.env).
-    // The old flat-file role check was wrong twice: user JSONs are
-    // stale/absent on DB-backed tenants (403 for everyone, including the
-    // real owner), and every flat-file studio signup carries role:'owner'
-    // (any studio could fire a deploy). Deliberately NOT reusing
-    // RELEASE_ADMIN_EMAILS — that list includes the dev Playwright
-    // account, which must never reach rsync deploys or SSH box setup.
-    var list = String(process.env.DEPLOY_ADMIN_EMAILS || '')
-      .split(',').map(function(s) { return s.trim().toLowerCase(); }).filter(Boolean);
-    if (req.user && req.user.email && list.indexOf(String(req.user.email).toLowerCase()) >= 0) return null;
-    return 'owner-only';
-  }
-  // The old SSH status scan and panel-triggered rsync push are retired —
-  // fleet deploys are pull-based via /release/* now, and boxes' okdunio is
-  // a symlink into releases/current (an rsync through it would corrupt the
-  // pinned release). deploy-gamoid.sh stays on disk as CLI break-glass.
-  // This endpoint remains ONLY as the guard probe the Secure-box panel
-  // feature-detects on (200 = allowlisted owner, reveal the tab).
-  router.get('/deploy/status', async (req, res) => {
-    const why = deployGuard(req);
-    if (why === 'worker-mode') return res.error(404, 'Not available on workers');
-    if (why) return res.error(403, 'Owner only');
-    res.json({ ok: true });
-  });
   // GET /admin-surfaces — which admin-only Settings panels this account may open, always a 200 (Damon 2026-10-19: no console
   // errors for everyone else). The panels ask their own status endpoint only when this says yes; the same guards decide.
   router.get('/admin-surfaces', async (req, res) => {
@@ -745,7 +716,7 @@ module.exports = function(router, ctx) {
     // social: the auto-post switch (mod-social share.js) — an admin, or an official account (config.social.official)
     const u = req.user || {}, official = ((((req.instance || {}).config || {}).social || {}).official || []).map(e => String(e).toLowerCase());
     const social = !!(req.user && (u.superOwner || ['admin', 'owner', 'super_owner'].includes(u.role) || official.includes(String(u.email || '').toLowerCase())));
-    res.json({ deploy: deployGuard(req) === null, release: !worker && releaseAdmin(req), publish, social });
+    res.json({ release: !worker && releaseAdmin(req), publish, social });
   });
 
   const REL_DIR = '/home/damon/platform/.releases';
@@ -1038,27 +1009,4 @@ module.exports = function(router, ctx) {
       fs.renameSync(BOXES_FILE + '.tmp', BOXES_FILE);
     } catch {}
   }
-
-
-  // Secure-a-box: owner enters a box's IP + root password; we SSH in (password
-  // auth), install + configure SSH 2FA seeded with the OWNER's EXISTING
-  // authenticator secret (so the same 6-digit code works on every box — no new
-  // QR), then reload sshd. The password is used once for the connection and
-  // NEVER stored. Lockout-safe: key logins are untouched, /root/2fa-revert.sh is
-  // written, and the user keeps their own session open to test.
-  router.post('/secure-box', async (req, res) => {
-    const why = deployGuard(req);
-    if (why === 'worker-mode') return res.error(404, 'Not available on workers');
-    if (why) return res.error(403, 'Owner only');
-    const b = req.body || {};
-    const ip = String(b.ip || '').trim();
-    const password = String(b.password || '');
-    const loginUser = (String(b.user || 'root').trim()) || 'root';
-    if (!ip || !password) return res.error(400, 'Box IP/host and root password are required');
-    if (!/^[a-zA-Z0-9.:_-]+$/.test(ip)) return res.error(400, 'Invalid IP/host');
-
-    // It reused the owner's TOTP secret in plain text — which no longer exists anywhere but the vault (Damon GO
-    // 2026-10-22: 2FA is checked on the vault), so it would install a sealed blob and lock the box. Refused.
-    return res.error(410, 'Secure-a-box is off: your 2FA secret now stays in the vault and can\u2019t be copied to a box.');
-  });
 };

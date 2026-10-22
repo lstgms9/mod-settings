@@ -2228,7 +2228,6 @@
       try { selectSection(decodeURIComponent(location.hash.slice(1))); } catch (_) {}
     }
     initDeployPanel();
-    initSecureBox();
     initPublishPanel();
     initAdminPanel();
     // init resolves once the menu is final (tier gates applied, Backups found) — the shell shows a module only then
@@ -2671,49 +2670,6 @@
       pendingMsg = st ? null : ('failed — stable unchanged at v' + s.stable);
       var s2 = await loadStatus(); if (s2) render(s2);
       if (st) deployHint.textContent = 'stable is v' + st.stable + ' — boxes are applying it (Doing column)';
-    });
-  }
-
-
-  // ── Secure-a-box panel (owner-only) ─────────────────────────
-  // Reveal for owners (same gate as deploy). Sends IP + root password to the
-  // backend, which SSHes in and turns on SSH 2FA using the owner's existing
-  // authenticator code. Password is cleared from the form right after send.
-  async function initSecureBox() {
-    var nav = document.getElementById('stgSecureBoxNav');
-    var ipEl = document.getElementById('sbIp');
-    var pwEl = document.getElementById('sbPw');
-    var runBtn = document.getElementById('sbRun');
-    var resEl = document.getElementById('sbResult');
-    if (!nav || !runBtn) return;
-    if (!(await adminSurfaces()).deploy) return;
-    try { var r = await fetch('/api/settings/deploy/status', { credentials: 'same-origin' }); if (!r.ok) return; } catch (e) { return; }
-    nav.style.display = '';
-    restoreSection();
-    runBtn.addEventListener('click', async function() {
-      var ip = (ipEl.value || '').trim(); var pw = pwEl.value || '';
-      if (!ip || !pw) { resEl.textContent = 'Enter the box IP and root password.'; return; }
-      var msg = 'Install + enable SSH 2FA on ' + ip + '?\nMake sure you ALREADY have a session open to it (so you can revert if needed).';
-      var ok = platform.ui ? await platform.ui.confirm(msg) : window.confirm(msg);
-      if (!ok) return;
-      runBtn.disabled = true; runBtn.textContent = 'Securing…'; resEl.textContent = 'Connecting to ' + ip + ' and configuring…';
-      try {
-        var resp = await fetch('/api/settings/secure-box', {
-          method: 'POST', credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ip: ip, password: pw }),
-        });
-        var data = await resp.json();
-        pwEl.value = '';  // clear the password from the form immediately
-        if (resp.ok && data.ok) {
-          resEl.textContent = '✅ 2FA is ON for ' + ip + '.\n\nTest a NEW login now: Password, then your authenticator code (the one you already use).\nIf it fails, in your open session run:  bash /root/2fa-revert.sh\n\n----- log -----\n' + (data.output || '');
-        } else {
-          resEl.textContent = '⚠ ' + (data.error || data.message || 'Failed') + '\n\n' + (data.output || '');
-        }
-      } catch (e) {
-        resEl.textContent = 'Error: ' + (e && e.message || e);
-      }
-      runBtn.disabled = false; runBtn.textContent = 'Secure box';
     });
   }
 
