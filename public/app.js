@@ -362,10 +362,14 @@
         // turning it off takes a code from the authenticator (or a recovery code) — Damon 2026-10-18
         var byMail = prefs._tfaMethod === 'email';
         if (byMail) { var sc = await API.post('/2fa/send-code', {}); if (!sc || !sc.ok) { toast((sc && sc.error) || 'Could not send a code'); return; } }
-        var code = prompt(byMail ? 'We emailed you a 6-digit code. Enter it to turn off two-factor authentication.'
-          : 'To turn off two-factor authentication, enter the 6-digit code from your authenticator app (or a recovery code).');
-        if (!code) return;
-        var off = await API.post('/2fa/disable', { code: code.trim() });
+        // THE prompt pop-up with THE code entry (no mic, PASTE; an emailed code also RESEND) — never a raw prompt() (Damon 2026-10-22)
+        var got = await platform.ui.prompt({ title: 'Turn off 2FA', ok: 'Turn off',
+          text: byMail ? 'We emailed you a 6-digit code. Enter it to turn off two-factor authentication.'
+            : 'To turn off two-factor authentication, enter the 6-digit code from your authenticator app (or a recovery code).',
+          code: byMail ? { resend: function() { return API.post('/2fa/send-code', {}).then(function(r2) { if (!r2 || !r2.ok) throw new Error((r2 && r2.error) || 'Could not send a code'); }); } }
+            : { letters: true, placeholder: '6-digit code or recovery code' } });
+        if (!got || !got.code) return;
+        var off = await API.post('/2fa/disable', { code: got.code });
         if (!off || !off.ok) { toast((off && off.error) || 'That code did not work'); return; }
         prefs._tfaEnabled = false;
         toggle.classList.remove('on');
@@ -613,7 +617,7 @@
           schedSave();
           renderEmails();
         } else if (action === 'delete') {
-          var ok = platform.ui ? await platform.ui.confirm('Delete this email address?') : confirm('Delete?');
+          var ok = await platform.ui.confirm('Delete this email address?');
           if (!ok) return;
           var basePath = platform.basePath || '';
           var resp = await fetch(basePath + '/api/domain/domains/' + el.dataset.domainId + '/emails/' + el.dataset.id, {
@@ -1442,9 +1446,10 @@
     var invBtn = document.getElementById('inviteBtn');
     if (invBtn) {
       invBtn.addEventListener('click', async function() {
-        var email = prompt('Email address to invite:');
-        if (!email || !email.includes('@')) return;
-        var name = prompt('Display name (optional):') || '';
+        var got = await platform.ui.prompt({ title: 'Invite to your team', ok: 'Invite', fields: [
+          { name: 'email', type: 'email', label: 'Email address', required: true }, { name: 'name', label: 'Display name (optional)' }] });
+        if (!got || !got.email.includes('@')) return;
+        var email = got.email, name = got.name;
         var r = await API.post('/team/invite', { email: email, displayName: name });
         if (r.ok) { toast('Invite sent'); loadTeam(); }
         else toast(r.error || 'Failed to invite');
@@ -1465,13 +1470,13 @@
           if (!visible) { buildModGrid(userId); buildEmailGrid(userId); }
         }
       } else if (action === 'remove') {
-        var ok = platform.ui ? await platform.ui.confirm('Remove this team member?') : confirm('Remove?');
+        var ok = await platform.ui.confirm('Remove this team member?');
         if (!ok) return;
         var r = await API.delete('/team/' + btn.dataset.userid);
         if (r.ok) { toast('Member removed'); loadTeam(); }
         else toast(r.error || 'Failed');
       } else if (action === 'cancel-invite') {
-        var ok2 = platform.ui ? await platform.ui.confirm('Cancel this invite?') : confirm('Cancel?');
+        var ok2 = await platform.ui.confirm('Cancel this invite?');
         if (!ok2) return;
         var r2 = await API.delete('/team/invites/' + btn.dataset.inviteid);
         if (r2.ok) { toast('Invite cancelled'); loadTeam(); }
@@ -1924,7 +1929,7 @@
     // In-app themed modal (platform.ui.confirm) — not the native browser
     // confirm chrome. Matches every other confirm in this module.
     var msg = 'Delete this mailbox? This cannot be undone.';
-    var ok = platform.ui ? await platform.ui.confirm(msg) : confirm(msg);
+    var ok = await platform.ui.confirm(msg);
     if (!ok) return;
     try {
       var r = await fetch('/api/chat/external/addresses/' + encodeURIComponent(id), { method: 'DELETE' });
@@ -2075,7 +2080,7 @@
       var okBtn = document.getElementById('stgConfirmOk');
       var cancelBtn = document.getElementById('stgConfirmCancel');
       var closeX = document.getElementById('stgConfirmCloseX');
-      if (!bg || !okBtn || !cancelBtn) { resolve(window.confirm(opts.body || 'Confirm?')); return; }
+      if (!bg || !okBtn || !cancelBtn) { platform.ui.confirm(opts.body || opts.title || 'Confirm?', { ok: opts.confirmText }).then(resolve); return; }
       title.textContent = opts.title || 'Confirm';
       // body can be plain text or HTML — accept the riskier opt-in.
       if (opts.bodyHtml) body.innerHTML = opts.bodyHtml; else body.textContent = opts.body || '';
@@ -2589,7 +2594,7 @@
       refreshBtn.disabled = false;
     });
     function ask(msg) {
-      return platform.ui ? platform.ui.confirm(msg) : Promise.resolve(window.confirm(msg));
+      return platform.ui.confirm(msg);
     }
     function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
     // Watch the feed until stable lands on `want`, so the button counts the
