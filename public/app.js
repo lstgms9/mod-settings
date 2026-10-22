@@ -895,7 +895,12 @@
       var key = inp.dataset.key;
       if (prefs[key] !== undefined) inp.value = prefs[key];
     });
-    // 2FA state
+    // 2FA state — a Google-only account (no password, 2FA off) has no switch: Google is its second step (Damon 2026-10-22)
+    if (prefs.googleOnly && !(prefs.tfa && prefs.tfa.enabled)) {
+      var gToggle = document.getElementById('tfaToggle'), gRow = gToggle && gToggle.closest('.stg-row'), gPanel = document.getElementById('tfaPanel');
+      if (gRow) gRow.innerHTML = '<div><div class="stg-label">Secured by Google</div><div class="stg-sublabel">You sign in with Google, which keeps this account safe</div></div>';
+      if (gPanel) gPanel.remove();
+    }
     if (prefs.tfa && prefs.tfa.enabled) {
       prefs._tfaEnabled = true; prefs._tfaMethod = prefs.tfa.method;
       var toggle = document.getElementById('tfaToggle');

@@ -122,6 +122,10 @@ module.exports = function(router, ctx) {
     const user = readUser(req.user.studio, req);
     const th = await tfaHolder(req).catch(() => null);
     prefs.tfa = th && th.tfa ? { method: th.tfa.method, enabled: true } : { enabled: false };
+    // an account with NO password that signs in through Google: Google is its second step (Damon 2026-10-22) — Privacy
+    // shows 'Secured by Google' where the 2FA switch would be; an account with a password keeps the switch
+    const cd = th && th.client && th.client.data;
+    prefs.googleOnly = !!(cd && !cd.passwordHash && (cd.identities || []).some((i) => i && i.provider === 'google'));
     // include plan info — user-level record first, then fall back to
     // the client record (gamoid public signups create only a client,
     // not a user-level file, so prefs.plan would otherwise stay
