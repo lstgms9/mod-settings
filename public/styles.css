@@ -869,7 +869,7 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 }
 /* A TAP PRESSES THE CONTROL (Damon 2026-10-18, phone: the first tap on Enable 2FA selected the box around it): a
    settings box is never selected or highlighted by a tap; fields stay selectable; toggles and choices take the tap */
-.stg-section, .stg-group, .stg-row, .stg-tfa-panel, .stg-tfa-method, .stg-acct-box, .stg-acct-pair { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+.stg-section, .stg-group, .stg-row, .stg-tfa-panel, .stg-tfa-method, .stg-acct-box, .stg-acct-pair { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .stg-section input, .stg-section textarea, .stg-section select, .stg-mono-cyan { -webkit-user-select: text; user-select: text; }
 .stg-section .stg-tfa-secret { -webkit-user-select: all; user-select: all; }
 .stg-toggle, .stg-tfa-method { cursor: pointer; touch-action: manipulation; }
