@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
-const { TOTP, Secret } = require('otpauth');
 const QRCode = require('qrcode');
 const archiver = require('archiver');
 
@@ -66,39 +65,32 @@ module.exports = function(router, ctx) {
     catch (e) { try { _okAuth = require(path.join(__dirname, '../../okdunio/auth')); } catch (e2) { _okAuth = null; } }
     return _okAuth;
   }
-  // 2FA SECRETS ARE SEALED AT REST (Damon 2026-10-18, security): tfa.secret, tfa.recovery[] and tfaPending.secret are
-  // stored AES-256-GCM-sealed with the vault's key (okdunio lib/authkeys.js). The holder hands out OPENED copies for
-  // checking, and its save() seals before storing — nothing here ever writes a plain secret. The vault key is fetched
-  // up front: if the vault can't be reached the holder throws (status 503) before anything is read or written.
+  // 2FA ON THE VAULT (Damon GO 2026-10-22): tfa.secret, tfa.recovery[] and tfaPending.secret are stored SEALED by the
+  // vault and checked there (okdunio lib/authkeys.js: tfaEnrol / tfaVerify / tfaRecover / tfaRecoveryCodes) — this
+  // server never opens them and holds no key. The holder hands out the stored (sealed) copies and saves them as they are.
   function keys() { const a = okAuth(); return a && a.authkeys; }
-  async function sealPatch(patch) {
-    const K = keys(), o = Object.assign({}, patch);
-    if (K) { if (o.tfa) o.tfa = await K.sealTfa(o.tfa); if (o.tfaPending) o.tfaPending = await K.sealTfa(o.tfaPending); }
-    return o;
-  }
   async function tfaHolder(req) {
-    const K = keys();
-    if (K) await K.key('TFA_ENC_KEY');   // fail closed now, not half-way through a save
-    const open = (t) => (K ? K.openTfa(t || null) : t || null);
     const c = await tfaClient(req), user = readUser(req.user.studio, req);
     if (c) {
-      if (!c.data.tfa && user && user.tfa && user.tfa.method === 'totp') { const sealed = await sealPatch({ tfa: await open(user.tfa) }); await storage.update('client', c.id, sealed); c.data.tfa = sealed.tfa; }
-      return { client: c, email: c.data.email || (user && user.email) || null, tfa: await open(c.data.tfa), pending: await open(c.data.tfaPending),
-        save: async (patch) => storage.update('client', c.id, await sealPatch(patch)) };
+      if (!c.data.tfa && user && user.tfa && user.tfa.method === 'totp') { await storage.update('client', c.id, { tfa: user.tfa }); c.data.tfa = user.tfa; }
+      return { client: c, email: c.data.email || (user && user.email) || null, tfa: c.data.tfa || null, pending: c.data.tfaPending || null, account: c.id,
+        save: async (patch) => storage.update('client', c.id, patch) };
     }
     if (!user) return null;
-    return { email: user.email || null, tfa: await open(user.tfa), pending: await open(user.tfaPending),
-      save: async (patch) => { patch = await sealPatch(patch); for (const k in patch) { if (patch[k] == null) delete user[k]; else user[k] = patch[k]; } writeUser(req.user.studio, user, req); } };
+    return { email: user.email || null, tfa: user.tfa || null, pending: user.tfaPending || null, account: req.user.studio,
+      save: async (patch) => { for (const k in patch) { if (patch[k] == null) delete user[k]; else user[k] = patch[k]; } writeUser(req.user.studio, user, req); } };
   }
   // the holder, or a 503 sent (the vault is down) — a thrown error here would take the whole server down
   async function holderOr503(req, res) {
     try { return { th: await tfaHolder(req) }; } catch (e) { res.error(e.status || 503, e.message || 'Unavailable'); return null; }
   }
-  function tfaCodeOk(tfa, code) {
-    if (!tfa || tfa.method !== 'totp' || !code) return false;
-    try { if (new TOTP({ algorithm: 'SHA1', digits: 6, period: 30, secret: Secret.fromBase32(tfa.secret) }).validate({ token: String(code).trim(), window: 1 }) !== null) return true; } catch (e) {}
-    const h = crypto.createHash('sha256').update(String(code).trim().toLowerCase()).digest('hex');
-    return Array.isArray(tfa.recovery) && tfa.recovery.indexOf(h) !== -1;
+  // a code against a TOTP 2FA (or one of its recovery codes) — on the vault; a used recovery code is taken off the list
+  async function tfaCodeOk(th, tfa, code) {
+    const K = keys(); if (!K || !tfa || tfa.method !== 'totp' || !code) return false;
+    if (await K.tfaVerify(tfa.secret, code, th.account)) return true;
+    const rest = await K.tfaRecover(tfa.recovery, code, th.account);
+    if (rest && th.tfa === tfa) await th.save({ tfa: Object.assign({}, tfa, { recovery: rest }) });
+    return !!rest;
   }
 
   async function getSettingsRecord(studio) {
@@ -304,32 +296,18 @@ module.exports = function(router, ctx) {
     // generated codes — so changing this only matters for new enrollments.
     const slug = req.instanceSlug;
     const issuer = (slug && slug !== 'inst-dev') ? (slug.charAt(0).toUpperCase() + slug.slice(1)) : 'OkDun';
-    const secret = new Secret({ size: 20 });
-    const totp = new TOTP({
-      issuer,
-      label: req.user.studio,
-      algorithm: 'SHA1',
-      digits: 6,
-      period: 30,
-      secret,
-    });
-    const uri = totp.toString();
-    let qrDataUrl;
-    try {
-      qrDataUrl = await QRCode.toDataURL(uri, { width: 200, margin: 2 });
-    } catch {
-      return res.error(500, 'QR generation failed');
-    }
-    // store the pending secret on the account (not active until a code from it is verified)
+    // the secret is made and sealed on the vault; its otpauth URI is only for this one QR (never stored here)
     const _h = await holderOr503(req, res); if (!_h) return; const th = _h.th;
     if (!th) return res.error(404, 'User not found');
     if (th.tfa) return res.error(400, '2FA is already on');
-    await th.save({ tfaPending: { method: 'totp', secret: secret.base32 } });
-    res.json({
-      qr: qrDataUrl,
-      secret: secret.base32,
-      uri,
-    });
+    const K = keys(); if (!K) return res.error(503, '2FA is unavailable right now');
+    let en; try { en = await K.tfaEnrol(issuer, req.user.studio); } catch (e) { return res.error(e.status || 503, e.message); }
+    let qrDataUrl;
+    try { qrDataUrl = await QRCode.toDataURL(en.otpauthUri, { width: 200, margin: 2 }); }
+    catch { return res.error(500, 'QR generation failed'); }
+    // the pending secret on the account (sealed; not active until a code from it is verified)
+    await th.save({ tfaPending: { method: 'totp', secret: en.sealedSecret } });
+    res.json({ qr: qrDataUrl, secret: (/[?&]secret=([A-Z2-7]+)/.exec(en.otpauthUri) || [])[1] || '', uri: en.otpauthUri });
   });
 
   // ── 2FA: verify TOTP code ───────────────────────────────────
@@ -341,15 +319,17 @@ module.exports = function(router, ctx) {
     if (!th || !th.pending || th.pending.method !== 'totp') {
       return res.error(400, 'No pending TOTP setup');
     }
-    if (!tfaCodeOk({ method: 'totp', secret: th.pending.secret }, code)) return res.error(400, 'Invalid code');
+    const K = keys(); if (!K) return res.error(503, '2FA is unavailable right now');
+    let good, rc;
+    try { good = await K.tfaVerify(th.pending.secret, code, th.account); if (good) rc = await K.tfaRecoveryCodes(); } catch (e) { return res.error(e.status || 503, e.message); }
+    if (!good) return res.error(400, 'Invalid code');
     // activate 2FA + mint one-time recovery codes. Shown to the user ONCE
     // (returned cleartext here); only sha256 hashes are stored, so a leaked
     // user file can't be used to log in. Each code works once (consumed at
     // login). Lose your authenticator → use one of these to get back in.
-    const recoveryCodes = Array.from({ length: 8 }, () => crypto.randomBytes(5).toString('hex'));
-    const recovery = recoveryCodes.map(c => crypto.createHash('sha256').update(c).digest('hex'));
-    await th.save({ tfa: { method: 'totp', secret: th.pending.secret, recovery }, tfaPending: null });
-    res.json({ ok: true, method: 'totp', recoveryCodes });
+    // (minted on the vault: the codes come back once, only their sealed hashes are stored)
+    await th.save({ tfa: { method: 'totp', secret: th.pending.secret, recovery: rc.sealedList }, tfaPending: null });
+    res.json({ ok: true, method: 'totp', recoveryCodes: rc.codes });
   });
 
   // ── 2FA: email setup — a code to the account's address (Damon 2026-10-18: email 2FA works — same record as
@@ -397,7 +377,9 @@ module.exports = function(router, ctx) {
     const _h = await holderOr503(req, res); if (!_h) return; const th = _h.th;
     if (!th) return res.error(404, 'User not found');
     const code = (req.body || {}).code, a = okAuth();
-    const good = !th.tfa ? true : (th.client && a) ? (await a.tfaCheck(storage, th.client, code)) === 'ok' : tfaCodeOk(th.tfa, code);
+    let good;
+    try { good = !th.tfa ? true : (th.client && a) ? (await a.tfaCheck(storage, th.client, code)) === 'ok' : await tfaCodeOk(th, th.tfa, code); }
+    catch (e) { return res.error(e.status || 503, e.message); }
     if (!good) return res.error(400, 'Enter a valid 2FA code to turn it off');
     await th.save({ tfa: null, tfaPending: null });
     const user = readUser(req.user.studio, req);
@@ -1075,54 +1057,8 @@ module.exports = function(router, ctx) {
     if (!ip || !password) return res.error(400, 'Box IP/host and root password are required');
     if (!/^[a-zA-Z0-9.:_-]+$/.test(ip)) return res.error(400, 'Invalid IP/host');
 
-    // Reuse the owner's existing TOTP secret so one code works everywhere.
-    // the account's 2FA as sign-in has it (the client record, opened with the vault's key; the old file only as a fallback)
-    const _h = await holderOr503(req, res); if (!_h) return;
-    const secret = _h.th && _h.th.tfa && _h.th.tfa.secret;
-    if (!secret) return res.error(400, 'Enable 2FA on your own account first (Settings → 2FA) so there is a code to reuse on the box.');
-
-    let scriptText;
-    try { scriptText = fs.readFileSync('/home/damon/platform/scripts/secure-server-2fa.sh', 'utf8'); }
-    catch (e) { return res.error(500, 'secure-server-2fa.sh missing on this box'); }
-
-    const { Client } = require('ssh2');
-    function run(cmd, stdin) {
-      return new Promise((resolve, reject) => {
-        const conn = new Client();
-        let out = '';
-        conn.on('ready', () => {
-          conn.exec(cmd, (err, stream) => {
-            if (err) { conn.end(); return reject(err); }
-            stream.on('data', d => { out += d.toString(); });
-            stream.stderr.on('data', d => { out += d.toString(); });
-            stream.on('close', (code) => { conn.end(); resolve({ code, out }); });
-            if (stdin) stream.end(stdin); else stream.end();
-          });
-        });
-        conn.on('error', reject);
-        conn.connect({ host: ip, port: 22, username: loginUser, password, readyTimeout: 20000 });
-      });
-    }
-
-    try {
-      // Run the setup over one SSH connection. The script installs PAM, seeds
-      // the owner's secret, validates, AND reloads sshd to activate — all in this
-      // one run (reload = SIGHUP, doesn't drop this connection). One shot, no
-      // half-state. We connect via password here, which still works because the
-      // reload only takes effect for NEW logins after this returns.
-      const stage = await run('GA_SECRET=' + JSON.stringify(secret) + ' bash -s', scriptText);
-      const ok = /passwordauthentication no/i.test(stage.out)
-        && /kbdinteractiveauthentication yes/i.test(stage.out)
-        && /2FA is LIVE|reloaded/i.test(stage.out);
-      if (!ok) {
-        return res.json({ ok: false, message: 'Setup did not validate/activate — check the log.', output: stage.out.slice(-3500) });
-      }
-      return res.json({ ok: true, output: stage.out.slice(-3500) });
-    } catch (e) {
-      const m = (e && e.message) || String(e);
-      if (/authentication|All configured auth/i.test(m)) return res.error(401, 'SSH login failed — wrong root password?');
-      if (/ECONNREFUSED|ETIMEDOUT|EHOSTUNREACH|getaddrinfo|timed out/i.test(m)) return res.error(502, 'Could not reach the box at ' + ip + ' (port 22).');
-      return res.error(502, 'SSH error: ' + m);
-    }
+    // It reused the owner's TOTP secret in plain text — which no longer exists anywhere but the vault (Damon GO
+    // 2026-10-22: 2FA is checked on the vault), so it would install a sealed blob and lock the box. Refused.
+    return res.error(410, 'Secure-a-box is off: your 2FA secret now stays in the vault and can\u2019t be copied to a box.');
   });
 };
