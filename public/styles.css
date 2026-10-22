@@ -342,27 +342,26 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
   padding: calc(18 * var(--u, 1px)); margin-top: calc(12 * var(--u, 1px)); display: none;
 }
 .stg-tfa-panel.visible { display: block; }
+/* THE 2FA CHOICES ARE BUTTONS (Damon 2026-10-22: too dark to read before one is picked): each is the shared SECONDARY
+   pui button (its line + bright text); the ring on the right is clearly visible, and a pick turns it green with a ✓ */
 .stg-tfa-method {
-  display: flex; align-items: flex-start; gap: calc(14 * var(--u, 1px)); padding: calc(14 * var(--u, 1px));
-  background: var(--bg2); border: calc(1 * var(--u, 1px)) solid var(--border); border-radius: calc(8 * var(--u, 1px));
-  margin-bottom: calc(8 * var(--u, 1px)); cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: flex-start; gap: calc(14 * var(--u, 1px)); padding: calc(14 * var(--u, 1px)); width: 100%;
+  text-align: left; border-radius: calc(8 * var(--u, 1px)); margin-bottom: calc(8 * var(--u, 1px)); cursor: pointer; transition: border-color 0.2s;
 }
-.stg-tfa-method:hover { border-color: var(--border2); }
-.stg-tfa-method.selected { border-color: #39ff7f; background: rgba(57,255,127,0.03); }
+.stg-tfa-method.selected { border-color: #39ff7f !important; }
 .stg-tfa-method-icon {
   font-size: calc(24 * var(--u, 1px)); width: calc(40 * var(--u, 1px)); height: calc(40 * var(--u, 1px)); display: flex; align-items: center;
   justify-content: center; background: var(--bg); border-radius: calc(8 * var(--u, 1px)); flex-shrink: 0;
 }
-.stg-tfa-method-name { font-size: calc(14 * var(--u, 1px)); font-weight: 600; color: var(--text); }
-.stg-tfa-method-desc { font-size: calc(14 * var(--u, 1px)); color: var(--text-dim); margin-top: calc(3 * var(--u, 1px)); line-height: 1.5; }
+.stg-tfa-method-name { font-size: calc(14 * var(--u, 1px)); font-weight: 700; color: var(--text); }
+.stg-tfa-method-desc { font-size: calc(14 * var(--u, 1px)); font-weight: 400; color: #c8c8dc; margin-top: calc(3 * var(--u, 1px)); line-height: 1.5; }
 .stg-tfa-radio {
-  width: calc(16 * var(--u, 1px)); height: calc(16 * var(--u, 1px)); border: calc(2 * var(--u, 1px)) solid var(--border); border-radius: 50%;
-  margin-left: auto; flex-shrink: 0; margin-top: calc(2 * var(--u, 1px)); position: relative; transition: all 0.2s;
+  width: calc(26 * var(--u, 1px)); height: calc(26 * var(--u, 1px)); border: calc(2 * var(--u, 1px)) solid #a0a0bc; border-radius: 50%;
+  margin-left: auto; flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
 }
-.stg-tfa-method.selected .stg-tfa-radio { border-color: #39ff7f; }
+.stg-tfa-method.selected .stg-tfa-radio { border-color: #39ff7f; background: #39ff7f; }
 .stg-tfa-method.selected .stg-tfa-radio::after {
-  content: ''; width: calc(8 * var(--u, 1px)); height: calc(8 * var(--u, 1px)); background: #39ff7f; border-radius: 50%;
-  position: absolute; top: calc(2 * var(--u, 1px)); left: calc(2 * var(--u, 1px)); box-shadow: 0 0 calc(6 * var(--u, 1px)) rgba(57,255,127,0.3);
+  content: '\2713'; color: #000; font: 900 calc(18 * var(--u, 1px))/1 system-ui, sans-serif;
 }
 .stg-tfa-setup { margin-top: calc(14 * var(--u, 1px)); display: none; }
 .stg-tfa-setup.visible { display: block; }

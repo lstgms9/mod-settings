@@ -318,22 +318,22 @@
         </div>
         <div class="stg-tfa-panel" id="tfaPanel">
           <div style="font-size:calc(14 * var(--u, 1px));color:var(--text);font-weight:600;margin-bottom:calc(12 * var(--u, 1px));">Choose your 2FA method:</div>
-          <div class="stg-tfa-method" id="tfa-totp" data-method="totp">
+          <button type="button" class="pui-secondary stg-tfa-method" id="tfa-totp" data-method="totp">
             <div class="stg-tfa-method-icon"><svg class="pui-ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg></div>
             <div style="flex:1">
               <div class="stg-tfa-method-name">Authenticator App</div>
               <div class="stg-tfa-method-desc">Use Google Authenticator, Authy, or any TOTP app. Scan a QR code, then enter 6-digit codes on login.</div>
             </div>
             <div class="stg-tfa-radio"></div>
-          </div>
-          <div class="stg-tfa-method" id="tfa-email" data-method="email">
+          </button>
+          <button type="button" class="pui-secondary stg-tfa-method" id="tfa-email" data-method="email">
             <div class="stg-tfa-method-icon"><svg class="pui-ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em" aria-hidden="true"><rect x="2" y="3.5" width="12" height="9" rx="1"/><path d="M2.5 4.5L8 9l5.5-4.5"/></svg></div>
             <div style="flex:1">
               <div class="stg-tfa-method-name">Email Code</div>
               <div class="stg-tfa-method-desc">We'll send a 6-digit code to your email each time you log in.</div>
             </div>
             <div class="stg-tfa-radio"></div>
-          </div>
+          </button>
           <!-- TOTP setup -->
           <div class="stg-tfa-setup" id="setup-totp">
             <div style="text-align:center;font-size:calc(14 * var(--u, 1px));color:var(--text-dim);margin-bottom:calc(16 * var(--u, 1px));">Scan this QR code with your authenticator app:</div>
