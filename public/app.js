@@ -341,27 +341,9 @@
   }
 
   // ── 2FA ─────────────────────────────────────────────────────
-  function buildCodeInputs(container, count) {
-    container.innerHTML = '';
-    for (var i = 0; i < count; i++) {
-      var inp = document.createElement('input');
-      inp.className = 'stg-tfa-code-digit';
-      inp.maxLength = 1;
-      inp.type = 'text';
-      inp.inputMode = 'numeric';
-      container.appendChild(inp);
-    }
-    container.addEventListener('input', function(e) {
-      if (e.target.value && e.target.nextElementSibling) e.target.nextElementSibling.focus();
-    });
-    container.addEventListener('keydown', function(e) {
-      if (e.key === 'Backspace' && !e.target.value && e.target.previousElementSibling) e.target.previousElementSibling.focus();
-    });
-  }
-
-  function getCode(container) {
-    return Array.from(container.querySelectorAll('.stg-tfa-code-digit')).map(function(i) { return i.value; }).join('');
-  }
+  // the 6-digit boxes are THE shared code entry (ui.codeEntry: no mic, a paste fills all 6, PASTE under it; the emailed
+  // one also has RESEND) — Damon 2026-10-22
+  var totpEntry = null, emailEntry = null;
 
   // the outline globe (ui.v1's icon set) where a country has no flag yet — not the 🌍 emoji (Damon 2026-10-18)
   var GLOBE_IC = '<svg class="pui-ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.6 3.7 2.6 6S9.8 12.3 8 14C6.2 12.3 5.4 10.3 5.4 8S6.2 3.7 8 2z"/></svg>';
@@ -372,8 +354,7 @@
     var panel = document.getElementById('tfaPanel');
     if (!toggle) return;
 
-    buildCodeInputs(document.getElementById('totpCodeRow'), 6);
-    buildCodeInputs(document.getElementById('emailCodeRow'), 6);
+    totpEntry = platform.ui.codeEntry(document.getElementById('totpCodeRow'), { boxClass: 'stg-tfa-code-digit' });
 
     toggle.addEventListener('click', async function() {
       if (prefs._tfaEnabled) {
@@ -444,7 +425,7 @@
 
     // TOTP verify
     document.getElementById('totpVerifyBtn').addEventListener('click', async function() {
-      var code = getCode(document.getElementById('totpCodeRow'));
+      var code = totpEntry.value();
       if (code.length !== 6) return;
       var r = await API.post('/2fa/verify-totp', { code: code });
       if (r.ok) {
@@ -484,13 +465,15 @@
       if (!r.ok) { toast(r.error || 'Could not send a code'); return; }
       if (r.ok) {
         document.getElementById('emailCodeArea').style.display = 'block';
-        setTimeout(function() { var first = document.querySelector('#emailCodeRow .stg-tfa-code-digit'); if (first) first.focus(); }, 200);
+        if (!emailEntry) emailEntry = platform.ui.codeEntry(document.getElementById('emailCodeRow'), { boxClass: 'stg-tfa-code-digit',
+          resend: function() { return API.post('/2fa/setup-email', {}).then(function(r2) { if (!r2.ok) throw new Error(r2.error || 'Could not send a code'); }); } });
+        setTimeout(function() { emailEntry.focus(); }, 200);
       }
     });
 
     // Email verify
     document.getElementById('emailVerifyBtn').addEventListener('click', async function() {
-      var code = getCode(document.getElementById('emailCodeRow'));
+      var code = emailEntry ? emailEntry.value() : '';
       if (code.length !== 6) return;
       var r = await API.post('/2fa/verify-email', { code: code });
       if (r.ok) {
