@@ -938,7 +938,11 @@ html.pui-framed .stg-main, .pui-inpop .stg-main { overflow: visible; }
 #changePwBtn { width: auto; }
 .stg-inbox-ro .stg-inbox-in { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stg-inbox .stg-acct-flagrow { display: flex; align-items: center; gap: calc(8 * var(--u, 1px)); }
-.stg-inbox select.stg-inbox-in { appearance: auto; cursor: pointer; }
+.stg-inbox select.stg-inbox-in { cursor: pointer; }
+/* THE COUNTRY BOX READS WHITE like the rows above it (Damon 2026-10-22: it showed ORANGE — the iPhone's native select tints
+   its text with the page's accent): drawn by us, not the phone — plain text colour, our own ▾ */
+#settings-app .stg-inbox select.stg-inbox-in { -webkit-appearance: none; appearance: none; accent-color: auto; color: var(--text) !important; -webkit-text-fill-color: var(--text);
+  padding-right: calc(28 * var(--u, 1px)) !important; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23e4e4f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right calc(4 * var(--u, 1px)) center / calc(14 * var(--u, 1px)) auto !important; }
 .stg-inbox select.stg-inbox-in option { background: var(--bg2); color: var(--text); }
 /* the danger zone: a clearly visible RED outline (Damon 2026-10-19) */
 .stg-section .stg-danger-group { border: calc(1.5 * var(--u, 1px)) solid var(--red, #ff3997); }
