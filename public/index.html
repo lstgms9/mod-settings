@@ -488,7 +488,8 @@
         <!-- the heading and its short line on ONE row, the line right-justified (Damon 2026-10-19) -->
         <div class="stg-acct-titlerow">
           <div class="stg-section-header" style="margin:0;">Account</div>
-          <div class="stg-section-desc" style="margin:0;">Manage account</div>
+          <!-- a real button (Damon 2026-10-23: it read as a plain text link) — opens the Manage account pop-up -->
+          <button type="button" class="pui-btn pui-btn-primary stg-manage-btn" id="stgManageBtn">Manage account</button>
         </div>
         <div class="stg-acct-head-right" data-hide-key="account-tier">
           <!-- Studio identity chip — logo when the studio has one,

@@ -921,7 +921,7 @@ html.pui-framed .stg-main, .pui-inpop .stg-main { overflow: visible; }
 }
 
 /* Account: the heading left, its short line right, one row (Damon 2026-10-19) */
-.stg-acct-titlerow { flex: 1 1 100%; display: flex; align-items: baseline; justify-content: space-between; gap: calc(12 * var(--u, 1px)); }
+.stg-acct-titlerow { flex: 1 1 100%; display: flex; align-items: center; justify-content: space-between; gap: calc(12 * var(--u, 1px)); }
 
 /* THE ACCOUNT FIELDS (Damon 2026-10-19/20): a clear field outline showing the value — no title, a placeholder when empty;
    read-only ones (Email) look the same, never a faint box. A row = the field + its own Save on the right. */

@@ -1657,6 +1657,8 @@
   function initPlanManage() {
     var btn = document.getElementById('planManageBtn');
     if (btn) btn.addEventListener('click', planButton);
+    var mb = document.getElementById('stgManageBtn');
+    if (mb) mb.addEventListener('click', planButton);
 
     // SAFE DELETE ACCOUNT (Damon 2026-10-18): the person types DELETE to confirm. The server marks the account deleted
     // and hides it (nothing removed); it's wiped for good 30 days later; support can restore it until then.
