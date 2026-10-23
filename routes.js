@@ -797,10 +797,13 @@ module.exports = function(router, ctx) {
     for (const [v, rec] of Object.entries(m.versions || {})) {
       versions[v] = {
         createdAt: rec.createdAt,
-        sites: Object.fromEntries(Object.entries(rec.sites || {}).map(([slug, s]) => [slug, { mods: (s.mods || []).length, depsHash: s.depsHash }])),
+        sites: Object.fromEntries(Object.entries(rec.sites || {}).map(([slug, s]) => [slug, { mods: (s.mods || []).length, depsHash: s.depsHash, key: s.key || null }])),
       };
     }
-    res.json({ version: m.version || 0, stable: m.stable || 0, versions });
+    // `stable` is THIS box's site's number (the token names the box, the registry its site), so a box reads one
+    // number whatever the manifest holds; stableBySite is every site's
+    const box = boxFromToken(req), site = (box && ((readBoxes().boxes || {})[box] || {}).site) || String(req.query.site || '');
+    res.json({ version: m.version || 0, stable: site ? deployLib.stableFor(m, site) : deployLib.stableMax(m), stableBySite: deployLib.stableMap(m), versions });
   });
 
   // GET /release/delta?from=<v>&to=<v> — the changed bytes between two
@@ -873,7 +876,7 @@ module.exports = function(router, ctx) {
     };
     all.updated = all.boxes[box].lastSeen;
     writeBoxes(all);
-    res.json({ ok: true, box, stable: deployLib.readManifest().stable || 0 });
+    res.json({ ok: true, box, stable: deployLib.stableFor(deployLib.readManifest(), all.boxes[box].site) });
   });
 
   // POST /keyop — the brokered keyed call (admin/PROD-KEYS-REMOVAL.md, Damon GO
@@ -931,8 +934,8 @@ module.exports = function(router, ctx) {
       cutLog('── cut started ──');
       const m = deployLib.recordVersion();
       const sites = Object.keys((m.versions[m.version] || {}).sites || {});
-      cutLog('── v' + m.version + ' recorded over ' + sites.join(', ') + ' (stable stays v' + m.stable + ') ──');
-      res.json({ ok: true, version: m.version, stable: m.stable, sites });
+      cutLog('── v' + m.version + ' recorded over ' + sites.join(', ') + ' (stable stays ' + stableLine(m) + ') ──');
+      res.json({ ok: true, version: m.version, stable: deployLib.stableMax(m), stableBySite: deployLib.stableMap(m), sites });
     } catch (e) {
       cutLog('── CUT FAILED: ' + e.message + ' ──');
       res.error(500, 'cut failed: ' + e.message);
@@ -947,13 +950,14 @@ module.exports = function(router, ctx) {
     if (!releaseAdmin(req)) return res.error(403, 'Release admin only');
     try {
       cutLog('── deploy started ──');
+      const want = sitesOf(req.body);
       const m = deployLib.recordVersion();
       const v = m.version;
-      const sites = Object.keys((m.versions[v] || {}).sites || []);
-      m.stable = v;
+      const moved = deployLib.setStable(m, v, want);
       deployLib.writeManifest(m);
-      cutLog('── deploy v' + v + ' over ' + sites.join(', ') + ' — stable → v' + v + ' (every box applies it now) ──');
-      res.json({ ok: true, version: v, stable: v, sites, direction: 'forward' });
+      const sites = Object.keys(moved);
+      cutLog('── deploy v' + v + ' to ' + sites.join(', ') + ' — their stable → v' + v + ' (' + stableLine(m) + ') ──');
+      res.json({ ok: true, version: v, stable: v, sites, stableBySite: deployLib.stableMap(m), direction: 'forward' });
     } catch (e) {
       cutLog('── DEPLOY FAILED: ' + e.message + ' ──');
       res.error(500, 'deploy failed: ' + e.message);
@@ -971,9 +975,11 @@ module.exports = function(router, ctx) {
     if (!v || v < 1) return res.error(400, 'Bad version');
     const m = deployLib.readManifest();
     if (!(m.versions || {})[v]) return res.error(404, 'No such version v' + v);
-    m.stable = v;
+    let moved;
+    try { moved = deployLib.setStable(m, v, sitesOf(req.body)); } catch (e) { return res.error(400, e.message); }
     deployLib.writeManifest(m);
-    res.json({ ok: true, stable: v, direction: v < (m.version || 0) ? 'rollback' : 'forward' });
+    cutLog('── promote v' + v + ' to ' + Object.keys(moved).join(', ') + ' (' + stableLine(m) + ') ──');
+    res.json({ ok: true, stable: v, sites: Object.keys(moved), stableBySite: deployLib.stableMap(m), direction: v < (m.version || 0) ? 'rollback' : 'forward' });
   });
 
   // GET /release/status — the panel's feed: versions, the boxes, and the
@@ -989,13 +995,22 @@ module.exports = function(router, ctx) {
     }));
     res.json({
       version: m.version || 0,
-      stable: m.stable || 0,
+      stable: deployLib.stableMax(m),
+      stableBySite: deployLib.stableMap(m),
       createdAt: m.createdAt || null,
       versions,
       boxes: readBoxes().boxes || {},
       buildLog: readCutLog(),
     });
   });
+
+  // A deploy/promote names its sites: { site: 'gamoid' } or { sites: ['gamoid', 'appoid'] }; none named = every site.
+  function sitesOf(b) {
+    b = b || {};
+    const list = Array.isArray(b.sites) ? b.sites : (b.site ? [b.site] : (typeof b.sites === 'string' ? b.sites.split(',') : []));
+    return list.map(s => String(s).trim()).filter(Boolean);
+  }
+  function stableLine(m) { return Object.entries(deployLib.stableMap(m)).map(([s, v]) => s + ' v' + v).join(', '); }
 
   function cutLog(line) {
     try {
