@@ -967,7 +967,7 @@ html.pui-framed .stg-main, .pui-inpop .stg-main { overflow: visible; }
 }
 
 
-/* THE PLAN BUTTON (Damon 2026-10-20): small, right-justified on the chip row — 'Studio AI' yellow, 'Upgrade' orange */
+/* THE PLAN BUTTON (Damon 2026-10-20): small, right-justified on the chip row — 'AI Builder' yellow, 'Upgrade' orange */
 .stg-plan-btn { margin-left: auto; padding: calc(5 * var(--u, 1px)) calc(12 * var(--u, 1px)); border-radius: calc(8 * var(--u, 1px)); border: 0; cursor: pointer; font-family: inherit; font-weight: 600; font-size: calc(16 * var(--u, 1px)); line-height: 1.2;
   background: #ffe03d; color: #0b0b14; white-space: nowrap; }
 .stg-plan-btn[data-plan="free"] { background: #2a2a40; color: var(--text); }

@@ -995,7 +995,7 @@
     }
     await renderPlanLine();   // a two-plan site (gamoid): its own line + button (Damon 2026-10-19)
     if (planVal) {
-      // the tenant's OWN plan names when its sign-up names them (gamoid two plans: studio → 'Studio AI', anything
+      // the tenant's OWN plan names when its sign-up names them (gamoid two plans: studio → 'AI Builder', anything
       // without a paid plan → 'Free'), else the generic names (uniMaster v237: Account still said 'Studio plan')
       var _pn = await tenantPlanName(planVal);
       var planEl = document.getElementById('planManageBtn');
@@ -1621,8 +1621,8 @@
     var tiers = (window.SIGNUP_CONFIG && window.SIGNUP_CONFIG.tiers) || [];
     return tiers.some(function (t) { return t.userTier === 'studio' && (t.form || []).indexOf('studioSlug') !== -1; });
   }
-  // THE PLAN LINE on a two-plan site (Damon 2026-10-19, gamoid): Free → 'Free' + 'Upgrade to Studio AI' (the code-
-  // locked step: a valid invite code gives this account the pilot's free month); Studio AI → 'Studio AI · $10/mo' +
+  // THE PLAN LINE on a two-plan site (Damon 2026-10-19, gamoid): Free → 'Free' + 'Upgrade to AI Builder' (the code-
+  // locked step: a valid invite code gives this account the pilot's free month); AI Builder → 'AI Builder · $10/mo' +
   // 'Manage' (Stripe's hosted billing page) where billing is on file, else the invite's free-month line.
   var _planTwo = null;   // { paid, free, st } once drawn
   var _planFresh = false;   // after a plan change the status is read anew
@@ -1636,16 +1636,16 @@
       if (!st) return;
       function nice(n) { return String(n || '').toLowerCase().replace(/\b(ai)\b/g, 'AI').replace(/(^|\s)([a-z])/g, function(m, a, b) { return a + b.toUpperCase(); }); }
       var isAI = st.tier === 'studio' || st.tier === 'studio_pro' || !!st.grantUntil;
-      var keep = !isAI && !!st.grantEndedAt && !st.subscribed;   // the invite's free month ended: 'Keep Studio AI: add a card'
+      var keep = !isAI && !!st.grantEndedAt && !st.subscribed;   // the invite's free month ended: 'Keep AI Builder: add a card'
       _planTwo = { paid: paid, name: nice(paid.name), isAI: isAI, keep: keep, st: st };
-      // THE PLAN BUTTON, top right (Damon 2026-10-20): 'Studio AI' — tap to manage it — or 'Upgrade' on Free
+      // THE PLAN BUTTON, top right (Damon 2026-10-20): 'AI Builder' — tap to manage it — or 'Upgrade' on Free
       var btn = document.getElementById('planManageBtn');
       if (btn) { btn.textContent = isAI ? nice(paid.name) : nice(free.name); btn.setAttribute('data-plan', isAI ? 'ai' : 'free'); btn.hidden = false; }
     } catch (e) {}
   }
   // THE PLAN BUTTON → the MANAGE ACCOUNT pop-up (Damon 2026-10-20): the sign-up page's own two plan cards
   // (/signup?pop=1&manage=1, mod-signup manageMode), the current one marked; it does the switching (Free at the month's
-  // end, Studio AI by card or an invite code) and says so (postMessage 'plan-changed') → this button follows
+  // end, AI Builder by card or an invite code) and says so (postMessage 'plan-changed') → this button follows
   var _manageHooked = false;
   function planButton() {
     if (!_planTwo) return openPlanModal();
