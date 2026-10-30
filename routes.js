@@ -126,6 +126,8 @@ module.exports = function(router, ctx) {
     // shows 'Secured by Google' where the 2FA switch would be; an account with a password keeps the switch
     const cd = th && th.client && th.client.data;
     prefs.googleOnly = !!(cd && !cd.passwordHash && (cd.identities || []).some((i) => i && i.provider === 'google'));
+    // this session signed in through Google: the Admin gate counts it as the second step, the same as the server's (devmail sessionOk)
+    prefs.viaGoogle = !!(req.user && req.user.via === 'google');
     // include plan info — user-level record first, then fall back to
     // the client record (gamoid public signups create only a client,
     // not a user-level file, so prefs.plan would otherwise stay
