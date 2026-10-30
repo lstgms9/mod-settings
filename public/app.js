@@ -2385,7 +2385,8 @@
     var _paintMedia = paintMedia;
     paintMedia = function(on) { _paintMedia(on); if (sw) { sw.classList.toggle('on', !!on); sw.setAttribute('aria-checked', on ? 'true' : 'false'); } };
     if (sw) { sw.onclick = function() { setMedia(!sw.classList.contains('on')); }; sw.onkeydown = function(e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); sw.onclick(); } }; }
-    if (sNow) sNow.onclick = function() { location.href = arc ? '/api/files/backup/latest' : '/api/files/export?mine=1'; };
+    // Download now (Damon 2026-10-30): ONE zip — every game you own (games/<name>/: code, art, levels, music) + your uploads
+    if (sNow) sNow.onclick = function() { location.href = '/api/files/export?mine=1&games=1'; };
     fetch('/api/files/media-export/status', { credentials: 'same-origin', cache: 'no-store' })
       .then(function(r){ return r.json(); })
       .then(function(st) {
