@@ -20,8 +20,8 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 :where(#settings-app) .pap-wrap { display: flex; flex-direction: column; align-items: center; gap: calc(8 * var(--u, 1px)); width: 100%; }
 :where(#settings-app) .pap-pic { width: calc(84 * var(--u, 1px)); height: calc(84 * var(--u, 1px)); border-radius: 50%; border: calc(2 * var(--u, 1px)) solid var(--pap-border); background: var(--pap-circle); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; flex: none; }
 :where(#settings-app) .pap-btns { display: flex; gap: calc(8 * var(--u, 1px)); align-items: center; }
-:where(#settings-app) .pap-nav, :where(#settings-app) .pap-change { background: var(--pap-input); border: calc(1 * var(--u, 1px)) solid #3dc8ff; color: var(--pap-text); font: 600 calc(18 * var(--u, 1px)) 'DM Sans', sans-serif; cursor: pointer; transition: all .15s; }
-:where(#settings-app) .pap-nav { width: calc(48 * var(--u, 1px)); height: calc(48 * var(--u, 1px)); padding: 0; border-radius: 50%; color: #fff; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+:where(#settings-app) .pap-nav { width: calc(48 * var(--u, 1px)); height: calc(48 * var(--u, 1px)); padding: 0; border-radius: 50%; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+:where(#settings-app) .pap-nav[hidden] { display: none; }
 :where(#settings-app) .pap-nav svg { width: calc(28 * var(--u, 1px)); height: calc(28 * var(--u, 1px)); }
 :where(#settings-app) .pap-change { padding: calc(8 * var(--u, 1px)) calc(18 * var(--u, 1px)); border-radius: calc(8 * var(--u, 1px)); }
 :where(#settings-app) .pap-cols { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: calc(6 * var(--u, 1px)); }
@@ -40,14 +40,13 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 :where(#settings-app) .pap-pc .pap-card { padding: calc(12 * var(--u, 1px)) calc(16 * var(--u, 1px)); }
 :where(#settings-app) .pap-pc .pap-pic { width: calc(76 * var(--u, 1px)); height: calc(76 * var(--u, 1px)); }
 :where(#settings-app) .pap-pc .pap-btns { grid-template-columns: calc(36 * var(--u, 1px)) calc(36 * var(--u, 1px)); }
-:where(#settings-app) .pap-pc .pap-nav, :where(#settings-app) .pap-pc .pap-change { font-size: calc(14 * var(--u, 1px)); }
 :where(#settings-app) .pap-pc .pap-change { padding: calc(5 * var(--u, 1px)) calc(14 * var(--u, 1px)); }
 :where(#settings-app) .pap-pc .pap-nav { width: calc(36 * var(--u, 1px)); height: calc(36 * var(--u, 1px)); }
 :where(#settings-app) .pap-pc .pap-nav svg { width: calc(20 * var(--u, 1px)); height: calc(20 * var(--u, 1px)); }
 :where(#settings-app) .pap-pc .pap-sw { width: calc(16 * var(--u, 1px)); height: calc(16 * var(--u, 1px)); }
 :where(#settings-app) .pap-page .pap-wrap { gap: calc(12 * var(--u, 1px)); margin-bottom: calc(10 * var(--u, 1px)); }
 :where(#settings-app) .pap-page .pap-pic { width: calc(110 * var(--u, 1px)); height: calc(110 * var(--u, 1px)); border-color: var(--border); background: var(--bg-surface); }
-:where(#settings-app) .pap-page .pap-change { padding: calc(10 * var(--u, 1px)) calc(24 * var(--u, 1px)); font-size: calc(14 * var(--u, 1px)); border-color: var(--border); background: var(--bg-surface); }
+:where(#settings-app) .pap-page .pap-change { padding: calc(10 * var(--u, 1px)) calc(24 * var(--u, 1px)); }
 :where(#settings-app) .pap-page .pap-sw { width: calc(26 * var(--u, 1px)); height: calc(26 * var(--u, 1px)); }
 :where(#settings-app) .pap-src { display: flex; gap: calc(6 * var(--u, 1px)); justify-content: center; flex-wrap: wrap; margin-top: calc(8 * var(--u, 1px)); width: 100%; }
 :where(#settings-app) .pap-cb { padding: calc(6 * var(--u, 1px)) calc(10 * var(--u, 1px)); background: var(--pap-input); border: calc(1 * var(--u, 1px)) solid var(--pap-border); color: var(--pap-text); font: calc(13 * var(--u, 1px)) 'DM Sans', sans-serif; border-radius: calc(5 * var(--u, 1px)); cursor: pointer; transition: border-color .15s, color .15s; }
