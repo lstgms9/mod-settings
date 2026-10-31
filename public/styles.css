@@ -903,7 +903,7 @@ html.pui-framed .stg-main, .pui-inpop .stg-main { overflow: visible; }
   #settings-app .stg-danger-group .stg-btn-danger { flex: none; }
   /* the picker laid out as the sign-up form's (picture left, ‹ › Change right, colours under), Save under it */
   /* picture left; ‹ › Change on one row with SAVE under it, beside the picture; the colours below both */
-  #settings-app .pap-settings .pap-card { display: grid; grid-template-columns: auto minmax(0, auto); grid-template-areas: "pic btns" "pic save" "cols cols" "err err";
+  #settings-app .pap-settings .pap-card { display: grid; grid-template-columns: auto minmax(0, auto); grid-template-areas: "pic btns" "pic save" "cols cols" "sic sic" "err err";
     column-gap: calc(14 * var(--u, 1px)); row-gap: calc(8 * var(--u, 1px)); align-items: center; justify-content: center; padding: calc(2 * var(--u, 1px)) 0 0; }
   #settings-app .pap-settings .pap-wrap { display: contents; }
   #settings-app .pap-settings .pap-pic { grid-area: pic; }
@@ -911,6 +911,7 @@ html.pui-framed .stg-main, .pui-inpop .stg-main { overflow: visible; }
   #settings-app .pap-settings .pap-cols { grid-area: cols; justify-self: center; }
   #settings-app .pap-settings .pap-save { grid-area: save; width: 100%; max-width: none; margin: 0; }
   #settings-app .pap-settings .pap-err { grid-area: err; }
+  #settings-app .pap-settings .pap-studio-ic { grid-area: sic; justify-self: center; }   /* Use my studio icon: its own row under the colours */
   /* the danger zone as one block: 'Delete account' | the button, the warning under both */
   /* the danger zone as one block: DANGER ZONE | the button on one row, 'Delete account' and its warning under */
   #settings-app .stg-danger-group { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: calc(10 * var(--u, 1px)); row-gap: calc(2 * var(--u, 1px)); align-items: center; }
