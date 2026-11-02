@@ -1668,7 +1668,7 @@
       m.content.innerHTML =
         '<p style="font-size:16px;line-height:1.5;margin:0 0 12px">Your account, profile, games and posts disappear now, and are removed for good after 30 days. Until then, support can bring the account back.</p>' +
         '<p style="font-size:16px;margin:0 0 8px">Type <b>DELETE</b> to confirm:</p>' +
-        '<input type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:100%;box-sizing:border-box;font-size:18px;padding:10px 12px;border-radius:8px;background:var(--bg,#0b0b14);color:var(--text,#eee)">' +
+        '<input type="text" data-no-mic autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:100%;box-sizing:border-box;font-size:18px;padding:10px 12px;border-radius:8px;background:var(--bg,#0b0b14);color:var(--text,#eee)">' +
         '<p class="stg-del-msg" style="font-size:16px;color:#ff6b6b;min-height:20px;margin:8px 0 0"></p>';
       var inp = m.content.querySelector('input'), msg = m.content.querySelector('.stg-del-msg');
       var go = document.createElement('button'); go.type = 'button'; go.textContent = 'Delete my account'; go.disabled = true;
