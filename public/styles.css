@@ -406,7 +406,7 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 .stg-email-domain-select { min-width: calc(140 * var(--u, 1px)); }
 .stg-email-add-btn { width: auto; padding: calc(7 * var(--u, 1px)) calc(16 * var(--u, 1px)); }
 
-/* ── Revenue / Connect ───────────────────────── */
+/* ── badges (Team) ───────────────────────── */
 .stg-connect-badge {
   display: inline-block; padding: calc(3 * var(--u, 1px)) calc(10 * var(--u, 1px)); border-radius: calc(10 * var(--u, 1px));
   font-size: calc(14 * var(--u, 1px)); font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.04em;
@@ -414,12 +414,6 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 .stg-connect-badge.active { background: rgba(57,255,127,0.12); color: #39ff7f; border: calc(1 * var(--u, 1px)) solid rgba(57,255,127,0.3); }
 .stg-connect-badge.pending { background: rgba(255,215,0,0.1); color: var(--yellow); border: calc(1 * var(--u, 1px)) solid rgba(255,215,0,0.2); }
 .stg-connect-badge.inactive { background: var(--bg); color: var(--text-dim); border: calc(1 * var(--u, 1px)) solid var(--border); }
-.stg-connect-rate { font-family: var(--font-mono); font-size: calc(18 * var(--u, 1px)); font-weight: 700; color: var(--primary); }
-.stg-upgrade-prompt {
-  background: color-mix(in srgb, var(--accent), transparent 97%); border: calc(1 * var(--u, 1px)) solid color-mix(in srgb, var(--accent), transparent 88%); border-radius: calc(8 * var(--u, 1px));
-  padding: calc(18 * var(--u, 1px)) calc(20 * var(--u, 1px));
-}
-
 /* ── Team ───────────────────────────────────── */
 .stg-team-row {
   display: flex; align-items: center; gap: calc(12 * var(--u, 1px));
