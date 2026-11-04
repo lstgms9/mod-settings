@@ -899,6 +899,25 @@ module.exports = function(router, ctx) {
     }
   });
 
+  // POST /gpay — GAMOID'S RECEIVING WALLET for a prod box (Damon 2026-11-04: one payment, split by us). The wallet runs
+  // here on dev (services/gamoid-pay, 127.0.0.1:3096, its mnemonic in dev's pocket); a prod's billpay asks with its box
+  // token — the same handshake as the release routes — and gets the result only. The vault is not involved (keyop now
+  // points at the vault, which runs only its fixed keyed ops). Fixed ops (lib/keyop-ops.js gpay.*), gamoid's box only.
+  router.post('/gpay', async (req, res) => {
+    if (process.env.WORKER_MODE === '1' || process.env.WORKER_MODE === 'true') return res.error(404, 'Not available on workers');
+    const box = boxFromToken(req);
+    if (!box) return res.error(403, 'Box token required');
+    const op = String((req.body || {}).op || '');
+    if (!/^(invoice|status|list|retry|refund|health)$/.test(op)) return res.error(400, 'unknown gpay op');
+    try {
+      const result = await require('./lib/keyop-ops.js').run(box, 'gpay.' + op, (req.body || {}).args);
+      res.json({ ok: true, result: result === undefined ? null : result });
+    } catch (e) {
+      console.log('[gpay] ' + box + ' ' + op + ' FAIL ' + String(e.message || e).slice(0, 160));
+      res.json({ error: String(e.message || e).slice(0, 300) });
+    }
+  });
+
   // POST /release/stats — a box's live metrics payload for the server
   // dashboard's box tabs (Damon 2026-09-06). Restored 2026-10-14: the 09-27
   // console rewrite dropped it, prod's collector kept posting into a 404 and
