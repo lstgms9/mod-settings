@@ -207,7 +207,7 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 /* Generic input style — used by the new Profile group (country select,
    timezone select, display name, bio, platform handle). Matches the
    site's dark theme + cyan focus instead of the browser default grey. */
-#settings-app .stg-input, #settings-app select.stg-input, #settings-app textarea.stg-input {
+#settings-app .stg-input, #settings-app select.stg-input {
   background: var(--bg); border-radius: calc(6 * var(--u, 1px));
   padding: calc(8 * var(--u, 1px)) calc(12 * var(--u, 1px)); font-size: calc(14 * var(--u, 1px)); font-family: inherit; color: var(--text);
   outline: none; transition: border-color 0.2s; appearance: none;

@@ -1030,7 +1030,7 @@
         cSel.value = s.country;
         if (flagEl) flagEl.innerHTML = flagImg(s.country) || GLOBE_IC;
       }
-      if (bio) bio.value = s.bio || '';
+      if (bio) { bio.value = s.bio || ''; if (window.platform && platform.ui.textBox) { platform.ui.textBox(bio); platform.ui.textBox.fit(bio); } }   // THE ONE TEXT BOX
       _platformState = (s.platforms && typeof s.platforms === 'object') ? Object.assign({}, s.platforms) : {};
       renderPlatformRows();
       refreshAddSelect();
