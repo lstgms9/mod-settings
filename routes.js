@@ -517,8 +517,9 @@ module.exports = function(router, ctx) {
   // ── Team management routes ──────────────────────────────────
   function requireAdmin(req, res) {
     if (!req.user) { res.error(401, 'Not logged in'); return false; }
-    const role = req.user.role || 'owner';
-    if (role !== 'owner' && role !== 'admin') { res.error(403, 'Admin access required'); return false; }
+    // an explicit owner/admin role or superOwner only — never a default (a session with no role was let through as 'owner')
+    const u = req.user;
+    if (u._viewAs || !(u.superOwner || u.role === 'owner' || u.role === 'admin')) { res.error(403, 'Admin access required'); return false; }
     return true;
   }
 
