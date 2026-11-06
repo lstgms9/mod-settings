@@ -3,6 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
 const QRCode = require('qrcode');
+const { isAdmin } = require('../../okdunio/lib/roles');
 const archiver = require('archiver');
 
 module.exports = function(router, ctx) {
@@ -525,8 +526,7 @@ module.exports = function(router, ctx) {
   // the site's whole address list (every studio's) — tenant admins only, never a studio 'owner'
   function requireSiteAdmin(req, res) {
     if (!req.user) { res.error(401, 'Not logged in'); return false; }
-    const u = req.user;
-    if (u._viewAs || !(u.superOwner || u.role === 'admin')) { res.error(403, 'Admin access required'); return false; }
+    if (!isAdmin(req)) { res.error(403, 'Admin access required'); return false; }
     return true;
   }
 
