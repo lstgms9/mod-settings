@@ -522,6 +522,13 @@ module.exports = function(router, ctx) {
     if (u._viewAs || !(u.superOwner || u.role === 'owner' || u.role === 'admin')) { res.error(403, 'Admin access required'); return false; }
     return true;
   }
+  // the site's whole address list (every studio's) — tenant admins only, never a studio 'owner'
+  function requireSiteAdmin(req, res) {
+    if (!req.user) { res.error(401, 'Not logged in'); return false; }
+    const u = req.user;
+    if (u._viewAs || !(u.superOwner || u.role === 'admin')) { res.error(403, 'Admin access required'); return false; }
+    return true;
+  }
 
   // GET /team — list team members
   router.get('/team', async (req, res) => {
@@ -654,7 +661,7 @@ module.exports = function(router, ctx) {
 
   // GET /team/emails — list all domain email addresses (for assignment UI)
   router.get('/team/emails', async (req, res) => {
-    if (!requireAdmin(req, res)) return;
+    if (!requireSiteAdmin(req, res)) return;
     // Back-compat heal: old assignments stored ONLY the team_member record
     // id. Where the member carries an account id (user_id), mirror it into
     // assignedTo so existing assignments become visible to prod sessions.
@@ -687,7 +694,7 @@ module.exports = function(router, ctx) {
 
   // PUT /team/:userId/emails — assign email addresses to a team member
   router.put('/team/:userId/emails', async (req, res) => {
-    if (!requireAdmin(req, res)) return;
+    if (!requireSiteAdmin(req, res)) return;
     const { emailIds } = req.body || {};
     if (!Array.isArray(emailIds)) return res.error(400, 'emailIds array required');
     const tm = await storage.get('team_member', req.params.userId);
