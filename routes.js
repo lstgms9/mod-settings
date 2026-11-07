@@ -571,10 +571,9 @@ module.exports = function(router, ctx) {
       const link = `${publicUrl}?invite=${token}`;
       try {
         // config.signup.siteMail (gamoid, 2026-10-19): okdunio's mailer (vault/relay aware, like the sign-up
-        // code), from the site's own sender (config.signup.emailFrom). Every other site keeps the shell's mailer, no from.
+        // code), from the site's own sender (config.signup.emailFrom). Every other site: the same mailer, no from.
         const su = siteCfg(req).signup || {}, viaSite = su.siteMail === true;
-        let ses = null; if (viaSite) { try { ses = require.main.require('./lib/ses'); } catch (e) {} }
-        if (!ses) ses = require(path.join(__dirname, '../../admin/platform-shell/lib/ses'));
+        const ses = require.main.require('./lib/ses');
         await ses.sendEmail({
           from: (viaSite && su.emailFrom) || undefined,
           to: email,
