@@ -3,7 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
 const QRCode = require('qrcode');
-const { isAdmin } = require('../../okdunio/lib/roles');
+const { isAdmin } = require.main.require('./lib/roles');
 const archiver = require('archiver');
 
 module.exports = function(router, ctx) {
