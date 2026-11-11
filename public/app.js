@@ -884,7 +884,7 @@
       if (planEl && !_planTwo) { planEl.textContent = label; planEl.hidden = false; }
     }
     // Studio identity chip — icon square + logo wordmark. Renders to the
-    // LEFT of the tier badge for studio-tier viewers. Square = iconFileId;
+    // LEFT of the tier badge for studio-tier viewers. Square = ui.studioIcon;
     // wordmark = logoFileId when uploaded, else the studio name as text.
     try {
       var chip = document.getElementById('accountStudioChip');
@@ -898,7 +898,7 @@
         var name = (st && (st.name || st.slug)) || sesObj.studioSlug;
         var logo = st && st.meta && st.meta.logoFileId;
         if (!logo) logo = st && st.studioLogoFileId;
-        var icon = st && st.meta && st.meta.iconFileId;
+        var icon = platform.ui.studioIcon(st);
         var html = '';
         if (icon) html += '<img src="/_instance/files/' + esc(icon) + '" alt="' + esc(name) + '">';
         if (logo) {
