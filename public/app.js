@@ -194,13 +194,10 @@
       var btn = e.target.closest('.stg-seg-btn');
       if (!btn) return;
       var seg = btn.closest('.stg-seg');
-      // A LONE .stg-seg-btn is legal (Deploy's Refresh sits in a plain row, not
-      // in a segmented group) — reading .dataset off the missing group threw an
-      // uncaught TypeError on every Refresh click (caught by the gate, 2026-09-26).
-      if (!seg) return;
+      if (!seg) return;   // a seg button outside a keyed group (the role pickers)
       var key = seg.dataset.key;
-      seg.querySelectorAll('.stg-seg-btn').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
+      seg.querySelectorAll('.stg-seg-btn').forEach(function(b) { b.classList.remove('on'); });   // ui.seg's picked = on
+      btn.classList.add('on');
       prefs[key] = btn.dataset.val;
       schedSave();
     });
@@ -287,11 +284,11 @@
     grid.innerHTML = aiLinks.tiles.map(function(t) {
       var m = AI_MARK[t.id] || ['#888', '?'], act;
       if (t.builtin) act = '<div class="stg-ai9-ok">Built in \u2713</div><div class="stg-ai9-soon">' + esc(t.sub || '') + '</div>';
-      else if (t.linked) act = '<div class="stg-ai9-ok">Connected ✓</div><button class="stg-ai9-btn stg-ai9-off" data-ai="off" data-id="' + t.id + '">Disconnect</button>';
-      else if (!aiLinks.available) act = '<button class="stg-ai9-btn" disabled>Coming soon</button>';
-      else if (t.login === 'now') act = '<button class="stg-ai9-btn stg-ai9-go" data-ai="login" data-id="' + t.id + '">Log in</button>';
-      else if (t.login === 'soon' && !t.key) act = '<button class="stg-ai9-btn" disabled>Coming soon</button>';
-      else act = '<button class="stg-ai9-btn stg-ai9-go" data-ai="key" data-id="' + t.id + '">Add key</button>' +
+      else if (t.linked) act = '<div class="stg-ai9-ok">Connected ✓</div>' + platform.ui.buttonHtml({ kind: 'outline', colour: 'dark', text: 'Disconnect', className: 'stg-ai9-btn stg-ai9-off', data: { ai: 'off', id: t.id } });
+      else if (!aiLinks.available) act = platform.ui.buttonHtml({ kind: 'outline', colour: 'dark', text: 'Coming soon', className: 'stg-ai9-btn', disabled: true });
+      else if (t.login === 'now') act = platform.ui.buttonHtml({ kind: 'filled', text: 'Log in', className: 'stg-ai9-btn stg-ai9-go', data: { ai: 'login', id: t.id } });
+      else if (t.login === 'soon' && !t.key) act = platform.ui.buttonHtml({ kind: 'outline', colour: 'dark', text: 'Coming soon', className: 'stg-ai9-btn', disabled: true });
+      else act = platform.ui.buttonHtml({ kind: 'filled', text: 'Add key', className: 'stg-ai9-btn stg-ai9-go', data: { ai: 'key', id: t.id } }) +
         (t.login === 'soon' ? '<div class="stg-ai9-soon">Log in: soon</div>' : '');
       return '<div class="stg-ai9' + (t.linked ? ' on' : '') + '" data-id="' + t.id + '">' +
         '<div class="stg-ai9-mark" style="color:' + m[0] + ';background:' + m[0] + '1f;border-color:' + m[0] + '55">' + m[1] + '</div>' +
@@ -446,8 +443,8 @@
               '<div class="stg-tfa-codes" style="display:grid;grid-template-columns:1fr 1fr;gap:calc(6 * var(--u, 1px));font-family:ui-monospace,monospace;margin-bottom:calc(12 * var(--u, 1px))">' +
                 codes.map(function(c){ return '<code style="background:#0b0b14;border:calc(1 * var(--u, 1px)) solid var(--border,#333);border-radius:calc(4 * var(--u, 1px));padding:calc(6 * var(--u, 1px)) calc(8 * var(--u, 1px));letter-spacing:calc(1 * var(--u, 1px))">' + c + '</code>'; }).join('') +
               '</div>' +
-              '<button class="stg-btn-primary" id="tfaRecCopy">Copy codes</button> ' +
-              '<button class="stg-seg-btn" id="tfaRecDone">Done</button>' +
+              platform.ui.buttonHtml({ kind: 'filled', text: 'Copy codes', id: 'tfaRecCopy' }) + ' ' +
+              platform.ui.buttonHtml({ kind: 'outline', colour: 'dark', text: 'Done', id: 'tfaRecDone' }) +
             '</div>';
           var copyBtn = document.getElementById('tfaRecCopy');
           if (copyBtn) copyBtn.addEventListener('click', function(){ try { navigator.clipboard.writeText(codes.join('\n')); toast('Recovery codes copied'); } catch(e) { toast('Select and copy them manually'); } });
@@ -600,7 +597,7 @@
       html += '<option value="' + esc(emailDomains[j].id) + '">' + esc(emailDomains[j].domain) + '</option>';
     }
     html += '</select>' +
-      '<button class="stg-ai-btn stg-ai-connect stg-email-add-btn" id="addEmailBtn">Add</button>' +
+      platform.ui.buttonHtml({ kind: 'filled', text: 'Add', id: 'addEmailBtn', className: 'stg-email-add-btn' }) +
       '</div>';
     container.innerHTML = html;
   }
@@ -742,9 +739,9 @@
       var key = seg.dataset.key;
       var val = prefs[key];
       if (val) {
-        seg.querySelectorAll('.stg-seg-btn').forEach(function(b) { b.classList.remove('active'); });
+        seg.querySelectorAll('.stg-seg-btn').forEach(function(b) { b.classList.remove('on'); });
         var match = seg.querySelector('[data-val="' + val + '"]');
-        if (match) match.classList.add('active');
+        if (match) match.classList.add('on');
       }
     });
     // toggles
@@ -980,7 +977,7 @@
       return '<div class="stg-row" style="padding:calc(6 * var(--u, 1px)) calc(10 * var(--u, 1px));background:var(--bg-card,#12121f);border:calc(1 * var(--u, 1px)) solid var(--border,#252540);border-radius:calc(6 * var(--u, 1px));gap:calc(8 * var(--u, 1px));">' +
         '<span style="min-width:calc(140 * var(--u, 1px));font-size:calc(14 * var(--u, 1px))">' + _platLabel(k) + '</span>' +
         '<input type="text" class="stg-input plat-row-input" data-key="' + k + '" value="' + String(handle || '').replace(/"/g,'&quot;') + '" placeholder="handle / URL" style="flex:1">' +
-        '<button class="stg-ai-btn" data-rm="' + k + '" style="width:auto;padding:calc(6 * var(--u, 1px)) calc(12 * var(--u, 1px));background:transparent;border:calc(1 * var(--u, 1px)) solid var(--red,#ff3997);color:var(--red,#ff3997)">×</button>' +
+        platform.ui.buttonHtml({ kind: 'icon-square', colour: 'danger', icon: 'close', title: 'Remove', data: { rm: k } }) +
       '</div>';
     }).join('');
     Array.from(host.querySelectorAll('.plat-row-input')).forEach(function(inp) {
@@ -1046,13 +1043,13 @@
       dnIn.addEventListener('input', dnSync);
       dnBtn.addEventListener('click', async function() {
         var v = dnIn.value.trim(); if (!v) return;
-        dnBtn.disabled = true; dnBtn.textContent = 'Saving…';
+        dnBtn.disabled = true; platform.ui.buttonText(dnBtn, 'Saving…');
         try {
           var r = await fetch('/api/auth/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ displayName: v }) });
           if (r.ok) { dnIn.dataset.original = v; if (dnHint) { dnHint.textContent = 'Saved.'; dnHint.className = 'stg-acct-username-hint ok'; } }
           else if (dnHint) { var dj = await r.json().catch(function() { return null; }); dnHint.textContent = (dj && dj.error) || 'Save failed'; dnHint.className = 'stg-acct-username-hint bad'; }   // 'That display name is taken — pick another.'
         } catch (e) { if (dnHint) { dnHint.textContent = 'Connection error'; dnHint.className = 'stg-acct-username-hint bad'; } }
-        dnBtn.textContent = 'Save'; dnSync();
+        platform.ui.buttonText(dnBtn, 'Save'); dnSync();
       });
     }
     var addBtn = document.getElementById('platformAddBtn');
@@ -1096,7 +1093,7 @@
       return '<div class="stg-row" style="padding:calc(6 * var(--u, 1px)) calc(10 * var(--u, 1px));background:var(--bg-card,#12121f);border:calc(1 * var(--u, 1px)) solid var(--border,#252540);border-radius:calc(6 * var(--u, 1px));gap:calc(8 * var(--u, 1px));">' +
         '<span style="min-width:calc(140 * var(--u, 1px));font-size:calc(14 * var(--u, 1px))">' + (r.name || '').replace(/</g,'&lt;') + '</span>' +
         '<a href="' + (r.url || '#').replace(/"/g,'&quot;') + '" target="_blank" rel="noopener" style="flex:1;font-size:calc(14 * var(--u, 1px));color:var(--primary);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.url || '').replace(/</g,'&lt;') + '</a>' +
-        '<button class="stg-ai-btn" data-press-rm="' + i + '" style="width:auto;padding:calc(6 * var(--u, 1px)) calc(12 * var(--u, 1px));background:transparent;border:calc(1 * var(--u, 1px)) solid var(--red,#ff3997);color:var(--red,#ff3997)">×</button>' +
+        platform.ui.buttonHtml({ kind: 'icon-square', colour: 'danger', icon: 'close', title: 'Remove', data: { 'press-rm': i } }) +
       '</div>';
     }).join('');
     Array.from(host.querySelectorAll('[data-press-rm]')).forEach(function(btn) {
@@ -1124,21 +1121,21 @@
       bio:         bio ? bio.value.trim() : null,
       platforms:   _platformState,
     };
-    if (btn) { btn.disabled = true; btn.dataset.orig = btn.textContent; btn.textContent = 'Saving…'; }
+    if (btn) { btn.disabled = true; btn.dataset.orig = btn.textContent; platform.ui.buttonText(btn, 'Saving…'); }
     try {
       var r = await fetch('/api/auth/profile', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       if (r.ok) {
-        if (btn) { btn.textContent = 'Saved ✓'; setTimeout(function(){ btn.disabled = false; btn.textContent = btn.dataset.orig || 'Save profile'; if (_profileWatch) _profileWatch.reset(); }, 1200); }
+        if (btn) { platform.ui.buttonText(btn, 'Saved ✓'); setTimeout(function(){ btn.disabled = false; platform.ui.buttonText(btn, btn.dataset.orig || 'Save profile'); if (_profileWatch) _profileWatch.reset(); }, 1200); }
         else toast('Saved');   // saved on change (no Save button)
       } else if (btn) {
-        btn.textContent = 'Failed'; btn.disabled = false;
-        setTimeout(function(){ btn.textContent = btn.dataset.orig || 'Save profile'; }, 1500);
+        platform.ui.buttonText(btn, 'Failed'); btn.disabled = false;
+        setTimeout(function(){ platform.ui.buttonText(btn, btn.dataset.orig || 'Save profile'); }, 1500);
       }
     } catch (e) {
-      if (btn) { btn.textContent = 'Network error'; btn.disabled = false; }
+      if (btn) { platform.ui.buttonText(btn, 'Network error'); btn.disabled = false; }
     }
   }
 
@@ -1187,19 +1184,19 @@
         '</div>' +
         '<span class="stg-role-badge ' + roleBadgeClass(m.role) + '">' + m.role + '</span>';
       if (m.role !== 'owner' && _userRole === 'owner') {
-        html += '<button class="stg-team-action" data-action="edit-access" data-userid="' + m.id + '">Edit</button>';
-        html += '<button class="stg-team-action stg-team-remove" data-action="remove" data-userid="' + m.id + '">Remove</button>';
+        html += platform.ui.buttonHtml({ kind: 'outline', colour: 'dark', size: 'sm', text: 'Edit', className: 'stg-team-action', data: { action: 'edit-access', userid: m.id } });
+        html += platform.ui.buttonHtml({ kind: 'outline', colour: 'danger', size: 'sm', text: 'Remove', className: 'stg-team-action stg-team-remove', data: { action: 'remove', userid: m.id } });
       } else if (m.role !== 'owner' && _userRole === 'admin') {
-        html += '<button class="stg-team-action" data-action="edit-access" data-userid="' + m.id + '">Edit</button>';
-        html += '<button class="stg-team-action stg-team-remove" data-action="remove" data-userid="' + m.id + '">Remove</button>';
+        html += platform.ui.buttonHtml({ kind: 'outline', colour: 'dark', size: 'sm', text: 'Edit', className: 'stg-team-action', data: { action: 'edit-access', userid: m.id } });
+        html += platform.ui.buttonHtml({ kind: 'outline', colour: 'danger', size: 'sm', text: 'Remove', className: 'stg-team-action stg-team-remove', data: { action: 'remove', userid: m.id } });
       }
       html += '</div>';
       // Inline edit panel (hidden by default)
       html += '<div class="stg-team-edit-panel" id="edit-' + m.id + '" style="display:none;">';
       if (_userRole === 'owner' && m.role !== 'owner') {
         html += '<div class="stg-team-edit-section"><span class="stg-label">Role:</span> ';
-        html += '<button class="stg-seg-btn' + (m.role === 'admin' ? ' active' : '') + '" data-setrole="admin" data-userid="' + m.id + '">Admin</button>';
-        html += '<button class="stg-seg-btn' + (m.role === 'member' ? ' active' : '') + '" data-setrole="member" data-userid="' + m.id + '">Member</button>';
+        html += '<button type="button" class="pui-seg-btn stg-seg-btn' + (m.role === 'admin' ? ' on' : '') + '" data-setrole="admin" data-userid="' + m.id + '">Admin</button>';
+        html += '<button type="button" class="pui-seg-btn stg-seg-btn' + (m.role === 'member' ? ' on' : '') + '" data-setrole="member" data-userid="' + m.id + '">Member</button>';
         html += '</div>';
       }
       if (m.role !== 'owner') {
@@ -1228,7 +1225,7 @@
           '<div class="stg-team-name">' + esc(inv.displayName || inv.email) + '</div>' +
           '<div class="stg-team-email">' + esc(inv.email) + ' <span class="stg-connect-badge pending">Pending</span></div>' +
         '</div>' +
-        '<button class="stg-team-action stg-team-remove" data-action="cancel-invite" data-inviteid="' + inv.id + '">Cancel</button>' +
+        platform.ui.buttonHtml({ kind: 'outline', colour: 'danger', size: 'sm', text: 'Cancel', className: 'stg-team-action stg-team-remove', data: { action: 'cancel-invite', inviteid: inv.id } }) +
         '</div>';
     }
     el.innerHTML = html;
@@ -1389,7 +1386,7 @@
       var panel = document.getElementById('edit-' + userId);
       if (panel) {
         panel.querySelectorAll('[data-setrole]').forEach(function(b) {
-          b.classList.toggle('active', b.dataset.setrole === role);
+          b.classList.toggle('on', b.dataset.setrole === role);
         });
       }
       // Update role badge on the team row
@@ -1427,9 +1424,10 @@
     if (_userRole === 'dev')    return 'dev';
     return 'player'; // free / unknown
   }
+  // the two plan pop-ups are THE shared pop-up (ui.modal); kept here so a finished upgrade closes them
+  var _planM = null, _slugM = null;
   function openPlanModal() {
-    var existing = document.getElementById('stgPlanModal');
-    if (existing) existing.remove();
+    if (_planM) _planM.close();
     loadTiers().then(function(tiers) {
       var cur = currentTierKey();
       var rows = tiers.map(function(t) {
@@ -1437,8 +1435,8 @@
         var isPaid = (t.monthly || t.price || 0) > 0;
         var priceLabel = isPaid ? ('$' + (t.monthly || t.price) + '/mo') : 'Free';
         var btn = isCur
-          ? '<button class="stg-ai-btn" disabled style="opacity:.5;cursor:default">CURRENT</button>'
-          : '<button class="stg-ai-btn stg-ai-connect" data-tier="' + t.id + '">' + (isPaid ? 'UPGRADE' : 'SWITCH') + '</button>';
+          ? platform.ui.buttonHtml({ kind: 'outline', colour: 'dark', text: 'Current', disabled: true })
+          : platform.ui.buttonHtml({ kind: 'filled', text: isPaid ? 'Upgrade' : 'Switch', data: { tier: t.id } });
         var color = t.color || 'var(--primary)';
         return '<div class="stg-plan-row" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg2,#12121f);border:1px solid var(--border,#252540);border-radius:8px;margin-bottom:10px">' +
           '<div style="flex:1">' +
@@ -1451,24 +1449,11 @@
           '</div>' +
         '</div>';
       }).join('');
-      var html =
-        '<div id="stgPlanModalBg" style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:var(--z-popup);display:flex;align-items:center;justify-content:center;padding:20px">' +
-          '<div style="background:var(--bg,#0b0b14);border:1px solid var(--border,#252540);border-radius:14px;padding:28px;width:520px;max-width:90vw;max-height:85vh;overflow:auto;position:relative">' +
-            '<button id="stgPlanClose" style="position:absolute;top:10px;right:14px;background:none;border:0;color:var(--text-mid,#a0aab0);font-size:22px;cursor:pointer">&times;</button>' +
-            '<h2 style="font-family:var(--font-head,Bungee);margin:0 0 6px;color:var(--text,#e4e4f0);font-size:20px">Manage Plan</h2>' +
-            '<p style="margin:0 0 18px;font-size:14px;color:var(--text-mid,#a0aab0)">Current: <strong style="color:var(--text,#e4e4f0)">' + cur.toUpperCase() + '</strong>. Upgrades route through Stripe.</p>' +
-            (tiers.length ? rows : '<div style="color:var(--text-mid,#a0aab0);font-size:14px">No tier config available.</div>') +
-          '</div>' +
-        '</div>';
-      var wrap = document.createElement('div');
-      wrap.id = 'stgPlanModal';
-      wrap.innerHTML = html;
-      document.body.appendChild(wrap);
-      var bg = document.getElementById('stgPlanModalBg');
-      var closeBtn = document.getElementById('stgPlanClose');
-      function shut() { wrap.remove(); }
-      closeBtn.addEventListener('click', shut);
-      bg.addEventListener('click', function(e) { if (e.target === bg) shut(); });
+      var m = _planM = platform.ui.modal({ title: 'Manage Plan', onClose: function() { _planM = null; } });
+      m.content.innerHTML = '<p style="margin:0 0 18px;font-size:14px;color:var(--text-mid,#a0aab0)">Current: <strong style="color:var(--text,#e4e4f0)">' + cur.toUpperCase() + '</strong>. Upgrades route through Stripe.</p>' +
+        (tiers.length ? rows : '<div style="color:var(--text-mid,#a0aab0);font-size:14px">No tier config available.</div>');
+      var wrap = m.content;
+      function shut() { m.close(); }
       wrap.querySelectorAll('button[data-tier]').forEach(function(b) {
         b.addEventListener('click', async function() {
           var tierId = b.dataset.tier;
@@ -1710,7 +1695,7 @@
           '</select>' +
           (isPrimary
             ? '<span class="stg-sublabel" title="Your studio\'s default mailbox — can\'t be deleted" style="white-space:nowrap;padding:calc(6 * var(--u, 1px)) calc(14 * var(--u, 1px));opacity:.7;">Default</span>'
-            : '<button class="stg-ai-btn mbx-del" data-id="' + addr.id + '" style="background:transparent;color:var(--red,#ff3997);border:calc(1 * var(--u, 1px)) solid var(--border,#252540);padding:calc(6 * var(--u, 1px)) calc(14 * var(--u, 1px));border-radius:calc(8 * var(--u, 1px));cursor:pointer;white-space:nowrap;">Delete</button>') +
+            : platform.ui.buttonHtml({ kind: 'outline', colour: 'danger', text: 'Delete', className: 'mbx-del', data: { id: addr.id } })) +
         '</div>';
       host.appendChild(row);
       var sel = row.querySelector('select.mbx-reassign');
@@ -1751,7 +1736,7 @@
     var assignedTo = sel.value ? [sel.value] : [];
     btn.disabled = true;
     var oldText = btn.textContent;
-    btn.textContent = 'Creating…';
+    platform.ui.buttonText(btn, 'Creating…');
     try {
       var url, payload;
       if (_mbxMode === 'company') {
@@ -1780,7 +1765,7 @@
       showMbxErr(e.message);
     } finally {
       btn.disabled = false;
-      btn.textContent = oldText;
+      platform.ui.buttonText(btn, oldText);
     }
   }
   async function refreshMailboxList() {
@@ -1833,7 +1818,7 @@
   // availability check against /api/auth/check-studio-slug, hard
   // warning that the slug is permanent.
   async function doUpgradeTier(tierId, t, srcBtn, studioSlug) {
-    if (srcBtn) { srcBtn.disabled = true; srcBtn.textContent = 'UPDATING...'; }
+    if (srcBtn) { srcBtn.disabled = true; platform.ui.buttonText(srcBtn, 'Updating…'); }
     try {
       var body = { tier: tierId };
       if (studioSlug) body.studioSlug = studioSlug;
@@ -1845,28 +1830,22 @@
       var j = await r.json();
       if (!r.ok || !j.ok) throw new Error(j.error || 'Upgrade failed');
       toast('Plan updated to ' + (t.name || tierId).toUpperCase());
-      var planModal = document.getElementById('stgPlanModal');
-      if (planModal) planModal.remove();
-      var slugModal = document.getElementById('stgSlugModal');
-      if (slugModal) slugModal.remove();
+      if (_slugM) _slugM.close();
+      if (_planM) _planM.close();
       setTimeout(function() { location.reload(); }, 600);
     } catch (e) {
-      if (srcBtn) { srcBtn.disabled = false; srcBtn.textContent = 'RETRY'; }
+      if (srcBtn) { srcBtn.disabled = false; platform.ui.buttonText(srcBtn, 'Retry'); }
       toast('Upgrade failed: ' + e.message);
       throw e;
     }
   }
   function openStudioSlugPicker(tierId, t, srcBtn) {
-    var existing = document.getElementById('stgSlugModal');
-    if (existing) existing.remove();
+    if (_slugM) _slugM.close();
     // Read parent mail domain from inlined SIGNUP_CONFIG if available;
     // fall back to gamoid.io.
     var mailDomain = (window.INSTANCE_MAIL_DOMAIN || 'gamoids.com');
-    var html =
-      '<div id="stgSlugModalBg" style="position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:var(--z-popup-over);display:flex;align-items:center;justify-content:center;padding:20px">' +
-        '<div style="background:var(--bg,#0b0b14);border:1px solid var(--border,#252540);border-radius:14px;padding:28px;width:500px;max-width:90vw;position:relative">' +
-          '<button id="stgSlugClose" style="position:absolute;top:10px;right:14px;background:none;border:0;color:var(--text-mid,#a0aab0);font-size:22px;cursor:pointer">&times;</button>' +
-          '<h2 style="font-family:var(--font-head,Bungee);margin:0 0 6px;color:var(--text,#e4e4f0);font-size:20px">Choose your studio URL</h2>' +
+    var m = _slugM = platform.ui.modal({ title: 'Choose your studio URL', onClose: function() { _slugM = null; } });
+    m.content.innerHTML =
           '<p style="margin:0 0 14px;font-size:14px;color:var(--text-mid,#a0aab0);line-height:1.45">Pick your studio URL. It becomes your website (<strong>your-slug.' + mailDomain + '</strong>) and your studio email (<strong>your-slug@' + mailDomain + '</strong>). <strong style="color:var(--red,#ff3997)">It can&rsquo;t be changed later</strong> — choose carefully.</p>' +
           '<div style="display:flex;align-items:center;background:var(--bg2,#12121f);border:1px solid var(--border,#252540);border-radius:8px;padding:4px 4px 4px 12px;margin-bottom:8px">' +
             '<input id="stgSlugIn" class="pui-bare" type="text" placeholder="gamebolina" maxlength="30" autocapitalize="off" spellcheck="false" autocomplete="off" style="flex:1;background:transparent;border:none;color:var(--text,#e4e4f0);font-family:var(--font-mono,monospace);font-size:15px;outline:none;padding:8px 0">' +
@@ -1875,27 +1854,16 @@
           '<div id="stgSlugStatus" style="font-size:14px;min-height:18px;font-family:var(--font-mono,monospace);color:var(--text-mid,#a0aab0)">3-30 chars, lowercase letters, numbers, hyphens.</div>' +
           '<div style="background:rgba(255,57,151,0.08);border:1px solid rgba(255,57,151,0.3);border-radius:8px;padding:10px 12px;margin:14px 0;font-size:14px;color:var(--text,#e4e4f0);line-height:1.4">' +
             '<strong style="color:var(--red,#ff3997)">Heads up:</strong> Your studio website (<span id="stgSlugPreview1" style="color:var(--primary)">…</span>) and emails (<span id="stgSlugPreview2" style="color:var(--primary)">…@…</span>) will use this URL forever.' +
-          '</div>' +
-          '<div style="display:flex;gap:8px;justify-content:flex-end">' +
-            '<button id="stgSlugCancel" class="stg-ai-btn" style="background:transparent;color:var(--text-mid,#a0aab0);border:1px solid var(--border,#252540);padding:10px 18px;border-radius:8px;cursor:pointer">Cancel</button>' +
-            '<button id="stgSlugConfirm" class="stg-ai-btn stg-ai-connect" disabled style="padding:10px 22px;opacity:.5">Confirm &amp; Upgrade</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    var wrap = document.createElement('div');
-    wrap.id = 'stgSlugModal';
-    wrap.innerHTML = html;
-    document.body.appendChild(wrap);
-    var bg = document.getElementById('stgSlugModalBg');
+          '</div>';
+    m.actions.innerHTML = platform.ui.buttonHtml({ kind: 'outline', colour: 'dark', text: 'Cancel', id: 'stgSlugCancel' }) +
+      platform.ui.buttonHtml({ kind: 'filled', text: 'Confirm & Upgrade', id: 'stgSlugConfirm', disabled: true });
     var input = document.getElementById('stgSlugIn');
     var status = document.getElementById('stgSlugStatus');
     var preview1 = document.getElementById('stgSlugPreview1');
     var preview2 = document.getElementById('stgSlugPreview2');
     var confirm = document.getElementById('stgSlugConfirm');
-    function shut() { wrap.remove(); }
-    document.getElementById('stgSlugClose').addEventListener('click', shut);
+    function shut() { m.close(); }
     document.getElementById('stgSlugCancel').addEventListener('click', shut);
-    bg.addEventListener('click', function(e) { if (e.target === bg) shut(); });
     input.focus();
     var checkTimer = null, lastChecked = '', okStr = false;
     function setStatus(text, color) {
@@ -1904,8 +1872,6 @@
     }
     function setConfirmEnabled(en) {
       confirm.disabled = !en;
-      confirm.style.opacity = en ? '1' : '.5';
-      confirm.style.cursor = en ? 'pointer' : 'default';
     }
     function refreshPreview() {
       var v = (input.value || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -1944,60 +1910,16 @@
       var v = (input.value || '').toLowerCase();
       if (!v || !okStr || v !== lastChecked) return;
       confirm.disabled = true;
-      confirm.textContent = 'UPGRADING…';
+      platform.ui.buttonText(confirm, 'Upgrading…');
       try { await doUpgradeTier(tierId, t, srcBtn, v); }
       catch (e) {
         confirm.disabled = false;
-        confirm.textContent = 'Confirm & Upgrade';
+        platform.ui.buttonText(confirm, 'Confirm & Upgrade');
       }
     });
   }
 
   // ── Init ────────────────────────────────────────────────────
-  // Promise-based confirm modal — replaces window.confirm() so
-  // dialogs match the rest of the app's chrome. Returns a Promise
-  // that resolves to true (confirm) or false (cancel / backdrop /
-  // Escape). Supports a `danger` flag that switches the confirm
-  // button to red for destructive actions.
-  function showConfirmModal(opts) {
-    opts = opts || {};
-    return new Promise(function(resolve) {
-      var bg = document.getElementById('stgConfirmBg');
-      var title = document.getElementById('stgConfirmTitle');
-      var body = document.getElementById('stgConfirmBody');
-      var okBtn = document.getElementById('stgConfirmOk');
-      var cancelBtn = document.getElementById('stgConfirmCancel');
-      var closeX = document.getElementById('stgConfirmCloseX');
-      if (!bg || !okBtn || !cancelBtn) { platform.ui.confirm(opts.body || opts.title || 'Confirm?', { ok: opts.confirmText }).then(resolve); return; }
-      title.textContent = opts.title || 'Confirm';
-      // body can be plain text or HTML — accept the riskier opt-in.
-      if (opts.bodyHtml) body.innerHTML = opts.bodyHtml; else body.textContent = opts.body || '';
-      okBtn.textContent = opts.confirmText || 'OK';
-      cancelBtn.textContent = opts.cancelText || 'Cancel';
-      okBtn.classList.toggle('danger', !!opts.danger);
-      function cleanup() {
-        bg.classList.remove('open');
-        bg.removeEventListener('mousedown', backdropDown);
-        bg.removeEventListener('mouseup', backdropUp);
-        document.removeEventListener('keydown', onKey);
-        okBtn.onclick = null; cancelBtn.onclick = null; closeX.onclick = null;
-      }
-      function close(v) { cleanup(); resolve(v); }
-      okBtn.onclick = function() { close(true); };
-      cancelBtn.onclick = function() { close(false); };
-      closeX.onclick = function() { close(false); };
-      var _md = false;
-      function backdropDown(e) { _md = (e.target === bg); }
-      function backdropUp(e) { if (_md && e.target === bg) close(false); _md = false; }
-      bg.addEventListener('mousedown', backdropDown);
-      bg.addEventListener('mouseup', backdropUp);
-      function onKey(e) { if (e.key === 'Escape') close(false); }
-      document.addEventListener('keydown', onKey);
-      bg.classList.add('open');
-      setTimeout(function() { okBtn.focus(); }, 30);
-    });
-  }
-  window._stgConfirm = showConfirmModal;
 
   var _tierGate = null;
   // Panes this tenant switched off (config.settings.hideSections → PUB_CONFIG.settingsHide; gamoid v1, Damon 2026-10-15:
@@ -2160,21 +2082,20 @@
           '<div class="stg-sublabel">' + (g.pushable
             ? 'State: ' + esc(g.state) + ' — ready to push'
             : 'State: ' + esc(g.state) + ' — reach beta or live to push') + '</div></div>' +
-          '<button class="stg-ai-btn stg-ai-connect pub-go" data-id="' + esc(g.id) + '" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));"' +
-          (g.pushable ? '' : ' disabled') + '>Push to production</button></div>';
+          platform.ui.buttonHtml({ kind: 'filled', text: 'Push to production', className: 'pub-go', data: { id: g.id }, disabled: !g.pushable }) + '</div>';
       }).join('');
       if (!s.pushed.length) pushedEl.innerHTML = '<span style="color:var(--text-mid)">Nothing pushed from here yet.</span>';
       else pushedEl.innerHTML = s.pushed.map(function(g) {
         return '<div class="stg-row">' +
           '<div><div class="stg-label">' + esc(g.name || g.slug) + '</div>' +
           '<div class="stg-sublabel">Pushed ' + esc(String(g.pushedAt || '').slice(0, 16).replace('T', ' ')) + (g.sha ? ' @ ' + esc(g.sha) : '') + '</div></div>' +
-          '<button class="stg-ai-btn pub-back" data-id="' + esc(g.id) + '" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));">Pull back</button></div>';
+          platform.ui.buttonHtml({ kind: 'outline', colour: 'dark', text: 'Pull back', className: 'pub-back', data: { id: g.id } }) + '</div>';
       }).join('');
     }
     render(st);
     async function act(btn, url, confirmMsg, busy) {
       if (!(await platform.ui.confirm(confirmMsg))) return;
-      btn.disabled = true; btn.textContent = busy;
+      btn.disabled = true; platform.ui.buttonText(btn, busy);
       try {
         var r = await fetch(url, { method: 'POST', credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gameId: btn.dataset.id }) });
@@ -2235,8 +2156,8 @@
     }
     function paintMode(mode) {
       if (!autoBtn) return;
-      autoBtn.classList.toggle('stg-ai-connect', mode === 'auto');
-      manBtn.classList.toggle('stg-ai-connect', mode === 'manual');
+      autoBtn.classList.toggle('on', mode === 'auto');
+      manBtn.classList.toggle('on', mode === 'manual');
     }
     async function loadSettings() {
       try {
@@ -2260,8 +2181,8 @@
     var mInfo = document.getElementById('bkMediaInfo');
     function paintMedia(on) {
       if (!mOn) return;
-      mOn.classList.toggle('stg-ai-connect', on);
-      mOff.classList.toggle('stg-ai-connect', !on);
+      mOn.classList.toggle('on', on);
+      mOff.classList.toggle('on', !on);
     }
     async function setMedia(on) {
       await fetch('/api/files/backup/settings', { method: 'POST', credentials: 'same-origin',
@@ -2455,8 +2376,7 @@
           '<div style="font-size:calc(14 * var(--u, 1px));font-family:ui-monospace,Menlo,monospace">v' + a.version +
           ' · ' + fmtAgo(a.createdAt) + (a.sites && a.sites.length ? ' · ' + esc(a.sites.join(' ')) : '') +
           (tags.length ? ' <b style="color:var(--primary)">[' + tags.join(', ') + ']</b>' : '') +
-          '</div><div><button class="stg-seg-btn rel-promote" data-v="' + a.version + '"' +
-          (a.version === s.stable ? ' disabled' : '') + '>' + (back ? 'Roll back' : 'Promote') + '</button></div></div>';
+          '</div><div>' + platform.ui.buttonHtml({ kind: 'outline', colour: 'dark', text: back ? 'Roll back' : 'Promote', className: 'rel-promote', data: { v: a.version }, disabled: a.version === s.stable }) + '</div></div>';
       }).join('') || '—';
       renderOutcome(s);
       logEl.textContent = s.buildLog || '(empty)';
@@ -2485,7 +2405,7 @@
         if (st) {
           render(st);
           if ((st.stable || 0) >= want) return st;
-          deployBtn.textContent = label + ' v' + (st.version || want) + '…';
+          platform.ui.buttonText(deployBtn, label + ' v' + (st.version || want) + '…');
         }
         await sleep(1000);
       }
@@ -2496,7 +2416,7 @@
       var next = (s.version || 0) + 1;
       if (!await ask('Deploy v' + next + '? This numbers the current dev commits and points stable at v' + next +
                      ' — every box applies it now (each fetches only its difference).')) return;
-      deployBtn.disabled = true; deployBtn.dataset.busy = '1'; deployBtn.textContent = 'Deploying… v' + next;
+      deployBtn.disabled = true; deployBtn.dataset.busy = '1'; platform.ui.buttonText(deployBtn, 'Deploying… v' + next);
       pendingMsg = 'deploying v' + next + ' — watch the Doing column: boxes fetch, apply, restart, health-check';
       render(s);
       var okDeploy = false;
@@ -2507,7 +2427,7 @@
       } catch (e) {}
       var st = okDeploy ? await settle(next, 'Deploying…') : null;
       delete deployBtn.dataset.busy;
-      deployBtn.disabled = false; deployBtn.textContent = 'Deploy';
+      deployBtn.disabled = false; platform.ui.buttonText(deployBtn, 'Deploy');
       pendingMsg = st ? null : (okDeploy ? 'deploy sent — refreshing…' : 'DEPLOY FAILED — stable unchanged at v' + s.stable);
       var s2 = await loadStatus(); if (s2) render(s2);
       if (st) deployHint.textContent = 'stable is v' + st.stable + ' — boxes are fetching and applying (Doing column)';
@@ -2522,7 +2442,7 @@
       if (!await ask((back ? 'Roll back to v' + v + '?' : 'Promote v' + v + '?') +
                      ' Every box applies it now (each fetches only its difference).')) return;
       var label = b.textContent;
-      b.disabled = true; b.textContent = back ? 'Rolling back…' : 'Promoting…';
+      b.disabled = true; platform.ui.buttonText(b, back ? 'Rolling back…' : 'Promoting…');
       pendingMsg = (back ? 'rolling back to v' + v : 'promoting v' + v) + ' — watch the Doing column';
       var ok = false;
       try {
@@ -2534,7 +2454,7 @@
         ok = r.ok;
       } catch (e) {}
       var st = ok ? await settle(v, back ? 'Rolling back…' : 'Promoting…') : null;
-      b.disabled = false; b.textContent = label;
+      b.disabled = false; platform.ui.buttonText(b, label);
       pendingMsg = st ? null : ('failed — stable unchanged at v' + s.stable);
       var s2 = await loadStatus(); if (s2) render(s2);
       if (st) deployHint.textContent = 'stable is v' + st.stable + ' — boxes are applying it (Doing column)';

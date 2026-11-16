@@ -45,25 +45,25 @@
         <div class="stg-group-label">THEME</div>
         <div class="stg-row">
           <div><div class="stg-label">Color theme</div><div class="stg-sublabel">Changes apply across all modules</div></div>
-          <div class="stg-seg stg-seg-equal" data-key="theme">
-            <button class="stg-seg-btn active" data-val="dark">Dark</button>
-            <button class="stg-seg-btn" data-val="grey">Grey</button>
-            <button class="stg-seg-btn" data-val="light-grey">Light Grey</button>
-            <button class="stg-seg-btn" data-val="light">Light</button>
-            <button class="stg-seg-btn" data-val="white">White</button>
+          <div class="pui-seg stg-seg stg-seg-equal" data-key="theme">
+            <button type="button" class="pui-seg-btn stg-seg-btn on" data-val="dark">Dark</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn" data-val="grey">Grey</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn" data-val="light-grey">Light Grey</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn" data-val="light">Light</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn" data-val="white">White</button>
           </div>
         </div>
         <div class="stg-row">
           <div><div class="stg-label">Accent color</div><div class="stg-sublabel">Primary highlight color</div></div>
-          <div class="stg-seg stg-seg-equal" data-key="accent">
+          <div class="pui-seg stg-seg stg-seg-equal" data-key="accent">
             <!-- each chip shows ITS OWN color, hardcoded to the ACCENTS map —
                  theme vars here (--primary/--red/--yellow) track the CURRENT
                  accent/theme, so "Cyan" rendered orange when accent=orange -->
-            <button class="stg-seg-btn active" data-val="cyan" style="color:#00e6d2">&#9679; Cyan</button>
-            <button class="stg-seg-btn" data-val="pink" style="color:#ff3997">&#9679; Pink</button>
-            <button class="stg-seg-btn" data-val="green" style="color:#39ff7f">&#9679; Green</button>
-            <button class="stg-seg-btn" data-val="yellow" style="color:#ffd700">&#9679; Gold</button>
-            <button class="stg-seg-btn" data-val="orange" style="color:#ff6b35">&#9679; Orange</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn on" data-val="cyan" style="color:#00e6d2">&#9679; Cyan</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn" data-val="pink" style="color:#ff3997">&#9679; Pink</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn" data-val="green" style="color:#39ff7f">&#9679; Green</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn" data-val="yellow" style="color:#ffd700">&#9679; Gold</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn" data-val="orange" style="color:#ff6b35">&#9679; Orange</button>
           </div>
         </div>
         <!-- Scanline overlay toggle removed — feature retired. -->
@@ -73,10 +73,10 @@
         <div class="stg-group-label">FONT SIZE</div>
         <div class="stg-row">
           <div><div class="stg-label">Interface text size</div></div>
-          <div class="stg-seg" data-key="fontSize">
-            <button class="stg-seg-btn" data-val="small">Small</button>
-            <button class="stg-seg-btn active" data-val="medium">Medium</button>
-            <button class="stg-seg-btn" data-val="large">Large</button>
+          <div class="pui-seg stg-seg" data-key="fontSize">
+            <button type="button" class="pui-seg-btn stg-seg-btn" data-val="small">Small</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn on" data-val="medium">Medium</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn" data-val="large">Large</button>
           </div>
         </div>
       </div>
@@ -125,7 +125,7 @@
             </select>
             <span class="stg-sublabel">Optional — leave empty to keep owner-only.</span>
           </div>
-          <button class="stg-ai-btn stg-ai-connect" id="mbxAddBtn" style="padding:calc(10 * var(--u, 1px)) calc(20 * var(--u, 1px));align-self:flex-end;">Create mailbox</button>
+          <button type="button" class="pui-b pui-b-filled pui-c-orange" id="mbxAddBtn"><span class="pui-b-t">Create mailbox</span></button>
           <div id="mbxErr" class="stg-sublabel" style="color:var(--red,#ff3997);display:none;"></div>
         </div>
       </div>
@@ -253,10 +253,10 @@
         </div>
         <div class="stg-row">
           <div><div class="stg-label">Date format</div></div>
-          <div class="stg-seg" data-key="dateFormat">
-            <button class="stg-seg-btn active" data-val="mdy">MM/DD/YYYY</button>
-            <button class="stg-seg-btn" data-val="dmy">DD/MM/YYYY</button>
-            <button class="stg-seg-btn" data-val="ymd">YYYY-MM-DD</button>
+          <div class="pui-seg stg-seg" data-key="dateFormat">
+            <button type="button" class="pui-seg-btn stg-seg-btn on" data-val="mdy">MM/DD/YYYY</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn" data-val="dmy">DD/MM/YYYY</button>
+            <button type="button" class="pui-seg-btn stg-seg-btn" data-val="ymd">YYYY-MM-DD</button>
           </div>
         </div>
         <div class="stg-row">
@@ -283,7 +283,7 @@
         </div>
         <div class="stg-tfa-panel" id="tfaPanel">
           <div style="font-size:calc(14 * var(--u, 1px));color:var(--text);font-weight:600;margin-bottom:calc(12 * var(--u, 1px));">Choose your 2FA method:</div>
-          <button type="button" class="pui-secondary stg-tfa-method" id="tfa-totp" data-method="totp">
+          <button type="button" class="pui-b pui-b-box pui-c-orange stg-tfa-method" id="tfa-totp" data-method="totp">
             <div class="stg-tfa-method-icon"><svg class="pui-ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg></div>
             <div style="flex:1">
               <div class="stg-tfa-method-name">Authenticator App</div>
@@ -291,7 +291,7 @@
             </div>
             <div class="stg-tfa-radio"></div>
           </button>
-          <button type="button" class="pui-secondary stg-tfa-method" id="tfa-email" data-method="email">
+          <button type="button" class="pui-b pui-b-box pui-c-orange stg-tfa-method" id="tfa-email" data-method="email">
             <div class="stg-tfa-method-icon"><svg class="pui-ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em" aria-hidden="true"><rect x="2" y="3.5" width="12" height="9" rx="1"/><path d="M2.5 4.5L8 9l5.5-4.5"/></svg></div>
             <div style="flex:1">
               <div class="stg-tfa-method-name">Email Code</div>
@@ -307,21 +307,21 @@
             <div class="stg-tfa-secret" id="tfaSecret"></div>
             <div style="text-align:center;font-size:calc(14 * var(--u, 1px));color:var(--text-dim);margin-bottom:calc(8 * var(--u, 1px));margin-top:calc(20 * var(--u, 1px));">Enter the 6-digit code from your app to verify:</div>
             <div class="stg-tfa-code-row" id="totpCodeRow"></div>
-            <button class="stg-tfa-verify-btn" id="totpVerifyBtn">Verify &amp; Enable</button>
+            <button type="button" class="pui-b pui-b-filled pui-c-orange" id="totpVerifyBtn"><span class="pui-b-t">Verify &amp; Enable</span></button>
           </div>
           <!-- Email setup -->
           <div class="stg-tfa-setup" id="setup-email">
             <div style="text-align:center;font-size:calc(14 * var(--u, 1px));color:var(--text-dim);margin-bottom:calc(12 * var(--u, 1px));">We'll send a test code to your email to verify it works.</div>
             <div style="text-align:center;margin-bottom:calc(16 * var(--u, 1px));">
-              <button class="stg-ai-btn stg-ai-connect" id="sendEmailCodeBtn" style="width:auto;padding:calc(10 * var(--u, 1px)) calc(24 * var(--u, 1px));">Send Test Code</button>
+              <button type="button" class="pui-b pui-b-filled pui-c-orange" id="sendEmailCodeBtn"><span class="pui-b-t">Send Test Code</span></button>
             </div>
             <div id="emailCodeArea" style="display:none;">
               <div style="text-align:center;font-size:calc(14 * var(--u, 1px));color:#39ff7f;margin-bottom:calc(12 * var(--u, 1px));">Code sent! Check your inbox.</div>
               <div class="stg-tfa-code-row" id="emailCodeRow"></div>
-              <button class="stg-tfa-verify-btn" id="emailVerifyBtn">Verify &amp; Enable</button>
+              <button type="button" class="pui-b pui-b-filled pui-c-orange" id="emailVerifyBtn"><span class="pui-b-t">Verify &amp; Enable</span></button>
             </div>
           </div>
-          <button type="button" class="stg-ai-btn stg-tfa-cancel" id="tfaCancelBtn">Cancel</button>
+          <button type="button" class="pui-b pui-b-outline pui-c-dark stg-tfa-cancel" id="tfaCancelBtn"><span class="pui-b-t">Cancel</span></button>
         </div>
       </div>
 
@@ -385,7 +385,7 @@
         </div>
         <div class="stg-row">
           <div><div class="stg-label">Export all data</div><div class="stg-sublabel">Download a zip of all your instance data</div></div>
-          <button class="stg-ai-btn stg-ai-connect" id="exportBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));">Export ZIP</button>
+          <button type="button" class="pui-b pui-b-filled pui-c-orange" id="exportBtn"><span class="pui-b-t">Export ZIP</span></button>
         </div>
       </div>
 
@@ -393,7 +393,7 @@
         <div class="stg-group-label">BROWSER</div>
         <div class="stg-row">
           <div><div class="stg-label">Clear browser cache</div><div class="stg-sublabel">Clears localStorage only -- no server data affected</div></div>
-          <button class="stg-ai-btn stg-ai-connect" id="clearCacheBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));">Clear</button>
+          <button type="button" class="pui-b pui-b-filled pui-c-orange" id="clearCacheBtn"><span class="pui-b-t">Clear</span></button>
         </div>
       </div>
     </div>
@@ -431,7 +431,7 @@
         <div class="stg-group-label">MEMBERS</div>
         <div id="teamMembers"></div>
         <div style="margin-top:calc(12 * var(--u, 1px));">
-          <button class="stg-ai-btn stg-ai-connect" id="inviteBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));">Invite Member</button>
+          <button type="button" class="pui-b pui-b-filled pui-c-orange" id="inviteBtn"><span class="pui-b-t">Invite Member</span></button>
         </div>
       </div>
 
@@ -484,7 +484,7 @@
           </form>
           <form class="stg-fieldrow" onsubmit="return false" autocomplete="off">
             <label class="stg-inbox"><input type="text" class="stg-inbox-in" id="profileDisplayName" enterkeyhint="done" placeholder="Display name" maxlength="40"></label>
-            <button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="displayNameSaveBtn" disabled>Save</button>
+            <button type="button" class="pui-b pui-b-filled pui-c-orange stg-acct-cta" id="displayNameSaveBtn" disabled><span class="pui-b-t">Save</span></button>
           </form>
           <div class="stg-acct-username-hint" id="displayNameHint"></div>
           <div class="stg-acct-pair stg-acct-pair-full stg-acct-pair-studio" id="accountStudioNameRow" style="display:none">
@@ -502,7 +502,7 @@
                 <span class="stg-flag-preview" id="profileCountryFlag"><svg class="pui-ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.6 3.7 2.6 6S9.8 12.3 8 14C6.2 12.3 5.4 10.3 5.4 8S6.2 3.7 8 2z"/></svg></span>
                 <select class="stg-inbox-in" id="profileCountry"></select>
               </span></label>
-            <button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="profileSaveBtn">Save</button>
+            <button type="button" class="pui-b pui-b-filled pui-c-orange stg-acct-cta" id="profileSaveBtn"><span class="pui-b-t">Save</span></button>
           </form>
         </div>
       </div>
@@ -522,7 +522,7 @@
           <div class="stg-info-platforms-add">
             <select class="stg-input" id="platformAddSelect"></select>
             <input type="text" class="stg-input" id="platformAddHandle" placeholder="@handle or URL">
-            <button class="stg-ai-btn stg-ai-connect" id="platformAddBtn">Add</button>
+            <button type="button" class="pui-b pui-b-filled pui-c-orange" id="platformAddBtn"><span class="pui-b-t">Add</span></button>
           </div>
         </label>
         <label class="stg-info-field">
@@ -531,7 +531,7 @@
           <div class="stg-info-platforms-add">
             <input type="text" class="stg-input" id="pressAddName" placeholder="Outlet name">
             <input type="text" class="stg-input" id="pressAddUrl" placeholder="URL">
-            <button class="stg-ai-btn stg-ai-connect" id="pressAddBtn">Add</button>
+            <button type="button" class="pui-b pui-b-filled pui-c-orange" id="pressAddBtn"><span class="pui-b-t">Add</span></button>
           </div>
         </label>
       </div>
@@ -574,7 +574,7 @@
         </div>
         <div class="stg-row bk-simple-row">
           <div class="stg-label bk-simple-label">Download a copy</div>
-          <button class="stg-ai-btn stg-ai-connect bk-simple-btn" id="bkSimpleNow">Download now</button>
+          <button type="button" class="pui-b pui-b-filled pui-c-orange bk-simple-btn" id="bkSimpleNow"><span class="pui-b-t">Download now</span></button>
         </div>
       </div>
       <div id="bkDetail">
@@ -583,7 +583,7 @@
         <div class="stg-group-label">LATEST ARCHIVE</div>
         <div class="stg-row">
           <div><div class="stg-label" id="bkLatestName">No archive yet</div><div class="stg-sublabel" id="bkLatestInfo">Backups run nightly after your first change</div></div>
-          <button class="stg-ai-btn stg-ai-connect" id="bkDownloadBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(20 * var(--u, 1px));" disabled>Download</button>
+          <button type="button" class="pui-b pui-b-filled pui-c-orange" id="bkDownloadBtn" disabled><span class="pui-b-t">Download</span></button>
         </div>
       </div>
       <div class="stg-group">
@@ -591,9 +591,9 @@
         <div class="stg-row">
           <div><div class="stg-label">Auto-download my media</div><div class="stg-sublabel" id="bkMediaInfo">When your uploads change, a current archive downloads to your computer automatically (at most weekly). On by default.</div></div>
           <div style="display:flex;gap:calc(8 * var(--u, 1px));">
-            <button class="stg-ai-btn" id="bkMediaOn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));">On</button>
-            <button class="stg-ai-btn" id="bkMediaOff" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));">Off</button>
-            <button class="stg-ai-btn stg-ai-connect" id="bkMediaNow" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));">Download now</button>
+            <span class="pui-seg"><button type="button" class="pui-seg-btn" id="bkMediaOn">On</button>
+            <button type="button" class="pui-seg-btn" id="bkMediaOff">Off</button></span>
+            <button type="button" class="pui-b pui-b-filled pui-c-orange" id="bkMediaNow"><span class="pui-b-t">Download now</span></button>
           </div>
         </div>
       </div>
@@ -602,15 +602,15 @@
         <div class="stg-row">
           <div><div class="stg-label">Mode</div><div class="stg-sublabel">Auto = a script on your machine fetches new archives nightly. Manual = you download here yourself.</div></div>
           <div style="display:flex;gap:calc(8 * var(--u, 1px));">
-            <button class="stg-ai-btn" id="bkModeAuto" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));">Auto</button>
-            <button class="stg-ai-btn" id="bkModeManual" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));">Manual</button>
+            <span class="pui-seg"><button type="button" class="pui-seg-btn" id="bkModeAuto">Auto</button>
+            <button type="button" class="pui-seg-btn" id="bkModeManual">Manual</button></span>
           </div>
         </div>
         <div class="stg-row" id="bkScriptRow">
           <div><div class="stg-label">Pull script</div><div class="stg-sublabel">Personal script with your backup token — drop it in cron / Task Scheduler. Regenerating the token invalidates the old script.</div></div>
           <div style="display:flex;gap:calc(8 * var(--u, 1px));">
-            <button class="stg-ai-btn stg-ai-connect" id="bkTokenBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));">New token</button>
-            <button class="stg-ai-btn stg-ai-connect" id="bkScriptBtn" style="width:auto;padding:calc(8 * var(--u, 1px)) calc(16 * var(--u, 1px));" disabled>Show script</button>
+            <button type="button" class="pui-b pui-b-filled pui-c-orange" id="bkTokenBtn"><span class="pui-b-t">New token</span></button>
+            <button type="button" class="pui-b pui-b-filled pui-c-orange" id="bkScriptBtn" disabled><span class="pui-b-t">Show script</span></button>
           </div>
         </div>
         <pre id="bkScriptOut" style="display:none;white-space:pre-wrap;word-break:break-all;background:var(--bg2,#111);border:calc(1 * var(--u, 1px)) solid var(--border);border-radius:calc(8 * var(--u, 1px));padding:calc(12 * var(--u, 1px));font-size:calc(14 * var(--u, 1px));margin:calc(10 * var(--u, 1px)) 0 0;"></pre>
@@ -631,8 +631,8 @@
             <div class="stg-sublabel" id="relDeployHint">one click: numbers the current dev commits and moves every box to that version now — each fetches only its difference</div>
           </div>
           <div style="display:flex;gap:calc(8 * var(--u, 1px))">
-            <button class="stg-seg-btn" id="relRefresh">Refresh</button>
-            <button class="stg-btn-primary" id="relDeploy">Deploy</button>
+            <button type="button" class="pui-b pui-b-outline pui-c-dark" id="relRefresh"><span class="pui-b-t">Refresh</span></button>
+            <button type="button" class="pui-b pui-b-filled pui-c-orange" id="relDeploy"><span class="pui-b-t">Deploy</span></button>
           </div>
         </div>
       </div>
@@ -659,19 +659,6 @@
   </div>
 </div>
 
-<!-- Confirm modal — shared by username change, delete account, etc.
-     showConfirmModal({ title, body, confirmText, cancelText }) → Promise<bool>. -->
-<div class="stg-modal-bg" id="stgConfirmBg" aria-hidden="true">
-  <div class="stg-modal" role="dialog" aria-modal="true" aria-labelledby="stgConfirmTitle">
-    <button class="stg-modal-close" id="stgConfirmCloseX" aria-label="Close">&times;</button>
-    <h2 id="stgConfirmTitle" class="stg-modal-title">Confirm</h2>
-    <div class="stg-modal-body" id="stgConfirmBody"></div>
-    <div class="stg-modal-actions">
-      <button class="stg-modal-btn stg-modal-btn-cancel" id="stgConfirmCancel">Cancel</button>
-      <button class="stg-modal-btn stg-modal-btn-confirm" id="stgConfirmOk">OK</button>
-    </div>
-  </div>
-</div>
 
 <link rel="stylesheet" href="styles.css">
 <script src="app.js"></script>
