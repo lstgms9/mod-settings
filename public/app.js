@@ -949,10 +949,10 @@
   // both the Settings picker and the Explore Social column show the
   // same icons.
   var PLATFORMS = [
-    ['x',         '𝕏 X / Twitter'],
-    ['instagram', '📷 Instagram'],
-    ['youtube',   '▶ YouTube'],
-    ['tiktok',    '♪ TikTok'],
+    ['x',         'X / Twitter'],   // x / instagram / youtube / tiktok: the real logos (ui.icon) beside the name, never a drawn glyph
+    ['instagram', 'Instagram'],
+    ['youtube',   'YouTube'],
+    ['tiktok',    'TikTok'],
     ['twitch',    '🎮 Twitch'],
     ['facebook',  'f Facebook'],
     ['threads',   '@ Threads'],
@@ -975,7 +975,7 @@
     host.innerHTML = keys.map(function(k) {
       var handle = _platformState[k];
       return '<div class="stg-row" style="padding:calc(6 * var(--u, 1px)) calc(10 * var(--u, 1px));background:var(--bg-card,#12121f);border:calc(1 * var(--u, 1px)) solid var(--border,#252540);border-radius:calc(6 * var(--u, 1px));gap:calc(8 * var(--u, 1px));">' +
-        '<span style="min-width:calc(140 * var(--u, 1px));font-size:calc(14 * var(--u, 1px))">' + _platLabel(k) + '</span>' +
+        '<span style="min-width:calc(140 * var(--u, 1px));font-size:calc(14 * var(--u, 1px))">' + (/^(x|instagram|youtube|tiktok)$/.test(k) ? platform.ui.icon(k) + ' ' : '') + _platLabel(k) + '</span>' +
         '<input type="text" class="stg-input plat-row-input" data-key="' + k + '" value="' + String(handle || '').replace(/"/g,'&quot;') + '" placeholder="handle / URL" style="flex:1">' +
         platform.ui.closeXHtml({ label: 'Remove', attrs: 'data-rm="' + k + '"' }) +
       '</div>';
