@@ -800,16 +800,17 @@ html.pui-framed .stg-main, .pui-inpop .stg-main { overflow: visible; }
    read-only ones (Email) look the same, never a faint box. A row = the field + its own Save on the right. */
 .stg-fieldrow { display: flex; align-items: center; gap: calc(8 * var(--u, 1px)); margin: 0; }
 .stg-fieldrow > .stg-inbox { flex: 1 1 auto; min-width: 0; }
+/* THE shared field (.pui-input, shared-UI plan 2026-11-16): the handle, display name and recovery email — only their place and size here */
+.stg-fieldrow > .pui-input { flex: 1 1 auto; min-width: 0; min-height: calc(48 * var(--u, 1px)); box-sizing: border-box; font-size: var(--pui-field-fs, 18px); }
+#settings-app .stg-acct-recovery { display: block; width: 100%; font-size: var(--pui-field-fs, 18px); min-height: calc(48 * var(--u, 1px)); box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; }
 .stg-fieldrow > .stg-acct-cta { flex: none; width: auto; }
 .stg-inbox { display: flex; flex-direction: column; justify-content: center; gap: calc(1 * var(--u, 1px)); padding: calc(10 * var(--u, 1px)) calc(12 * var(--u, 1px)); min-height: calc(48 * var(--u, 1px)); box-sizing: border-box; border: calc(1 * var(--u, 1px)) solid var(--border2, #3a3a55);
   border-radius: calc(10 * var(--u, 1px)); background: var(--bg); min-width: 0; cursor: text; }
 .stg-inbox:focus-within { border-color: var(--primary); }
 .stg-inbox-in { display: block; width: 100%; min-width: 0; box-sizing: border-box; border: 0; outline: 0; padding: 0; margin: 0;
   background: transparent; color: var(--text); font: inherit; font-size: calc(16 * var(--u, 1px)); min-height: calc(22 * var(--u, 1px)); }
-.stg-inbox-ro { cursor: default; }
 #settings-app .stg-inbox .stg-inbox-in { border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; }
 #changePwBtn { width: auto; }
-.stg-inbox-ro .stg-inbox-in { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stg-inbox .stg-acct-flagrow { display: flex; align-items: center; gap: calc(8 * var(--u, 1px)); }
 .stg-inbox select.stg-inbox-in { cursor: pointer; }
 /* THE COUNTRY BOX READS WHITE like the rows above it (Damon 2026-10-22: it showed ORANGE — the iPhone's native select tints
