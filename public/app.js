@@ -307,16 +307,17 @@
     m.content.innerHTML = '<div class="stg-ai9-pop"><p>Paste your ' + esc(t.name) + ' API key. It goes straight to our vault, only ever ' +
       'used with ' + esc(t.sub || t.name) + ', and is never shown again.</p>' +
       '<input type="password" class="stg-ai-key-input" autocomplete="off" spellcheck="false" placeholder="API key">' +
-      '<div class="stg-ai9-err"></div><button type="button" class="stg-ai9-btn stg-ai9-go stg-ai9-save">Save key</button></div>';
-    var inp = m.content.querySelector('input'), err = m.content.querySelector('.stg-ai9-err'), go = m.content.querySelector('.stg-ai9-save');
+      '<div class="stg-ai9-err"></div></div>';
+    var go = ui.button({ kind: 'filled', text: 'Save key', className: 'stg-ai9-save' }); m.actions.appendChild(go);   // the shared button, pinned in the row
+    var inp = m.content.querySelector('input'), err = m.content.querySelector('.stg-ai9-err');
     setTimeout(function() { inp.focus(); }, 50);
     go.onclick = async function() {
       var k = inp.value.trim(); if (!k) { inp.focus(); return; }
-      go.disabled = true; go.textContent = 'Saving…'; err.textContent = '';
+      go.disabled = true; ui.buttonText(go, 'Saving…'); err.textContent = '';
       var r = null; try { r = await API.post('/ai-links/' + t.id + '/key', { key: k }); } catch (e) { r = { error: e.message }; }
       inp.value = '';
       if (r && r.ok) { (m.close || function() {})(); document.querySelectorAll('.pui-modal-overlay').forEach(function(o) { if (o.contains(go)) o.remove(); }); toast(t.name + ' connected'); loadAILinks(); }
-      else { go.disabled = false; go.textContent = 'Save key'; err.textContent = (r && r.error) || 'Could not save the key'; }
+      else { go.disabled = false; ui.buttonText(go, 'Save key'); err.textContent = (r && r.error) || 'Could not save the key'; }
     };
   }
   function initAISubs() {
@@ -693,14 +694,14 @@
         '<input type="password" class="stg-input" id="pwCur" placeholder="Current password" autocomplete="current-password">' +
         '<input type="password" class="stg-input" id="pwNew" placeholder="New password (8+ characters)" autocomplete="new-password">' +
         '<div class="stg-pw-msg" id="pwMsg"></div></div>';
-      var go = document.createElement('button'); go.type = 'button'; go.className = 'stg-ai-btn stg-ai-connect'; go.textContent = 'Update';
+      var go = platform.ui.button({ kind: 'filled', text: 'Update' });
       m.actions.appendChild(go);
       var cur = m.content.querySelector('#pwCur'), nw = m.content.querySelector('#pwNew'), msg = m.content.querySelector('#pwMsg');
       function say(t) { msg.textContent = t; }
       async function submit() {
         if (!cur.value) { say('Enter your current password.'); cur.focus(); return; }
         if (nw.value.length < 8) { say('The new password needs 8 or more characters.'); nw.focus(); return; }
-        go.disabled = true; go.textContent = 'Updating…'; say('');
+        go.disabled = true; platform.ui.buttonText(go, 'Updating…'); say('');
         try {
           var r = await fetch((platform.basePath || '') + '/api/auth/change-password', { method: 'POST', credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: cur.value, newPassword: nw.value }) });
@@ -708,7 +709,7 @@
           if (d.ok) { m.close(); toast('Password changed'); return; }
           say(d.error || 'Could not change the password.');
         } catch (e) { say('Connection error — try again.'); }
-        go.disabled = false; go.textContent = 'Update';
+        go.disabled = false; platform.ui.buttonText(go, 'Update');
       }
       go.onclick = submit;
       nw.addEventListener('keydown', function(e) { if (e.key === 'Enter') submit(); });
@@ -881,7 +882,7 @@
       var _pn = await tenantPlanName(planVal);
       var planEl = document.getElementById('planManageBtn');
       var label = _pn || ((TIER_NAMES[planVal] || (planVal.charAt(0).toUpperCase() + planVal.slice(1))) + ' plan');
-      if (planEl && !_planTwo) { planEl.textContent = label; planEl.hidden = false; }
+      if (planEl && !_planTwo) { platform.ui.buttonText(planEl, label); planEl.hidden = false; }
     }
     // Studio identity chip — icon square + logo wordmark. Renders to the
     // LEFT of the tier badge for studio-tier viewers. Square = ui.studioIcon;
@@ -1521,7 +1522,7 @@
       _planTwo = { paid: paid, name: nice(paid.name), isAI: isAI, keep: keep, st: st };
       // THE PLAN BUTTON, top right (Damon 2026-10-20): 'AI Builder' — tap to manage it — or 'Upgrade' on Free
       var btn = document.getElementById('planManageBtn');
-      if (btn) { btn.textContent = isAI ? nice(paid.name) : nice(free.name); btn.setAttribute('data-plan', isAI ? 'ai' : 'free'); btn.hidden = false; }
+      if (btn) { platform.ui.buttonText(btn, isAI ? nice(paid.name) : nice(free.name)); btn.setAttribute('data-plan', isAI ? 'ai' : 'free'); btn.classList.toggle('pui-b-outline', !isAI); btn.hidden = false; }   // Free: the outline look, AI Builder: filled
     } catch (e) {}
   }
   // THE PLAN BUTTON → the MANAGE ACCOUNT pop-up (Damon 2026-10-20): the sign-up page's own two plan cards
@@ -1552,12 +1553,11 @@
         '<input type="text" data-no-mic autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:100%;box-sizing:border-box;font-size:18px;padding:10px 12px;border-radius:8px;background:var(--bg,#0b0b14);color:var(--text,#eee)">' +
         '<p class="stg-del-msg" style="font-size:16px;color:#ff6b6b;min-height:20px;margin:8px 0 0"></p>';
       var inp = m.content.querySelector('input'), msg = m.content.querySelector('.stg-del-msg');
-      var go = document.createElement('button'); go.type = 'button'; go.textContent = 'Delete my account'; go.disabled = true;
-      go.className = 'pui-btn pui-btn-danger';
+      var go = platform.ui.button({ kind: 'filled', colour: 'danger', text: 'Delete my account', disabled: true });
       m.actions.appendChild(go);
       inp.addEventListener('input', function() { go.disabled = inp.value.trim() !== 'DELETE'; });
       go.addEventListener('click', async function() {
-        go.disabled = true; go.textContent = 'Deleting…';
+        go.disabled = true; platform.ui.buttonText(go, 'Deleting…');
         try {
           var r = await fetch('/api/auth/delete-account', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1567,7 +1567,7 @@
           if (r.ok && j && j.ok) { location.href = '/'; return; }   // signed out — back to the front page
           msg.textContent = (j && j.error) || 'Delete failed';
         } catch (e) { msg.textContent = 'Network error — try again'; }
-        go.disabled = false; go.textContent = 'Delete my account';
+        go.disabled = false; platform.ui.buttonText(go, 'Delete my account');
       });
     });
   }
@@ -2030,7 +2030,19 @@
     } catch (_) {}
   }
   applyHide(); applyRemove();
+  // THE SHARED BUTTONS (shared-UI plan 2026-11-16): the page's slots become ui.button — same ids, so every handler below finds them;
+  // the old class stays only for where it sits in the layout (its own look is gone)
+  function sharedButtons() {
+    var U = window.platform.ui, B = {
+      stgManageBtn: { kind: 'filled', size: 'sm', text: 'Manage account', className: 'stg-manage-btn' },   // sm: it shares the heading's row (it ran off a 390 screen at full size)
+      planManageBtn: { kind: 'filled', size: 'sm', colour: 'yellow', text: 'Plan', hidden: true, className: 'stg-plan-btn' },
+      changePwBtn: { kind: 'outline', text: 'Change password', className: 'stg-acct-cta' },
+      deleteBtn: { kind: 'outline', colour: 'danger', text: 'Delete Account', className: 'stg-btn-danger' },
+    };
+    document.querySelectorAll('[data-pui-btn]').forEach(function (slot) { var id = slot.getAttribute('data-pui-btn'); if (!B[id]) return; slot.replaceWith(U.button(Object.assign({ id: id }, B[id]))); });
+  }
   window.platform.module.init = async function() {
+    sharedButtons();
     applyHide(); applyRemove();
     // Fill any [data-tenant-brand] placeholders with the current
     // tenant's display name. mod-settings is multi-tenant, so we read

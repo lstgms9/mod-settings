@@ -456,14 +456,14 @@
         <div class="stg-acct-titlerow">
           <div class="stg-section-header" style="margin:0;">Account</div>
           <!-- a real button (Damon 2026-10-23: it read as a plain text link) — opens the Manage account pop-up -->
-          <button type="button" class="pui-btn pui-btn-primary stg-manage-btn" id="stgManageBtn">Manage account</button>
+          <span data-pui-btn="stgManageBtn"></span>
         </div>
         <div class="stg-acct-head-right" data-hide-key="account-tier">
           <!-- Studio identity chip — logo when the studio has one,
                otherwise the studio name. Only renders for tier 2+. -->
           <a class="stg-acct-studio-chip" id="accountStudioChip" href="#" style="display:none"></a>
           <!-- THE PLAN BUTTON (Damon 2026-10-20): small, right-justified — 'AI Builder' (tap = manage) / 'Upgrade' -->
-          <button type="button" class="stg-plan-btn" id="planManageBtn" hidden></button>
+          <span data-pui-btn="planManageBtn"></span>
         </div>
       </div>
 
@@ -496,7 +496,7 @@
           <!-- the sign-in email: plain orange text, never a box — boxes are for what you can edit (Damon 2026-10-20) -->
           <div class="stg-acct-email stg-acct-email-line" id="accountEmail" data-fallback="you@example.com">—</div>
           <label class="stg-inbox stg-inbox-ro"><input type="text" class="stg-inbox-in stg-mono-cyan" id="accountRecoveryEmail" placeholder="Recovery email" readonly></label>
-          <div><button type="button" class="stg-ai-btn stg-ai-connect stg-acct-cta" id="changePwBtn">Change password</button></div>
+          <div><span data-pui-btn="changePwBtn"></span></div>
           <form class="stg-fieldrow" onsubmit="return false" autocomplete="off">
             <label class="stg-inbox"><span class="stg-acct-flagrow">
                 <span class="stg-flag-preview" id="profileCountryFlag"><svg class="pui-ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.6 3.7 2.6 6S9.8 12.3 8 14C6.2 12.3 5.4 10.3 5.4 8S6.2 3.7 8 2z"/></svg></span>
@@ -542,7 +542,7 @@
         <div class="stg-group-label">DANGER ZONE</div>
         <div class="stg-row">
           <div><div class="stg-label">Delete account</div><div class="stg-sublabel">Permanently remove your account and studio — cannot be undone.</div></div>
-          <button class="stg-btn-danger" id="deleteBtn">Delete Account</button>
+          <span data-pui-btn="deleteBtn"></span>
         </div>
       </div>
     </div>

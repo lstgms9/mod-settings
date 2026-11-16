@@ -267,12 +267,6 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 /* ── Danger ──────────────────────────────────── */
 .stg-danger-group { border-color: rgba(255,57,151,0.2); }
 .stg-danger-group .stg-group-label { color: var(--red); }
-.stg-btn-danger {
-  padding: calc(7 * var(--u, 1px)) calc(18 * var(--u, 1px)); border-radius: calc(6 * var(--u, 1px)); font-size: calc(14 * var(--u, 1px)); font-weight: 600;
-  font-family: inherit; cursor: pointer;
-  background: rgba(255,57,151,0.06); border: calc(1 * var(--u, 1px)) solid rgba(255,57,151,0.3); color: var(--red); transition: all 0.2s;
-}
-.stg-btn-danger:hover { background: rgba(255,57,151,0.15); }
 
 /* ── Storage bar ─────────────────────────────── */
 .stg-server-dot { width: calc(10 * var(--u, 1px)); height: calc(10 * var(--u, 1px)); border-radius: 50%; flex-shrink: 0; }
@@ -846,7 +840,7 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 /* phone text law (16px+): the Account pane's labels, fields, plan line and buttons were 14px on a phone (uniMaster v237) */
 @media (max-width: 760px) {
   .stg-group-label, .stg-acct-email, .stg-acct-static, .stg-sublabel,
-  .stg-acct-cta, .stg-btn-danger, .stg-input { font-size: calc(16 * var(--u, 1px)) !important; }
+  .stg-acct-cta, .stg-input { font-size: calc(16 * var(--u, 1px)) !important; }
 }
 /* A TAP PRESSES THE CONTROL (Damon 2026-10-18, phone: the first tap on Enable 2FA selected the box around it): a
    settings box is never selected or highlighted by a tap; fields stay selectable; toggles and choices take the tap */
@@ -952,7 +946,6 @@ html.pui-framed .stg-main, .pui-inpop .stg-main { overflow: visible; }
 #settings-app .stg-danger-group .stg-group-label { color: var(--red, #ff3997); white-space: nowrap; }
 @media (max-width: 760px) {   /* DANGER ZONE and its button fit one row in the pop-up's narrower page */
   #settings-app .stg-danger-group .stg-group-label { letter-spacing: calc(.5 * var(--u, 1px)); }
-  #settings-app .stg-danger-group .stg-btn-danger { padding: calc(6 * var(--u, 1px)) calc(10 * var(--u, 1px)); color: var(--red, #ff3997); }
 }
 @media (max-width: 760px) {   /* the last few rows of air, so Account fits a 414x896 phone in the pop-up */
   #settings-app .stg-sidebar { padding: calc(8 * var(--u, 1px)) 0 calc(2 * var(--u, 1px)); }
@@ -966,10 +959,7 @@ html.pui-framed .stg-main, .pui-inpop .stg-main { overflow: visible; }
 
 
 /* THE PLAN BUTTON (Damon 2026-10-20): small, right-justified on the chip row — 'AI Builder' yellow, 'Upgrade' orange */
-.stg-plan-btn { margin-left: auto; padding: calc(5 * var(--u, 1px)) calc(12 * var(--u, 1px)); border-radius: calc(8 * var(--u, 1px)); border: 0; cursor: pointer; font-family: inherit; font-weight: 600; font-size: calc(16 * var(--u, 1px)); line-height: 1.2;
-  background: #ffe03d; color: #0b0b14; white-space: nowrap; }
-.stg-plan-btn[data-plan="free"] { background: #2a2a40; color: var(--text); }
-.stg-plan-btn[hidden] { display: none; }
+.stg-plan-btn { margin-left: auto; }
 
 /* the sign-in email: plain orange text on its own line (no box) */
 .stg-acct-email-line { padding: calc(4 * var(--u, 1px)) calc(2 * var(--u, 1px)); font-size: calc(16 * var(--u, 1px)); overflow-wrap: anywhere; background: none; border: 0; border-radius: 0; min-height: 0; }   /* NO box: boxes are for what you can edit */
