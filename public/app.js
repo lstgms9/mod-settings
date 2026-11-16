@@ -977,7 +977,7 @@
       return '<div class="stg-row" style="padding:calc(6 * var(--u, 1px)) calc(10 * var(--u, 1px));background:var(--bg-card,#12121f);border:calc(1 * var(--u, 1px)) solid var(--border,#252540);border-radius:calc(6 * var(--u, 1px));gap:calc(8 * var(--u, 1px));">' +
         '<span style="min-width:calc(140 * var(--u, 1px));font-size:calc(14 * var(--u, 1px))">' + _platLabel(k) + '</span>' +
         '<input type="text" class="stg-input plat-row-input" data-key="' + k + '" value="' + String(handle || '').replace(/"/g,'&quot;') + '" placeholder="handle / URL" style="flex:1">' +
-        platform.ui.buttonHtml({ kind: 'icon-square', colour: 'danger', icon: 'close', title: 'Remove', data: { rm: k } }) +
+        platform.ui.closeXHtml({ label: 'Remove', attrs: 'data-rm="' + k + '"' }) +
       '</div>';
     }).join('');
     Array.from(host.querySelectorAll('.plat-row-input')).forEach(function(inp) {
@@ -1093,7 +1093,7 @@
       return '<div class="stg-row" style="padding:calc(6 * var(--u, 1px)) calc(10 * var(--u, 1px));background:var(--bg-card,#12121f);border:calc(1 * var(--u, 1px)) solid var(--border,#252540);border-radius:calc(6 * var(--u, 1px));gap:calc(8 * var(--u, 1px));">' +
         '<span style="min-width:calc(140 * var(--u, 1px));font-size:calc(14 * var(--u, 1px))">' + (r.name || '').replace(/</g,'&lt;') + '</span>' +
         '<a href="' + (r.url || '#').replace(/"/g,'&quot;') + '" target="_blank" rel="noopener" style="flex:1;font-size:calc(14 * var(--u, 1px));color:var(--primary);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.url || '').replace(/</g,'&lt;') + '</a>' +
-        platform.ui.buttonHtml({ kind: 'icon-square', colour: 'danger', icon: 'close', title: 'Remove', data: { 'press-rm': i } }) +
+        platform.ui.closeXHtml({ label: 'Remove', attrs: 'data-press-rm="' + i + '"' }) +
       '</div>';
     }).join('');
     Array.from(host.querySelectorAll('[data-press-rm]')).forEach(function(btn) {
