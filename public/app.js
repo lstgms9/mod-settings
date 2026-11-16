@@ -897,21 +897,17 @@
         var logo = st && st.meta && st.meta.logoFileId;
         if (!logo) logo = st && st.studioLogoFileId;
         var icon = platform.ui.studioIcon(st);
-        var html = '';
-        if (icon) html += '<img src="/_instance/files/' + esc(icon) + '" alt="' + esc(name) + '">';
-        if (logo) {
-          html += '<img class="stg-acct-studio-chip-logo" src="/_instance/files/' + esc(logo) + '" alt="' + esc(name) + '">';
-        } else {
-          html += '<span class="stg-acct-studio-chip-name">' + esc(name) + '</span>';
-        }
-        chip.innerHTML = html;
+        // THE shared chip (ui.buttonHtml chip, shared-UI plan 2026-11-16): the studio icon + its logo, or its name
+        var pics = (icon ? '<img src="/_instance/files/' + esc(icon) + '" alt="">' : '') + (logo ? '<img class="stg-acct-studio-chip-logo" src="/_instance/files/' + esc(logo) + '" alt="' + esc(name) + '">' : '');
+        var t0 = document.createElement('template');
+        t0.innerHTML = platform.ui.buttonHtml({ kind: 'chip', id: 'accountStudioChip', className: 'stg-acct-studio-chip', href: '/explore/thingi?_highlight=' + encodeURIComponent(st.id),
+          icon: pics || null, text: logo ? null : name, title: name, label: name });
+        var made = t0.content.firstElementChild; chip.replaceWith(made); chip = made;
         // Open THIS studio's profile — point at the studio thing explicitly.
         // Without an id it opened /explore/thingi on whatever thing was last
         // selected (usually a game), not the studio.
-        chip.href = '/explore/thingi?_highlight=' + encodeURIComponent(st.id);
         chip.onclick = function () { try { localStorage.setItem('platform-selected-thing', st.id); } catch (e) {} };
-        chip.title = name;
-        chip.style.display = 'inline-flex';
+
       } else if (chip) {
         chip.style.display = 'none';
       }

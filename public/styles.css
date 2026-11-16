@@ -468,27 +468,9 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
   margin-bottom: calc(18 * var(--u, 1px));
 }
 .stg-acct-head-right { display: flex; align-items: center; gap: calc(10 * var(--u, 1px)); flex: 1 1 100%; }   /* the studio chip left, the plan button right */
-.stg-acct-studio-chip {
-  display: inline-flex; align-items: center; gap: calc(8 * var(--u, 1px));
-  padding: calc(6 * var(--u, 1px)) calc(12 * var(--u, 1px));
-  background: var(--bg2);
-  border: calc(1 * var(--u, 1px)) solid var(--border2);
-  border-radius: calc(8 * var(--u, 1px));
-  color: var(--text); font-family: var(--font-head);
-  font-size: calc(14 * var(--u, 1px)); letter-spacing: 0.06em;
-  text-decoration: none; cursor: pointer;
-  transition: border-color 0.15s, transform 0.1s;
-}
-.stg-acct-studio-chip:hover { border-color: var(--primary); transform: translateY(-1px); }
-.stg-acct-studio-chip img {
-  width: calc(24 * var(--u, 1px)); height: calc(24 * var(--u, 1px)); object-fit: cover;
-  border-radius: calc(4 * var(--u, 1px)); display: block;
-}
-.stg-acct-studio-chip img.stg-acct-studio-chip-logo {
-  width: auto; max-width: calc(130 * var(--u, 1px)); object-fit: contain;
-  border-radius: 0;
-}
-.stg-acct-studio-chip-name { line-height: 1; }
+.stg-acct-studio-chip img { width: calc(24 * var(--u, 1px)); height: calc(24 * var(--u, 1px)); object-fit: cover; border-radius: calc(4 * var(--u, 1px)); display: block; }
+.stg-acct-studio-chip img.stg-acct-studio-chip-logo { width: auto; max-width: calc(130 * var(--u, 1px)); object-fit: contain; border-radius: 0; }
+.stg-acct-studio-chip .pui-b-ic { display: inline-flex; gap: calc(8 * var(--u, 1px)); width: auto; }   /* icon + logo side by side */
 
 
 /* Two-box duet row — Avatar | Details. Same height enforced by grid. */
