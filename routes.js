@@ -893,7 +893,29 @@ module.exports = function(router, ctx) {
     };
     all.updated = all.boxes[box].lastSeen;
     writeBoxes(all);
-    res.json({ ok: true, box, stable: deployLib.stableFor(deployLib.readManifest(), all.boxes[box].site) });
+    const m = deployLib.readManifest(), cur = all.boxes[box];
+    // THE PUSH CLOCK (Damon 2026-11-20): the checkin that says a box is LIVE on a new version (idle after its apply) ends that
+    // ship's clock — GitHub's push time (b2-deployctl stamped which push the version carries) to this moment, measured. One
+    // line per version in .runtime/ship-times.log; the box shows it as its last line. Over 40 s: SLOW + the slowest step.
+    let shipTime = null;
+    const tm = ((m.versions || {})[cur.version] || {}).timing;
+    if (tm && cur.site === 'gamoid' && cur.phase === 'idle' && cur.health === '200' && !cur.rolledBack && (prev.version !== cur.version || prev.phase !== 'idle')) {
+      const LOGF = '/home/damon/platform/.runtime/ship-times.log', tag = 'v' + cur.version + ' ' + cur.site + ' ';
+      let seen = ''; try { seen = fs.readFileSync(LOGF, 'utf8'); } catch (e) {}
+      if (!seen.split('\n').some((l) => l.includes(' ' + tag))) {
+        const s1 = (a, b) => ((b - a) / 1000).toFixed(1);
+        if (tm.none) shipTime = 'v' + cur.version + ' push->live: unknown — ' + tm.none;
+        else {
+          const live = Date.now(), total = (live - tm.pushedAt) / 1000;
+          const steps = tm.landedAt ? [['dev pull', tm.pushedAt, tm.landedAt], ['to ship', tm.landedAt, tm.cutAt], ['prod apply', tm.cutAt, live]] : [['dev pull + ship', tm.pushedAt, tm.cutAt], ['prod apply', tm.cutAt, live]];
+          const slow = steps.slice().sort((a, b) => (b[2] - b[1]) - (a[2] - a[1]))[0];
+          shipTime = (total > 40 ? 'SLOW ' : '') + 'v' + cur.version + ' push->live ' + total.toFixed(1) + ' s (' + tm.repo + ' ' + String(tm.sha).slice(0, 7) + ': ' +
+            steps.map((x) => x[0] + ' ' + s1(x[1], x[2])).join(' · ') + ')' + (total > 40 ? ' — slowest: ' + slow[0] + ' ' + s1(slow[1], slow[2]) + ' s' : '');
+        }
+        try { fs.appendFileSync(LOGF, new Date().toISOString() + ' ' + tag + shipTime + '\n'); } catch (e) {}
+      }
+    }
+    res.json({ ok: true, box, stable: deployLib.stableFor(m, cur.site), shipTime });
   });
 
   // POST /keyop — the brokered keyed call (admin/PROD-KEYS-REMOVAL.md, Damon GO
