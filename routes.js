@@ -844,7 +844,18 @@ module.exports = function(router, ctx) {
         const child = spawn(process.execPath, ['/home/damon/platform/scripts/deploy-delta-build.js', site, String(from || 0), String(to), file], { detached: true, stdio: 'ignore' });
         child.unref();
       }
-      return res.status(202).json({ building: true, from, to, site, retryInMs: building ? 5000 : 15000 });
+      // HOLD THE ASK until the bundle lands (2026-11-20, ship speed): a one-file delta builds in ~3 s, but a 202 sent the
+      // box to sleep 15 s first — 16 of every ship's 26 s on prod. The build's rename into `file` wakes this (fs.watch, no
+      // poll); only a build still going after 40 s (under the proxy's 60 s) gets the 202 and the box's retry, as before.
+      ready = await new Promise((resolve) => {
+        let w = null, t = null;
+        const has = () => { try { return fs.statSync(file).size > 0; } catch { return false; } };
+        const end = (v) => { clearTimeout(t); try { w && w.close(); } catch {} resolve(v); };
+        try { w = fs.watch(DELTA_DIR, (ev, name) => { if (name === path.basename(file) && has()) end(true); }); } catch {}
+        t = setTimeout(() => end(has()), 40000);
+        if (has()) end(true);
+      });
+      if (!ready) return res.status(202).json({ building: true, from, to, site, retryInMs: building ? 5000 : 15000 });
     }
     const st = fs.statSync(file);
     const buf = fs.readFileSync(file);
