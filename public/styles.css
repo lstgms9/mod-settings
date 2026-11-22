@@ -77,7 +77,7 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
   padding: calc(24 * var(--u, 1px)) 0; overflow-y: auto;
 }
 .stg-sidebar-title {
-  font-family: var(--font-head); font-size: calc(14 * var(--u, 1px));
+  font-family: var(--font-head); font-size: calc(16 * var(--u, 1px));
   color: var(--primary); padding: 0 calc(20 * var(--u, 1px)); margin-bottom: calc(24 * var(--u, 1px)); letter-spacing: calc(1 * var(--u, 1px));
 }
 .stg-nav-item {
@@ -98,7 +98,7 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 .stg-section.active { display: block; }
 
 .stg-section-header { font-family: var(--font-head); font-size: calc(18 * var(--u, 1px)); color: var(--text); margin-bottom: calc(6 * var(--u, 1px)); }
-.stg-section-desc { font-size: calc(14 * var(--u, 1px)); color: var(--text-dim); margin-bottom: calc(28 * var(--u, 1px)); max-width: calc(500 * var(--u, 1px)); }
+.stg-section-desc { font-size: calc(16 * var(--u, 1px)); color: var(--text-dim); margin-bottom: calc(28 * var(--u, 1px)); max-width: calc(500 * var(--u, 1px)); }
 
 /* ── Groups ──────────────────────────────────── */
 .stg-group {
@@ -107,7 +107,7 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 }
 .stg-group:hover { border-color: var(--border2); }
 .stg-group-label {
-  font-family: var(--font-head); font-size: calc(14 * var(--u, 1px)); letter-spacing: calc(1.5 * var(--u, 1px));
+  font-family: var(--font-head); font-size: calc(16 * var(--u, 1px)); letter-spacing: calc(1.5 * var(--u, 1px));
   color: var(--primary); margin-bottom: calc(14 * var(--u, 1px));
 }
 
@@ -118,8 +118,8 @@ html.gmob #settings-app { --pui-pri-fs: calc(18 * var(--u)); --pui-pri-fs-wide: 
 }
 .stg-row:last-child { border-bottom: none; padding-bottom: 0; }
 .stg-row:first-of-type { padding-top: 0; }
-.stg-label { font-size: calc(14 * var(--u, 1px)); font-weight: 500; color: var(--text); }
-.stg-sublabel { font-size: calc(14 * var(--u, 1px)); color: var(--text-dim); margin-top: calc(2 * var(--u, 1px)); }
+.stg-label { font-size: calc(16 * var(--u, 1px)); font-weight: 500; color: var(--text); }
+.stg-sublabel { font-size: calc(16 * var(--u, 1px)); color: var(--text-dim); margin-top: calc(2 * var(--u, 1px)); }
 .stg-mono-cyan { font-family: var(--font-mono); color: var(--primary); }
 
 /* ── Segmented control ───────────────────────── */
