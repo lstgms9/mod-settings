@@ -859,7 +859,7 @@
           var myStudio2 = Array.isArray(things2) ? things2.find(function(t) {
             return t.kind === 'studio' && (t.slug === sesObj3.studioSlug || t.owner_user_id === sesObj3.slug);
           }) : null;
-          if (myStudio2 && (myStudio2.name || myStudio2.studioName)) snEl.value = myStudio2.name || myStudio2.studioName;
+          if (myStudio2 && myStudio2.name) snEl.value = myStudio2.name;
         }
       }
     } catch (e) {}
