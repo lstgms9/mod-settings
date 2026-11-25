@@ -534,10 +534,10 @@ module.exports = function(router, ctx) {
   router.get('/team', async (req, res) => {
     if (!requireAdmin(req, res)) return;
     const all = await storage.list('team_member', { studio: req.user.studio });
-    const members = [];
+    const members = [], ic = await require.main.require('./lib/profile-icon').iconsFor(storage, all.map((m) => String((m.data || m).email || '').toLowerCase()));
     for (const m of all) {
       const full = await storage.get('team_member', m.id);
-      if (full) members.push({ id: full.id, email: full.data.email, displayName: full.data.displayName, avatar: full.data.avatar, role: full.data.role || 'member', modVisibility: full.data.modVisibility || {}, lastLoginAt: full.data.lastLoginAt, createdAt: full.data.createdAt });
+      if (full) members.push({ id: full.id, email: full.data.email, displayName: full.data.displayName, profile_icon: ic[String(full.data.email || '').toLowerCase()] || null, role: full.data.role || 'member', modVisibility: full.data.modVisibility || {}, lastLoginAt: full.data.lastLoginAt, createdAt: full.data.createdAt });
     }
     res.json(members);
   });

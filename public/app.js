@@ -1173,7 +1173,7 @@
       var m = teamMembers[i];
       if (!m.role) m.role = 'member';
       html += '<div class="stg-team-row" data-userid="' + m.id + '">' +
-        '<div class="stg-team-avatar">' + esc(m.avatar || '??') + '</div>' +
+        '<div class="stg-team-avatar">' + window.platform.ui.profileIcon(m.profile_icon, 34) + '</div>' +   // THE ONE PROFILE ICON
         '<div class="stg-team-info">' +
           '<div class="stg-team-name">' + esc(m.displayName || m.email) + '</div>' +
           '<div class="stg-team-email">' + esc(m.email) + '</div>' +
